@@ -1,0 +1,154 @@
+{
+  "brand": "Everest Real Estate",
+  "header": {
+    "teamsTitle": "Team Leaderboard",
+    "teamsSub": "Total sales · ranked by branch",
+    "agentsTitle": "Sales Agents Leaderboard",
+    "agentsSub": "Ranked by total sales",
+    "insightsTitle": "Insights",
+    "insightsSub": "Trend this quarter and quarter-over-quarter"
+  },
+  "status": {
+    "live": "LIVE",
+    "reconnecting": "RECONNECTING",
+    "connecting": "CONNECTING",
+    "demo": "DEMO DATA",
+    "feed": "Data feed status: {status}"
+  },
+  "view": {
+    "teams": "Teams",
+    "agents": "Agents",
+    "toggle": "Switch view",
+    "insights": "Insights"
+  },
+  "quarter": {
+    "label": "Quarter",
+    "short": "Q{n}",
+    "notStarted": "Q{n} — not started yet",
+    "range": {
+      "1": "Jan–Mar",
+      "2": "Apr–Jun",
+      "3": "Jul–Sep",
+      "4": "Oct–Dec"
+    }
+  },
+  "table": {
+    "rank": "Rank",
+    "team": "Team",
+    "agent": "Agent",
+    "members": "Members",
+    "sales": "Sales (EGP)",
+    "target": "Target (EGP)",
+    "progress": "Progress to target",
+    "progressShort": "Progress"
+  },
+  "card": {
+    "topTeam": "#1 TEAM",
+    "sales": "SALES",
+    "target": "Target",
+    "ofTarget": "{pct}% of {target} EGP target"
+  },
+  "empty": {
+    "teamsTitle": "No team standings yet",
+    "teamsBody": "Waiting for the first results this quarter. Standings appear here as soon as sales are recorded.",
+    "agentsTitle": "No agent standings yet",
+    "agentsBody": "Waiting for the first results this quarter. Agents appear here as soon as sales are recorded."
+  },
+  "a11y": {
+    "rank": "Rank {n}",
+    "members": "{n} members",
+    "salesAmount": "Sales {amount}",
+    "pctOfTarget": "{pct} percent of target",
+    "up": "up {n}",
+    "down": "down {n}",
+    "teamStandings": "Team standings",
+    "teamStandingsRest": "Team standings, ranks {from} and below",
+    "agentStandings": "Agent standings",
+    "teamLeader": "Team leader: {name}, {amount}.",
+    "topAgent": "Top agent: {name}, {amount}.",
+    "logo": "{name} logo"
+  },
+  "settings": {
+    "title": "Settings",
+    "open": "Open settings",
+    "theme": "Theme",
+    "daylight": "Daylight",
+    "midnight": "Midnight",
+    "rotate": "Auto-rotate",
+    "interval": "Rotation interval",
+    "seconds": "{n}s",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
+    "language": "Language",
+    "keepAwake": "Keep screen awake",
+    "shortcuts": "Shortcuts: T view · R rotate · F fullscreen · S settings · L language"
+  },
+  "search": {
+    "placeholder": "Search agent or team",
+    "clear": "Clear search",
+    "noResults": "No results for \"{q}\""
+  },
+  "chart": {
+    "trend": "Sales trend this quarter",
+    "compare": "Quarter comparison",
+    "noHistory": "Not enough history yet — a snapshot is taken daily.",
+    "trendSub": "Each team’s total sales, from the daily snapshots",
+    "compareSub": "Each team’s total sales per quarter",
+    "leader": "Leader",
+    "otherTeams": "Other teams",
+    "date": "Date",
+    "showTable": "Table",
+    "showChart": "Chart",
+    "trendHint": "Use the left and right arrow keys to step through dates"
+  },
+  "export": {
+    "label": "Export",
+    "png": "Save PNG",
+    "pdf": "Print / PDF",
+    "failed": "Export failed"
+  },
+  "admin": {
+    "title": "Board admin",
+    "open": "Admin",
+    "backToBoard": "Board",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out",
+    "checking": "Checking…",
+    "loading": "Loading…",
+    "email": "Email",
+    "password": "Password",
+    "notAdmin": "You do not have access to this page",
+    "notAdminHint": "{email} is signed in but is not an admin. Ask an admin to upgrade your account.",
+    "periods": "Targets & sales",
+    "agents": "Agents",
+    "teams": "Teams",
+    "addTeam": "New team",
+    "addAgent": "New agent",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "saveAll": "Save all",
+    "saveAllCount": "Save {n} changes",
+    "active": "Active",
+    "activeHint": "Inactive records leave the board without losing their data",
+    "inactive": "Inactive",
+    "nameEn": "Name (English)",
+    "nameAr": "Name (Arabic)",
+    "noTeam": "No team",
+    "noAgents": "No active agents",
+    "year": "Year",
+    "action": "Status",
+    "periodsHint": "Edit the numbers, then press Save — nothing is written before that.",
+    "confirmDeleteTeam": "Permanently delete team “{name}”? Its agents are kept but left without a team.",
+    "confirmDeleteAgent": "Permanently delete agent “{name}”? All their targets and sales go with them. Deactivating is usually better.",
+    "uploadPhoto": "Upload photo",
+    "uploading": "Uploading…",
+    "removePhoto": "Remove",
+    "photoHint": "JPG, PNG or WebP · up to 2 MB",
+    "photoType": "Unsupported format — use JPG, PNG or WebP",
+    "photoSize": "File is larger than 2 MB"
+  }
+}

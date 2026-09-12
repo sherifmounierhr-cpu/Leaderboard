@@ -1,0 +1,51 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+import { compact, egp } from '@/lib/format'
+import type { BoardEntity } from '@/composables/useBoardData'
+import Avatar from './Avatar.vue'
+import ProgressTrack from './ProgressTrack.vue'
+
+defineProps<{ team: BoardEntity }>()
+const { t } = useI18n()
+</script>
+
+<template>
+  <div
+    class="relative flex flex-col items-center gap-3.5 lg:gap-[clamp(8px,1.7vh,14px)] rounded-2xl border border-accent/70 bg-card px-6 pb-8 lg:pb-[clamp(16px,3vh,32px)] pt-0 lg:px-8 ring-1 ring-accent/15 shadow-[0_1px_2px_-1px_rgba(27,34,42,0.08),0_24px_50px_-28px_rgba(21,122,74,0.5)] animate-leader-pulse origin-bottom"
+  >
+    <div
+      class="flex items-center gap-2 rounded-b-lg bg-accent-strong px-6 py-2 font-semibold tracking-[0.12em] text-white text-xs lg:text-sm shadow-[0_5px_12px_-5px_rgba(15,99,56,0.6)]"
+    >
+      <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-gold text-base lg:text-lg" />
+      {{ t('card.topTeam') }}
+    </div>
+
+    <Avatar
+      :entity="team"
+      kind="team"
+      class="size-24 lg:size-[clamp(84px,13.5vh,136px)] rounded-3xl ring-2 ring-accent/80 text-3xl"
+    />
+
+    <div
+      class="w-full font-semibold tracking-[-0.01em] text-center text-strong text-2xl lg:text-[clamp(22px,3.3vh,30px)] text-balance break-words line-clamp-2"
+      :title="team.name"
+    >
+      {{ team.name }}
+    </div>
+
+    <div class="flex items-baseline gap-2" :title="egp(team.deals)">
+      <span class="font-bold leading-[0.85] tracking-[-0.02em] tabular-nums text-accent-text text-stat-hero">
+        {{ compact(team.deals) }}
+      </span>
+      <span class="font-medium uppercase text-accent-text/65 tracking-[0.16em] text-sm lg:text-label">
+        {{ t('card.sales') }}
+      </span>
+    </div>
+
+    <ProgressTrack :pct="team.pct" soft tall />
+
+    <div class="font-medium text-accent-text/80 text-sm lg:text-note">
+      {{ t('card.ofTarget', { pct: team.pct, target: compact(team.target) }) }}
+    </div>
+  </div>
+</template>

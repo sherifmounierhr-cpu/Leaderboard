@@ -1,0 +1,231 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   Design tokens — استخرجت من بناء الإصدار الأول (index-DpmeYDwL.css)
+   الثيم الافتراضي daylight؛ midnight يعيد تعريف الألوان أدناه فقط.
+------------------------------------------------------------------ */
+@theme {
+  --font-sans: "Tajawal", "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Brand / accent */
+  --color-accent: #157a4a;
+  --color-accent-strong: #0f6338;
+  --color-accent-live: #4bbd80;
+  --color-accent-text: #0f6438;
+
+  /* Surfaces */
+  --color-page: #f3f4f2;
+  --color-header: #1e242c;
+  --color-card: #ffffff;
+  --color-card-alt: #f7f8f6;
+  --color-card-border: #e7e9e6;
+  --color-divider: #eef0ec;
+  --color-track: #e9ebe8;
+  --color-avatar: #e9ece9;
+
+  /* Text */
+  --color-strong: #1b222a;
+  --color-mute: #5b6472;
+  --color-dim: #9aa0a8;
+  --color-avatar-text: #5b6472;
+
+  /* Semantic */
+  --color-gold: #c39a4b;
+  --color-down: #cf4a41;
+
+  /* Typographic scale (يُكمل مقاييس Tailwind الافتراضية) */
+  --text-eyebrow: 0.625rem;
+  --text-caption: 0.8125rem;
+  --text-note: 0.9375rem;
+  --text-label: 1.0625rem;
+  --text-metric-sm: 1.375rem;
+  --text-name: 1.625rem;
+  --text-rank: 1.75rem;
+  --text-metric: 1.875rem;
+  --text-stat-3: clamp(1.75rem, 2.2vw, 2.1rem);
+  --text-stat-3-lead: clamp(2rem, 2.6vw, 2.4rem);
+  --text-stat-2: clamp(2.4rem, min(4vw, 6.5vh), 3.6rem);
+  --text-stat-hero: clamp(3.75rem, min(6vw, 9.5vh), 5.5rem);
+
+  /* Motion */
+  --animate-bar-grow: bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-leader-pulse: leader-pulse 4.5s ease-in-out infinite;
+}
+
+/* الظلال ليست جزءاً من @theme لأنها تتبدل مع الثيم */
+:root {
+  --shadow-panel: 0 1px 2px -1px #1b222a0f, 0 12px 28px -18px #1b222a29;
+  --shadow-podium: 0 1px 2px -1px #1b222a0f, 0 18px 34px -20px #1b222a33;
+  --shadow-card: 0 1px 2px -1px #1b222a0d, 0 10px 22px -18px #1b222a24;
+
+  /* ------------------------------------------------------------------
+     ألوان الرسوم البيانية.
+     الأرباع تسلسل مرتّب (ordinal) لا هويات مستقلة، لذا تأخذ تدرّجاً بلون
+     واحد فاتح→غامق. القيم مُتحقَّق منها بـ validate_palette.js --ordinal
+     على السطح #ffffff: تدرّج أحادي، فجوات L ≥ 0.06، الطرف الفاتح 2.10:1.
+  ------------------------------------------------------------------ */
+  --chart-q1: #6cc498;
+  --chart-q2: #3f9c6d;
+  --chart-q3: #218050;
+  --chart-q4: #075129;
+
+  /* شكل "الإبراز": المتصدّر باللون الأساسي وبقية الفروع رمادية سياقية */
+  --chart-emphasis: #157a4a;
+  --chart-context: #a3aaa3;
+  --chart-grid: #eef0ec;
+  --chart-surface: #ffffff;
+}
+
+/* نفس التدرّج مُعاد اختياره للسطح الداكن #232a33 (الطرف الفاتح 2.20:1) */
+:root[data-theme="midnight"] {
+  --chart-q1: #22694a;
+  --chart-q2: #3d9268;
+  --chart-q3: #63bd92;
+  --chart-q4: #9ee2be;
+
+  --chart-emphasis: #55c98c;
+  --chart-context: #6f7987;
+  --chart-grid: #ffffff14;
+  --chart-surface: #232a33;
+}
+
+:root[data-theme="midnight"] {
+  --color-accent-text: #55c98c;
+  --color-page: #171c22;
+  --color-header: #0f131a;
+  --color-card: #232a33;
+  --color-card-alt: #2a323c;
+  --color-card-border: #ffffff14;
+  --color-divider: #ffffff0f;
+  --color-track: #ffffff17;
+  --color-avatar: #333c47;
+  --color-strong: #f3f5f7;
+  --color-mute: #9aa3b2;
+  --color-dim: #6b7688;
+  --color-avatar-text: #c7cdd6;
+  --color-gold: #d8b768;
+
+  --shadow-panel: 0 1px 2px -1px #00000080, 0 16px 30px -18px #0009;
+  --shadow-podium: 0 1px 2px -1px #00000080, 0 20px 36px -18px #000000a8;
+  --shadow-card: 0 1px 2px -1px #0000008c, 0 12px 24px -18px #000000a8;
+  color-scheme: dark;
+}
+
+/* transform-origin لا يقبل قيماً منطقية، لذا نضبط الجهة لكل اتجاه صراحةً */
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+[dir="ltr"] .animate-bar-grow { transform-origin: left center; }
+[dir="rtl"] .animate-bar-grow { transform-origin: right center; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes leader-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.012); }
+}
+
+/* انتقال ترتيب الصفوف — نفس منحنى الإصدار الأول */
+.rank-move {
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.rank-enter-active,
+.rank-leave-active {
+  transition: opacity 0.4s, transform 0.4s;
+}
+.rank-enter-from,
+.rank-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.rank-leave-active {
+  width: 100%;
+  position: absolute;
+}
+
+/* انتقال تبديل الشاشة */
+.view-enter-active,
+.view-leave-active {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+.view-enter-from { opacity: 0; transform: translateY(10px); }
+.view-leave-to { opacity: 0; transform: translateY(-10px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-move,
+  .rank-enter-active,
+  .rank-leave-active,
+  .view-enter-active,
+  .view-leave-active {
+    transition: none !important;
+  }
+}
+
+html, body, #app { height: 100%; }
+body { margin: 0; background: var(--color-page); }
+
+/* وضع الكشك: إخفاء كل عناصر التحكم */
+:root[data-kiosk="1"] [data-kiosk-hide] { display: none !important; }
+
+/* ------------------------------------------------------------------
+   التصدير كصورة PNG.
+   اللوحة مقيّدة بارتفاع الشاشة وحاويات تمرير داخلية، فالتقاطها كما هي يقصّ
+   ما تحت الطيّة. نفكّ القيود أثناء الالتقاط فقط ليخرج المحتوى كاملاً.
+------------------------------------------------------------------ */
+:root[data-exporting] [data-board],
+:root[data-exporting] [data-board] main,
+:root[data-exporting] [data-board] [role="table"],
+:root[data-exporting] [data-board] [role="rowgroup"],
+:root[data-exporting] [data-board] [data-scroll] {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  flex: none !important;
+}
+
+/* الصور من نطاق خارجي؛ إن رفض CORS تلويث الـ canvas نُعيد المحاولة بعد كتمها،
+   فتظهر الأحرف الأولى المرسومة تحتها بدل أن يفشل التصدير كلياً. */
+:root[data-exporting="no-images"] [data-avatar-photo] { display: none !important; }
+
+/* ------------------------------------------------------------------
+   الطباعة / PDF.
+   اللوحة مصممة لملء الشاشة بارتفاع ثابت وحاويات تمرير داخلية — وكلاهما
+   يقصّ المحتوى على الورق، فنفكّهما هنا ليتدفّق كل شيء عبر الصفحات.
+------------------------------------------------------------------ */
+@media print {
+  @page { margin: 12mm; }
+
+  [data-export-hide],
+  [data-print-hide] { display: none !important; }
+
+  html, body, #app { height: auto !important; overflow: visible !important; }
+
+  /* الخلفيات الملوّنة لا تُطبع افتراضياً — نجبر الترويسة والأشرطة على الظهور */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* فكّ h-screen و overflow-hidden و flex-1 حتى ينمو المحتوى بطوله الحقيقي */
+  [data-board],
+  [data-board] main,
+  [data-board] [role="table"],
+  [data-board] [role="rowgroup"],
+  [data-board] [data-scroll] {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+
+  /* الصفوف والبطاقات لا تُقطع بين صفحتين */
+  [role="row"],
+  [role="listitem"],
+  section { break-inside: avoid; page-break-inside: avoid; }
+
+  /* الرسوم البيانية جنباً إلى جنب تضيق على الورق — عمود واحد */
+  [data-insights-grid] { grid-template-columns: 1fr !important; }
+}
