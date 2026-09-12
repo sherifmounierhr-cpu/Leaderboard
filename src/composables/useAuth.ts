@@ -74,6 +74,11 @@ export function useAuth() {
     role.value = null
   }
 
+  async function changePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    return error ? error.message : null
+  }
+
   return {
     session,
     ready,
@@ -85,5 +90,6 @@ export function useAuth() {
     email: computed(() => session.value?.user.email ?? ''),
     signIn,
     signOut,
+    changePassword,
   }
 }

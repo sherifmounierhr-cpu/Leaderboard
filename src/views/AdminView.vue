@@ -6,6 +6,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import TeamsAdmin from '@/components/admin/TeamsAdmin.vue'
 import AgentsAdmin from '@/components/admin/AgentsAdmin.vue'
 import PeriodsAdmin from '@/components/admin/PeriodsAdmin.vue'
+import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 
 const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, isAdmin, email, signIn, signOut } = useAuth()
@@ -16,6 +17,7 @@ const tab = ref<Tab>('periods')
 const tabs: Tab[] = ['periods', 'agents', 'teams']
 
 const form = ref({ email: '', password: '' })
+const showChangePassword = ref(false)
 
 async function onSignIn() {
   if (await signIn(form.value.email, form.value.password)) form.value.password = ''
@@ -52,6 +54,12 @@ const FIELD =
           v-if="isSignedIn"
           type="button"
           class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          @click="showChangePassword = !showChangePassword"
+        >{{ t('admin.changePassword') }}</button>
+        <button
+          v-if="isSignedIn"
+          type="button"
+          class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
           @click="signOut"
         >{{ t('admin.signOut') }}</button>
       </div>
@@ -59,6 +67,10 @@ const FIELD =
 
     <main class="flex-1 px-4 py-6 sm:px-8 lg:px-12 lg:py-10">
       <p v-if="!ready" class="text-center font-medium text-mute py-20">{{ t('admin.checking') }}</p>
+
+      <div v-if="isSignedIn && showChangePassword" class="mx-auto mb-6 max-w-sm">
+        <ChangePasswordCard />
+      </div>
 
       <!-- تسجيل الدخول -->
       <form

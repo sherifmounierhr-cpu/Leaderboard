@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  // مساره على GitHub Pages فرعي (github.io/Leaderboard)، فيحتاج base صريح عند البناء هناك فقط
+  base: process.env.GITHUB_ACTIONS ? '/Leaderboard/' : '/',
   plugins: [
     vue({
       template: {

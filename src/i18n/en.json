@@ -149,6 +149,17 @@
     "removePhoto": "Remove",
     "photoHint": "JPG, PNG or WebP · up to 2 MB",
     "photoType": "Unsupported format — use JPG, PNG or WebP",
-    "photoSize": "File is larger than 2 MB"
+    "photoSize": "File is larger than 2 MB",
+    "changePassword": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changePasswordHint": "At least 6 characters. Checked against a leaked-password database before saving.",
+    "checkingLeak": "Checking password…",
+    "passwordMismatch": "Passwords don't match",
+    "passwordTooShort": "Password is too short — at least 6 characters",
+    "passwordPwned": "This password has appeared in {count} known data breaches — choose a different one",
+    "passwordCheckFailed": "Couldn't check the password against the leak database (connection issue) — proceed at your own risk or try again later",
+    "passwordChanged": "Password changed successfully",
+    "continueAnyway": "Continue anyway"
   }
 }
