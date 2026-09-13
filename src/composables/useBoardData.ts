@@ -76,8 +76,16 @@ function localName(name: string, nameAr: string | null | undefined): string {
   return locale.value === 'ar' && nameAr ? nameAr : name
 }
 
+/**
+ * البيانات التجريبية شبكة أمان للتلفزيون، لا شاشة تحميل: تظهر فقط إن كان
+ * الإعداد ناقصاً أو فشل الاتصال ولم ينجح ولا مرة. أثناء أول تحميل ناجح
+ * تظهر حالة "لا نتائج" بدل ومضة أسماء وهمية.
+ * `updatedAt` يُضبط عند أول نجاح فقط، فهو علامة "حمّلنا مرة على الأقل".
+ */
+const showDemo = computed(() => !hasSupabaseConfig || (Boolean(error.value) && !updatedAt.value))
+
 const teams = computed<BoardEntity[]>(() => {
-  if (!rawTeams.value) return DEMO_TEAMS
+  if (!rawTeams.value) return showDemo.value ? DEMO_TEAMS : []
   return rawTeams.value.map((t) => ({
     id: t.team_id,
     name: localName(t.name, t.name_ar),
@@ -90,7 +98,7 @@ const teams = computed<BoardEntity[]>(() => {
 })
 
 const agents = computed<BoardEntity[]>(() => {
-  if (!rawAgents.value) return DEMO_AGENTS
+  if (!rawAgents.value) return showDemo.value ? DEMO_AGENTS : []
   return rawAgents.value.map((a) => ({
     id: a.agent_id,
     name: localName(a.name, a.name_ar),
@@ -121,8 +129,8 @@ const teamDeltas = computed(() => deltasFor(rawTeams.value, 'team'))
 const agentDeltas = computed(() => deltasFor(rawAgents.value, 'agent'))
 
 const status = computed<FeedStatus>(() => {
-  if (!hasSupabaseConfig) return 'demo'
-  if (error.value) return updatedAt.value ? 'reconnecting' : 'demo'
+  if (showDemo.value) return 'demo'
+  if (error.value) return 'reconnecting'
   return updatedAt.value ? 'live' : 'connecting'
 })
 
