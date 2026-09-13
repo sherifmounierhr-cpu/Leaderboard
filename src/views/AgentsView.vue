@@ -28,8 +28,13 @@ const filtered = computed(() => {
   )
 })
 
+/**
+ * عمودا المبيعات والمستهدف بـ clamp لا بعرض ثابت: `compact` بالعربية يكتب
+ * «4.6 مليون» بدل «4.6M»، فالنص أعرض بأضعاف وكان يفيض على العمود المجاور.
+ * الحد الأدنى يتبع أكبر خط ممكن، والـ vw يكبر مع الشاشة مثل حجم الخط نفسه.
+ */
 const GRID =
-  'grid-cols-[60px_2fr_1.1fr_78px_88px_1.25fr] gap-4 px-6 2xl:grid-cols-[96px_1.8fr_1fr_120px_120px_1.4fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[60px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(84px,6vw,110px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(84px,6vw,110px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
 
 <template>

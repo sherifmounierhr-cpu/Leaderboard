@@ -12,8 +12,9 @@ import TeamRow from '@/components/TeamRow.vue'
 const { teams, teamDeltas } = useBoardData()
 const { t } = useI18n()
 
+// عمود المبيعات بـ clamp لنفس سبب شاشة المستشارين: «مليون» بالعربية أعرض من «M»
 const GRID =
-  'grid-cols-[56px_2fr_88px_128px_1.5fr] gap-4 px-6 2xl:grid-cols-[96px_1.8fr_120px_180px_1.7fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[56px_1.9fr_clamp(80px,5vw,120px)_clamp(140px,11vw,195px)_1.45fr] gap-4 px-6 2xl:grid-cols-[96px_1.9fr_clamp(80px,5vw,120px)_clamp(140px,11vw,195px)_1.6fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
 
 <template>
