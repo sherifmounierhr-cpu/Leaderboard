@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ROTATE_INTERVALS, settings } from '@/composables/useSettings'
+import {
+  DAY_ENDS_AT,
+  DAY_STARTS_AT,
+  ROTATE_INTERVALS,
+  activeTheme,
+  settings,
+} from '@/composables/useSettings'
 import { useAuth } from '@/composables/useAuth'
-import type { LocaleName, ThemeName } from '@/lib/types'
+import type { LocaleName, ThemePreference } from '@/lib/types'
 
 const props = defineProps<{ open: boolean; isFullscreen: boolean }>()
 const emit = defineEmits<{ 'update:open': [boolean]; fullscreen: [] }>()
@@ -20,7 +26,7 @@ function onDocumentClick(event: MouseEvent) {
 onMounted(() => document.addEventListener('mousedown', onDocumentClick))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocumentClick))
 
-const themes: ThemeName[] = ['daylight', 'midnight']
+const themes: ThemePreference[] = ['daylight', 'midnight', 'auto']
 const locales: LocaleName[] = ['ar', 'en']
 </script>
 
@@ -47,12 +53,12 @@ const locales: LocaleName[] = ['ar', 'en']
       <p class="m-0 mb-2 font-semibold text-caption uppercase tracking-[0.08em] text-mute">
         {{ t('settings.theme') }}
       </p>
-      <div class="mb-4 grid grid-cols-2 gap-2">
+      <div class="mb-2 grid grid-cols-3 gap-2">
         <button
           v-for="theme in themes"
           :key="theme"
           type="button"
-          class="rounded-lg border px-3 py-2 text-sm font-semibold transition-colors"
+          class="rounded-lg border px-2 py-2 text-caption font-semibold transition-colors"
           :class="
             settings.theme === theme
               ? 'border-accent bg-accent/10 text-accent-text'
@@ -64,6 +70,13 @@ const locales: LocaleName[] = ['ar', 'en']
           {{ t(`settings.${theme}`) }}
         </button>
       </div>
+
+      <!-- في الوضع التلقائي نوضّح المظهر الساري الآن ومتى يتبدّل -->
+      <p v-if="settings.theme === 'auto'" class="m-0 mb-4 text-eyebrow leading-relaxed text-dim">
+        {{ t('settings.autoHint', { from: DAY_STARTS_AT, to: DAY_ENDS_AT }) }}
+        · {{ t(`settings.${activeTheme}`) }}
+      </p>
+      <div v-else class="mb-4" />
 
       <!-- اللغة -->
       <p class="m-0 mb-2 font-semibold text-caption uppercase tracking-[0.08em] text-mute">

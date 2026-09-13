@@ -112,6 +112,8 @@
     "theme": "Theme",
     "daylight": "Daylight",
     "midnight": "Midnight",
+    "auto": "Auto",
+    "autoHint": "Follows the clock: daylight from {from}:00 to {to}:00",
     "rotate": "Auto-rotate",
     "interval": "Rotation interval",
     "seconds": "{n}s",

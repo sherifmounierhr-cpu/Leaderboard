@@ -46,7 +46,11 @@ export interface RankHistoryPoint {
 
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'
 export type BoardView = 'teams' | 'agents' | 'insights'
+/** المظهر المطبَّق فعلياً على الصفحة. */
 export type ThemeName = 'daylight' | 'midnight'
+
+/** ما يختاره المستخدم: مظهر ثابت، أو 'auto' ليتبع ساعة اليوم. */
+export type ThemePreference = ThemeName | 'auto'
 export type LocaleName = 'ar' | 'en'
 
 /** عنصر في وسيلة إيضاح الرسم البياني. */

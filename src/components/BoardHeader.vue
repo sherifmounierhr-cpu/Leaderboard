@@ -7,6 +7,7 @@ import { isKiosk } from '@/composables/useSettings'
 import QuarterSwitcher from './QuarterSwitcher.vue'
 import ViewToggle from './ViewToggle.vue'
 import StatusBadge from './StatusBadge.vue'
+import BoardClock from './BoardClock.vue'
 import SettingsMenu from './SettingsMenu.vue'
 import ExportMenu from './ExportMenu.vue'
 
@@ -75,6 +76,9 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
         />
         <span>{{ period }}</span>
       </div>
+
+      <!-- تبقى في الكشك والتصدير: التقرير المطبوع يجب أن يقول متى أُخِذ -->
+      <BoardClock class="shrink-0" />
 
       <div class="shrink-0" data-kiosk-hide>
         <QuarterSwitcher />

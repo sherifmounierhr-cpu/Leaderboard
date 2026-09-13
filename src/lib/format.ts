@@ -16,10 +16,14 @@ export function setNumberLocale(locale: LocaleName) {
   activeLocale = locale
   compactCache.clear()
   fullCache.clear()
+  timeCache.clear()
+  dateCache.clear()
 }
 
 const compactCache = new Map<string, Intl.NumberFormat>()
 const fullCache = new Map<string, Intl.NumberFormat>()
+const timeCache = new Map<string, Intl.DateTimeFormat>()
+const dateCache = new Map<string, Intl.DateTimeFormat>()
 
 function compactFormatter() {
   const tag = LOCALE_TAG[activeLocale]
@@ -66,6 +70,34 @@ export function drivePhotoUrl(value: unknown): string {
   if (!raw) return ''
   const m = raw.match(/\/d\/([a-zA-Z0-9_-]+)/)
   return m ? `https://lh3.googleusercontent.com/d/${m[1]}` : raw
+}
+
+/** الساعة والدقيقة بمحلية العرض — أرقام لاتينية في العربية كبقية اللوحة. */
+export function clockTime(date: Date): string {
+  const tag = LOCALE_TAG[activeLocale]
+  let f = timeCache.get(tag)
+  if (!f) {
+    // hour: 'numeric' لا '2-digit': بنظام 12 ساعة تُقرأ «2:35 م» لا «02:35 م»
+    f = new Intl.DateTimeFormat(tag, { hour: 'numeric', minute: '2-digit' })
+    timeCache.set(tag, f)
+  }
+  return f.format(date)
+}
+
+/** اليوم والتاريخ كاملاً: «الأحد، ١٣ سبتمبر ٢٠٢٦» بأرقام لاتينية. */
+export function clockDate(date: Date): string {
+  const tag = LOCALE_TAG[activeLocale]
+  let f = dateCache.get(tag)
+  if (!f) {
+    f = new Intl.DateTimeFormat(tag, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })
+    dateCache.set(tag, f)
+  }
+  return f.format(date)
 }
 
 /** الربع التقويمي الحالي (1..4). */
