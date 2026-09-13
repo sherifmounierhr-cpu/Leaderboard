@@ -48,6 +48,11 @@
     "target": "Target",
     "ofTarget": "{pct}% of {target} EGP target"
   },
+  "lock": {
+    "title": "Everest Leaderboard",
+    "subtitle": "Sign in to view the board",
+    "staysSignedIn": "This device stays signed in after the first login — the display screen will not ask again."
+  },
   "report": {
     "hint": "Pick a report type and period, then print to PDF or download as Excel.",
     "type": "Report type",

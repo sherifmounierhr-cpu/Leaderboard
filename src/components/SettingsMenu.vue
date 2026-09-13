@@ -2,12 +2,14 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ROTATE_INTERVALS, settings } from '@/composables/useSettings'
+import { useAuth } from '@/composables/useAuth'
 import type { LocaleName, ThemeName } from '@/lib/types'
 
 const props = defineProps<{ open: boolean; isFullscreen: boolean }>()
 const emit = defineEmits<{ 'update:open': [boolean]; fullscreen: [] }>()
 
 const { t } = useI18n()
+const { email, signOut } = useAuth()
 const root = ref<HTMLElement | null>(null)
 
 function onDocumentClick(event: MouseEvent) {
@@ -140,6 +142,16 @@ const locales: LocaleName[] = ['ar', 'en']
         {{ t('admin.open') }}
       </a>
 
+      <button
+        type="button"
+        class="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-card-border px-3 py-2 text-sm font-semibold text-mute transition-colors hover:text-down"
+        @click="signOut"
+      >
+        <iconify-icon icon="mdi:logout" aria-hidden="true" class="text-lg" />
+        {{ t('admin.signOut') }}
+      </button>
+
+      <p v-if="email" class="m-0 mb-2 truncate text-eyebrow text-dim" dir="ltr">{{ email }}</p>
       <p class="m-0 text-eyebrow leading-relaxed text-dim">{{ t('settings.shortcuts') }}</p>
     </div>
   </div>

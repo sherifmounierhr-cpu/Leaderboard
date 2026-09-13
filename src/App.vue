@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useAuth } from '@/composables/useAuth'
 import { useBoardControls } from '@/composables/useBoardControls'
 import { useWakeLock } from '@/composables/useWakeLock'
+import SignInScreen from '@/components/SignInScreen.vue'
 import BoardHeader from '@/components/BoardHeader.vue'
 import TeamsView from '@/views/TeamsView.vue'
 import AgentsView from '@/views/AgentsView.vue'
 import InsightsView from '@/views/InsightsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 
+const { t } = useI18n()
+const { ready, isSignedIn } = useAuth()
 const { view, settingsOpen, isFullscreen, toggleFullscreen } = useBoardControls()
 useWakeLock()
 
@@ -16,7 +21,16 @@ const board = ref<HTMLElement | null>(null)
 </script>
 
 <template>
+  <p
+    v-if="!ready"
+    class="min-h-screen flex items-center justify-center bg-page font-sans font-medium text-mute"
+  >{{ t('admin.checking') }}</p>
+
+  <!-- لا شيء يقرأ البيانات قبل الدخول: الترويسة والشاشات كلها تحت هذا الشرط -->
+  <SignInScreen v-else-if="!isSignedIn" />
+
   <div
+    v-else
     ref="board"
     data-board
     class="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col bg-page text-strong font-sans"
