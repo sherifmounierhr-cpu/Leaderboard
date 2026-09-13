@@ -7,14 +7,16 @@ import TeamsAdmin from '@/components/admin/TeamsAdmin.vue'
 import AgentsAdmin from '@/components/admin/AgentsAdmin.vue'
 import PeriodsAdmin from '@/components/admin/PeriodsAdmin.vue'
 import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
+import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
+import DataTransfer from '@/components/admin/DataTransfer.vue'
 
 const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, isAdmin, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'agents' | 'teams'
+type Tab = 'periods' | 'agents' | 'teams' | 'reports' | 'data'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'agents', 'teams']
+const tabs: Tab[] = ['periods', 'agents', 'teams', 'reports', 'data']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -49,7 +51,8 @@ const FIELD =
         <h1 class="m-0 font-semibold text-lg lg:text-xl truncate">{{ t('admin.title') }}</h1>
       </div>
 
-      <div class="flex items-center gap-2">
+      <!-- أزرار التنقّل تختفي عند طباعة تقرير؛ الشعار والعنوان يبقيان في الورقة -->
+      <div class="flex items-center gap-2" data-export-hide>
         <a
           :href="boardUrl"
           class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
@@ -133,8 +136,9 @@ const FIELD =
       <!-- لوحة الإدارة -->
       <div v-else class="flex flex-col gap-6">
         <div
-          class="flex items-center gap-1 self-start rounded-lg border border-card-border bg-card p-1"
+          class="flex flex-wrap items-center gap-1 self-start rounded-lg border border-card-border bg-card p-1"
           role="tablist"
+          data-export-hide
           :aria-label="t('admin.title')"
         >
           <button
@@ -154,7 +158,9 @@ const FIELD =
 
         <PeriodsAdmin v-if="tab === 'periods'" />
         <AgentsAdmin v-else-if="tab === 'agents'" />
-        <TeamsAdmin v-else />
+        <TeamsAdmin v-else-if="tab === 'teams'" />
+        <ReportsAdmin v-else-if="tab === 'reports'" />
+        <DataTransfer v-else />
       </div>
     </main>
   </div>

@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { currentQuarter } from '@/lib/format'
+import { exportWorkbook, parseWorkbook, type ImportSummary } from '@/lib/workbook'
 
 export interface AdminTeam {
   id: string
@@ -165,6 +166,62 @@ export function useAdminData() {
     return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
   }
 
+  /** التصدير يشمل السنة كاملة لا الربع المعروض فقط. */
+  async function exportYear() {
+    const { data, error } = await supabase
+      .from('lb_periods')
+      .select('*')
+      .eq('year', year.value)
+    if (error) fail(error)
+
+    const byAgent = new Map<string, { quarter: number; target: number; deals: number }[]>()
+    for (const row of (data ?? []) as AdminPeriod[]) {
+      const list = byAgent.get(row.agent_id) ?? []
+      list.push({
+        quarter: Number(row.quarter),
+        target: Number(row.target_egp) || 0,
+        deals: Number(row.amount_egp) || 0,
+      })
+      byAgent.set(row.agent_id, list)
+    }
+
+    await exportWorkbook(
+      {
+        teams: teams.value.map((t) => ({
+          name: t.name,
+          name_ar: t.name_ar,
+          photo_url: t.photo_url,
+        })),
+        agents: agents.value.map((a) => ({
+          name: a.name,
+          name_ar: a.name_ar,
+          team: a.team_name,
+          photo_url: a.photo_url,
+          periods: byAgent.get(a.id) ?? [],
+        })),
+      },
+      year.value,
+    )
+  }
+
+  /**
+   * الاستيراد يحدّث ويضيف فقط — لا يحذف أحداً. يمر عبر lb_admin_import
+   * المحروسة، وهي نفس منطق مزامنة جوجل شيت، في نداء واحد.
+   */
+  async function importFile(file: File): Promise<ImportSummary> {
+    saveError.value = null
+    const { payload, summary } = await parseWorkbook(file)
+
+    const { error } = await supabase.rpc('lb_admin_import', {
+      p_year: year.value,
+      p_payload: payload,
+    })
+    if (error) fail(error)
+
+    await reload()
+    return summary
+  }
+
   return {
     teams,
     agents,
@@ -174,6 +231,8 @@ export function useAdminData() {
     loading,
     saveError,
     reload,
+    exportYear,
+    importFile,
     loadPeriods,
     setQuarter,
     saveTeam,
