@@ -48,6 +48,17 @@
     "target": "Target",
     "ofTarget": "{pct}% of {target} EGP target"
   },
+  "celebrate": {
+    "title": "New deal",
+    "amount": "Deal value",
+    "newTotal": "Total sales now",
+    "rank": "Rank {n}",
+    "announce": "{name} closed a new deal worth {amount}"
+  },
+  "spotlight": {
+    "topAgent": "Top performer",
+    "ofTeam": "{team}"
+  },
   "empty": {
     "teamsTitle": "No team standings yet",
     "teamsBody": "Waiting for the first results this quarter. Standings appear here as soon as sales are recorded.",

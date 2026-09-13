@@ -7,6 +7,7 @@ import { isKiosk } from '@/composables/useSettings'
 import Avatar from '@/components/Avatar.vue'
 import ProgressTrack from '@/components/ProgressTrack.vue'
 import RankDelta from '@/components/RankDelta.vue'
+import LeaderCard from '@/components/LeaderCard.vue'
 
 const { agents, agentDeltas } = useBoardData()
 const { t } = useI18n()
@@ -27,6 +28,16 @@ const filtered = computed(() => {
       agent.name.toLowerCase().includes(q) || (agent.team ?? '').toLowerCase().includes(q),
   )
 })
+
+const searching = computed(() => query.value.trim().length > 0)
+
+/**
+ * المتصدّر يخرج من الجدول إلى بطاقة خاصة — نفس منطق منصّة التتويج في شاشة
+ * الفروع. أثناء البحث تُخفى البطاقة ويعود الجدول كاملاً، وإلا لاختفى المتصدّر
+ * من نتائج البحث عن اسمه.
+ */
+const leader = computed(() => (searching.value ? null : (ranked.value[0] ?? null)))
+const listed = computed(() => (searching.value ? filtered.value : filtered.value.slice(1)))
 
 /**
  * عمودا المبيعات والمستهدف بـ clamp لا بعرض ثابت: `compact` بالعربية يكتب
@@ -68,16 +79,31 @@ const GRID =
       {{ t('search.noResults', { q: query }) }}
     </div>
 
+    <!-- المتصدّر في بطاقة خاصة، وبجانب الجدول على الشاشات الكبيرة حتى لا يأكل ارتفاعاً -->
+    <div
+      v-if="filtered.length"
+      class="flex-1 min-h-0 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(270px,330px)_1fr] lg:gap-6 2xl:grid-cols-[minmax(320px,400px)_1fr]"
+    >
+      <LeaderCard
+        v-if="leader"
+        :entity="leader.agent"
+        kind="agent"
+        size="compact"
+        :label="t('spotlight.topAgent')"
+        :subtitle="leader.agent.team || undefined"
+        class="lg:self-start"
+      />
+
+      <div class="flex flex-col min-h-0">
     <!-- الموبايل -->
     <TransitionGroup
-      v-if="filtered.length"
       tag="div"
       name="rank"
       role="list"
       class="lg:hidden flex flex-col gap-3"
     >
       <div
-        v-for="{ agent, rank } in filtered"
+        v-for="{ agent, rank } in listed"
         :key="agent.id"
         role="listitem"
         class="rounded-xl border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]"
@@ -138,7 +164,6 @@ const GRID =
 
     <!-- الديسكتوب -->
     <div
-      v-if="filtered.length"
       role="table"
       :aria-label="t('a11y.agentStandings')"
       class="hidden lg:flex lg:flex-col lg:flex-1 rounded-xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
@@ -160,7 +185,7 @@ const GRID =
 
       <TransitionGroup role="rowgroup" tag="div" name="rank" data-scroll class="flex-1 min-h-0 flex flex-col overflow-y-auto">
         <div
-          v-for="{ agent, rank } in filtered"
+          v-for="{ agent, rank } in listed"
           :key="agent.id"
           role="row"
           class="grid items-center flex-1 min-h-[5.5rem] 2xl:min-h-[6.5rem] py-2 border-b border-divider last:border-b-0"
@@ -214,6 +239,8 @@ const GRID =
           </div>
         </div>
       </TransitionGroup>
+        </div>
+      </div>
     </div>
 
     <div v-if="!agents.length" class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">

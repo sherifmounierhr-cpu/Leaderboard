@@ -1,12 +1,31 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
 import ProgressTrack from './ProgressTrack.vue'
 
-defineProps<{ team: BoardEntity }>()
+const props = withDefaults(
+  defineProps<{
+    entity: BoardEntity
+    kind?: 'agent' | 'team'
+    /** نص الشريط العلوي — الفرع الأول افتراضياً، ويُستبدل لمتصدّر المستشارين. */
+    label?: string
+    /** سطر إضافي تحت الاسم؛ يُستخدم لاسم فرع المستشار. */
+    subtitle?: string
+    /**
+     * hero لمنصّة الفروع العريضة، و compact للبطاقة الجانبية الأضيق —
+     * الخط الضخم لا يتّسع لـ«4.6 مليون» في عمود عرضه 300 بكسل.
+     */
+    size?: 'hero' | 'compact'
+  }>(),
+  { kind: 'team', size: 'hero' },
+)
+
 const { t } = useI18n()
+const ribbon = computed(() => props.label ?? t('card.topTeam'))
+const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'text-stat-2'))
 </script>
 
 <template>
@@ -17,35 +36,41 @@ const { t } = useI18n()
       class="flex items-center gap-2 rounded-b-lg bg-accent-strong px-6 py-2 font-semibold tracking-[0.12em] text-white text-xs lg:text-sm shadow-[0_5px_12px_-5px_rgba(15,99,56,0.6)]"
     >
       <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-gold text-base lg:text-lg" />
-      {{ t('card.topTeam') }}
+      {{ ribbon }}
     </div>
 
     <Avatar
-      :entity="team"
-      kind="team"
+      :entity="entity"
+      :kind="kind"
       class="size-24 lg:size-[clamp(84px,13.5vh,136px)] rounded-3xl ring-2 ring-accent/80 text-3xl"
     />
 
-    <div
-      class="w-full font-semibold tracking-[-0.01em] text-center text-strong text-2xl lg:text-[clamp(22px,3.3vh,30px)] text-balance break-words line-clamp-2"
-      :title="team.name"
-    >
-      {{ team.name }}
+    <div class="flex flex-col items-center gap-0.5 w-full">
+      <div
+        class="w-full font-semibold tracking-[-0.01em] text-center text-strong text-2xl lg:text-[clamp(22px,3.3vh,30px)] text-balance break-words line-clamp-2"
+        :title="entity.name"
+      >
+        {{ entity.name }}
+      </div>
+      <div v-if="subtitle" class="font-medium text-mute text-sm lg:text-note">{{ subtitle }}</div>
     </div>
 
-    <div class="flex items-baseline gap-2" :title="egp(team.deals)">
-      <span class="font-bold leading-[0.85] tracking-[-0.02em] tabular-nums text-accent-text text-stat-hero">
-        {{ compact(team.deals) }}
+    <div class="flex items-baseline gap-2" :title="egp(entity.deals)">
+      <span
+        class="font-bold leading-[0.85] tracking-[-0.02em] tabular-nums text-accent-text"
+        :class="statSize"
+      >
+        {{ compact(entity.deals) }}
       </span>
       <span class="font-medium uppercase text-accent-text/65 tracking-[0.16em] text-sm lg:text-label">
         {{ t('card.sales') }}
       </span>
     </div>
 
-    <ProgressTrack :pct="team.pct" soft tall />
+    <ProgressTrack :pct="entity.pct" soft tall />
 
     <div class="font-medium text-accent-text/80 text-sm lg:text-note">
-      {{ t('card.ofTarget', { pct: team.pct, target: compact(team.target) }) }}
+      {{ t('card.ofTarget', { pct: entity.pct, target: compact(entity.target) }) }}
     </div>
   </div>
 </template>

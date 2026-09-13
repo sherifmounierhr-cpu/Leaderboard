@@ -30,7 +30,7 @@ const GRID =
     <template v-if="teams.length">
       <!-- الموبايل: البطاقة الأولى ثم قائمة -->
       <div class="md:hidden flex flex-col gap-5">
-        <LeaderCard :team="teams[0]" />
+        <LeaderCard :entity="teams[0]" kind="team" />
         <TransitionGroup
           v-if="teams.length > 1"
           tag="div"
@@ -55,7 +55,7 @@ const GRID =
         <div class="grid grid-cols-[1fr_1.22fr_1fr] gap-5 lg:gap-7 items-end">
           <PodiumCard v-if="teams[1]" :team="teams[1]" :rank="2" />
           <div v-else aria-hidden="true" />
-          <LeaderCard :team="teams[0]" />
+          <LeaderCard :entity="teams[0]" kind="team" />
           <PodiumCard v-if="teams[2]" :team="teams[2]" :rank="3" />
           <div v-else aria-hidden="true" />
         </div>

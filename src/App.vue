@@ -6,6 +6,7 @@ import BoardHeader from '@/components/BoardHeader.vue'
 import TeamsView from '@/views/TeamsView.vue'
 import AgentsView from '@/views/AgentsView.vue'
 import InsightsView from '@/views/InsightsView.vue'
+import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 
 const { view, settingsOpen, isFullscreen, toggleFullscreen } = useBoardControls()
 useWakeLock()
@@ -34,5 +35,7 @@ const board = ref<HTMLElement | null>(null)
         <InsightsView v-else key="insights" class="flex-1 flex flex-col min-h-0" />
       </Transition>
     </main>
+
+    <CelebrationOverlay />
   </div>
 </template>

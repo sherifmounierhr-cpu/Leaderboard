@@ -52,6 +52,9 @@
   --animate-bar-grow: bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
   --animate-leader-pulse: leader-pulse 4.5s ease-in-out infinite;
+  --animate-celebrate-in: celebrate-in 0.5s cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  --animate-celebrate-halo: celebrate-halo 2.6s ease-in-out infinite;
+  --animate-confetti: confetti 3.2s cubic-bezier(0.35, 0.15, 0.5, 1) infinite;
 }
 
 /* الظلال ليست جزءاً من @theme لأنها تتبدل مع الثيم */
@@ -131,6 +134,25 @@
   50% { transform: scale(1.012); }
 }
 
+/* شاشة الاحتفال بصفقة جديدة */
+@keyframes celebrate-in {
+  from { opacity: 0; transform: scale(0.9) translateY(18px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes celebrate-halo {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.06); }
+}
+
+/* القصاصات تسقط من فوق الشاشة إلى تحتها مع دوران — الإزاحة الأفقية لكل قطعة */
+@keyframes confetti {
+  from { opacity: 0; transform: translate3d(0, -12vh, 0) rotate(0deg); }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  to { opacity: 0; transform: translate3d(var(--drift, 0), 104vh, 0) rotate(720deg); }
+}
+
 /* انتقال ترتيب الصفوف — نفس منحنى الإصدار الأول */
 .rank-move {
   transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
@@ -165,6 +187,14 @@
   .view-leave-active {
     transition: none !important;
   }
+
+  /* الاحتفال يبقى ظاهراً، لكن بلا حركة: القصاصات تُخفى بالكامل */
+  .animate-celebrate-in,
+  .animate-celebrate-halo,
+  .animate-confetti {
+    animation: none !important;
+  }
+  [data-confetti] { display: none !important; }
 }
 
 html, body, #app { height: 100%; }
