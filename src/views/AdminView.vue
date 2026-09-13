@@ -19,6 +19,13 @@ const tabs: Tab[] = ['periods', 'agents', 'teams']
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
 
+/**
+ * مش "/" ثابتة: على GitHub Pages التطبيق منشور تحت /Leaderboard/، فـ "/" تودّي
+ * لجذر النطاق حيث لا يوجد شيء (404). Vite يعيد كتابة مسارات الصور تلقائياً
+ * لكن ليس روابط <a>، فنقرأ الأساس منه صراحةً.
+ */
+const boardUrl = import.meta.env.BASE_URL
+
 async function onSignIn() {
   if (await signIn(form.value.email, form.value.password)) form.value.password = ''
 }
@@ -44,7 +51,7 @@ const FIELD =
 
       <div class="flex items-center gap-2">
         <a
-          href="/"
+          :href="boardUrl"
           class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
         >
           <iconify-icon icon="mdi:view-dashboard-outline" aria-hidden="true" />
