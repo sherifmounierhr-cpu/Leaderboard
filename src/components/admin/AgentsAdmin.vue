@@ -2,10 +2,12 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminData, type AdminAgent } from '@/composables/useAdminData'
+import { useLocalName } from '@/composables/useLocalName'
 import PhotoField from './PhotoField.vue'
 
 const { agents, teams, saveAgent, deleteAgent } = useAdminData()
 const { t } = useI18n()
+const localName = useLocalName()
 
 type Draft = {
   id: string | null
@@ -28,7 +30,8 @@ const filtered = computed(() => {
     (a) =>
       a.name.toLowerCase().includes(q) ||
       (a.name_ar ?? '').toLowerCase().includes(q) ||
-      (a.team_name ?? '').toLowerCase().includes(q),
+      (a.team_name ?? '').toLowerCase().includes(q) ||
+      (a.team_name_ar ?? '').toLowerCase().includes(q),
   )
 })
 
@@ -175,9 +178,11 @@ const FIELD =
         >{{ agent.photo_url ? '' : agent.name.slice(0, 2).toUpperCase() }}</span>
 
         <div class="min-w-0 flex-1">
-          <p class="m-0 font-semibold text-strong truncate">{{ agent.name_ar || agent.name }}</p>
+          <p class="m-0 font-semibold text-strong truncate">
+            {{ localName(agent.name, agent.name_ar) }}
+          </p>
           <p class="m-0 text-caption text-mute truncate">
-            {{ agent.team_name || t('admin.noTeam')
+            {{ agent.team_name ? localName(agent.team_name, agent.team_name_ar) : t('admin.noTeam')
             }}<template v-if="!agent.active"> · {{ t('admin.inactive') }}</template>
           </p>
         </div>

@@ -16,7 +16,9 @@ export interface AdminAgent {
   name: string
   name_ar: string | null
   team_id: string | null
+  /** الإنجليزي مفتاح الربط في التصدير والمزامنة؛ العربي للعرض فقط. */
   team_name: string | null
+  team_name_ar: string | null
   photo_url: string | null
   active: boolean
 }

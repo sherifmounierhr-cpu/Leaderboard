@@ -3,9 +3,11 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
+import { useLocalName } from '@/composables/useLocalName'
 
 const { agents, periods, year, quarter, setQuarter, savePeriod, loadPeriods } = useAdminData()
 const { t } = useI18n()
+const localName = useLocalName()
 
 interface Draft {
   target: number
@@ -37,7 +39,8 @@ const rows = computed(() => {
         !q ||
         a.name.toLowerCase().includes(q) ||
         (a.name_ar ?? '').toLowerCase().includes(q) ||
-        (a.team_name ?? '').toLowerCase().includes(q),
+        (a.team_name ?? '').toLowerCase().includes(q) ||
+        (a.team_name_ar ?? '').toLowerCase().includes(q),
     )
 })
 
@@ -165,10 +168,10 @@ const NUM =
             :class="isDirty(agent.id) ? 'bg-accent/[0.05]' : ''"
           >
             <td class="px-4 py-2.5 font-semibold text-strong whitespace-nowrap">
-              {{ agent.name_ar || agent.name }}
+              {{ localName(agent.name, agent.name_ar) }}
             </td>
             <td class="px-4 py-2.5 text-mute whitespace-nowrap">
-              {{ agent.team_name || '—' }}
+              {{ agent.team_name ? localName(agent.team_name, agent.team_name_ar) : '—' }}
             </td>
             <td class="px-4 py-2.5 text-end">
               <input

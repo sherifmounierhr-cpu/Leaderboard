@@ -4,13 +4,15 @@ import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { compact, egp, percent } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
+import { useLocalName } from '@/composables/useLocalName'
 import { exportRows } from '@/lib/workbook'
 import type { AgentStanding, TeamStanding } from '@/lib/types'
 
 type ReportKind = 'exec' | 'branch' | 'agent' | 'hr'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const { year, quarter, setQuarter } = useAdminData()
+const local = useLocalName()
 
 const kind = ref<ReportKind>('exec')
 const branchName = ref('')
@@ -26,10 +28,6 @@ const busy = ref(false)
 
 /** أقل من هذا يُعدّ متأخراً في تقرير الموارد البشرية. */
 const AT_RISK_PCT = 70
-
-function local(name: string, nameAr: string | null): string {
-  return locale.value === 'ar' && nameAr ? nameAr : name
-}
 
 async function load() {
   loading.value = true
