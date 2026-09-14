@@ -114,6 +114,7 @@
     "midnight": "Midnight",
     "auto": "Auto",
     "autoHint": "Follows the clock: daylight from {from}:00 to {to}:00",
+    "activeNow": "now {theme}",
     "rotate": "Auto-rotate",
     "interval": "Rotation interval",
     "seconds": "{n}s",

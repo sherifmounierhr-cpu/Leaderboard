@@ -26,6 +26,15 @@ function onDocumentClick(event: MouseEvent) {
 onMounted(() => document.addEventListener('mousedown', onDocumentClick))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocumentClick))
 
+// صيغة 12 ساعة للعربية («6 مساءً» لا «18 مساءً»)؛ الإنجليزية تعرض 24 ساعة
+const hour12 = (h: number) => h % 12 || 12
+const autoHintParams = {
+  from: DAY_STARTS_AT,
+  to: DAY_ENDS_AT,
+  from12: hour12(DAY_STARTS_AT),
+  to12: hour12(DAY_ENDS_AT),
+}
+
 const themes: ThemePreference[] = ['daylight', 'midnight', 'auto']
 const locales: LocaleName[] = ['ar', 'en']
 </script>
@@ -47,7 +56,7 @@ const locales: LocaleName[] = ['ar', 'en']
       v-if="open"
       role="dialog"
       :aria-label="t('settings.title')"
-      class="absolute end-0 top-[calc(100%+8px)] z-50 w-72 rounded-xl border border-card-border bg-card p-4 text-strong shadow-[var(--shadow-panel)]"
+      class="max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:max-h-[calc(100dvh-5rem)] max-sm:overflow-y-auto sm:absolute sm:end-0 sm:top-[calc(100%+8px)] sm:w-72 z-50rounded-xl border border-card-border bg-card p-4 text-strong shadow-[var(--shadow-panel)]"
     >
       <!-- المظهر -->
       <p class="m-0 mb-2 font-semibold text-caption uppercase tracking-[0.08em] text-mute">
@@ -73,8 +82,8 @@ const locales: LocaleName[] = ['ar', 'en']
 
       <!-- في الوضع التلقائي نوضّح المظهر الساري الآن ومتى يتبدّل -->
       <p v-if="settings.theme === 'auto'" class="m-0 mb-4 text-eyebrow leading-relaxed text-dim">
-        {{ t('settings.autoHint', { from: DAY_STARTS_AT, to: DAY_ENDS_AT }) }}
-        · {{ t(`settings.${activeTheme}`) }}
+        {{ t('settings.autoHint', autoHintParams) }}
+        · {{ t('settings.activeNow', { theme: t(`settings.${activeTheme}`) }) }}
       </p>
       <div v-else class="mb-4" />
 
