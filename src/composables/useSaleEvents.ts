@@ -33,8 +33,16 @@ const events = ref<SaleEventRow[]>([])
 const celebrations = ref<Celebration[]>([])
 const lastReadId = ref(readStoredId())
 
-/** أعلى معرّف رأيناه. null = لم نحمّل بعد، فأول تحميل لا يحتفل بشيء. */
-let lastSeenId: number | null = null
+/** أعلى معرّف رأيناه — يمنع الاحتفال بنفس الحدث مرتين. */
+let lastSeenId = 0
+
+/**
+ * ما وقع قبل فتح الصفحة تاريخ، لا حدث جديد. نقارن بالوقت لا بـ«أول تحميل»:
+ * لو فشل أول تحميل (انقطاع، جلسة تتجدد) لا يُعامَل الحدث التالي كتاريخ فيضيع
+ * احتفاله. هامش صغير لفرق الساعة بين الجهاز والخادم.
+ */
+const CLOCK_SKEW_MS = 5_000
+const openedAt = Date.now() - CLOCK_SKEW_MS
 
 function readStoredId(): number {
   try {
@@ -104,13 +112,10 @@ async function load() {
   }
 
   const rows = ((data ?? []) as SaleEventRow[]).map(normalize)
-  const top = rows[0]?.id ?? 0
-
-  if (lastSeenId !== null && top > lastSeenId) {
-    const seen = lastSeenId
-    enqueue(rows.filter((e) => e.id > seen))
-  }
-  lastSeenId = Math.max(lastSeenId ?? 0, top)
+  const seen = lastSeenId
+  const fresh = rows.filter((e) => e.id > seen && new Date(e.created_at).getTime() >= openedAt)
+  if (fresh.length) enqueue(fresh)
+  lastSeenId = Math.max(seen, rows[0]?.id ?? 0)
   events.value = rows
 }
 
