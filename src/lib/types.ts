@@ -44,6 +44,25 @@ export interface RankHistoryPoint {
   rank: number
 }
 
+/** صف من public.lb_sale_events */
+export interface SaleEventRow {
+  id: number
+  agent_id: string
+  year: number
+  quarter: number
+  /** sale: زيادة مكتشفة تلقائياً · manual: تهنئة أطلقها مسؤول */
+  kind: 'sale' | 'manual'
+  amount_egp: number
+  total_egp: number
+  note: string | null
+  created_at: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+  team: string | null
+  team_ar: string | null
+}
+
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'
 export type BoardView = 'teams' | 'agents' | 'insights'
 /** المظهر المطبَّق فعلياً على الصفحة. */

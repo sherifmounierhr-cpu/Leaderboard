@@ -47,21 +47,6 @@ const DEMO_AGENTS: BoardEntity[] = [
 /** فاصل احتياطي: Realtime هو المصدر الأساسي، وهذا يلتقط أي حدث ضائع. */
 const FALLBACK_POLL_MS = 120_000
 
-/**
- * حفظ صف كامل من الإدارة قد يحرّك عدة مستشارين دفعة واحدة، ومزامنة الشيت
- * قد تحرّك الكل. نحتفل بأكبر الزيادات فقط حتى لا تُحجب اللوحة دقائق.
- */
-const MAX_CELEBRATIONS = 3
-
-export interface SaleCelebration {
-  /** مفتاح فريد لكل حدث — لازم لإعادة تشغيل الحركة لو تكرر نفس المستشار. */
-  key: string
-  agentId: string
-  /** مقدار الزيادة، وهو ما نحتفل به — لا الإجمالي. */
-  amount: number
-  total: number
-}
-
 // ------------------------------------------------------------------ state
 const rawTeams = ref<TeamStanding[] | null>(null)
 const rawAgents = ref<AgentStanding[] | null>(null)
@@ -77,14 +62,6 @@ const quarterPinned = ref(new URLSearchParams(location.search).has('quarter'))
 const loading = ref(false)
 const error = ref<string | null>(null)
 const updatedAt = ref<Date | null>(null)
-
-const celebrations = ref<SaleCelebration[]>([])
-
-/**
- * أساس المقارنة لكشف الزيادة. مربوط بالسنة والربع: تبديل الربع يستبدل الأساس
- * بلا احتفال، وإلا لاحتفلنا بفرق بين فترتين مختلفتين.
- */
-let salesBaseline: { period: string; deals: Map<string, number> } | null = null
 
 function initialQuarter(): number {
   const raw = new URLSearchParams(location.search).get('quarter')
@@ -157,41 +134,6 @@ const status = computed<FeedStatus>(() => {
   return updatedAt.value ? 'live' : 'connecting'
 })
 
-// -------------------------------------------------------------- celebrations
-/**
- * قاعدة البيانات تخزّن إجمالياً واحداً لكل (مستشار، ربع) لا صفقات مفردة، فلا
- * يوجد حدث "صفقة جديدة" نشترك فيه. نستنتجه بمقارنة الإجمالي الجديد بالسابق،
- * وهذا يعمل أياً كان مصدر الكتابة — صفحة الإدارة أو مزامنة جوجل شيت.
- */
-function detectSales(rows: AgentStanding[], period: string) {
-  const next = new Map<string, number>()
-  for (const row of rows) next.set(row.agent_id, Number(row.deals) || 0)
-
-  // أول تحميل أو تبديل ربع: نضبط الأساس فقط. لا نحتفل ببيانات لم نرها تتغيّر.
-  if (salesBaseline && salesBaseline.period === period) {
-    const risen: SaleCelebration[] = []
-    const stamp = Date.now()
-
-    for (const [agentId, total] of next) {
-      const before = salesBaseline.deals.get(agentId)
-      // مستشار ظهر الآن لأول مرة ليس صفقة جديدة، بل إدخال رصيد قائم.
-      if (before == null || total <= before) continue
-      risen.push({ key: `${agentId}:${stamp}`, agentId, amount: total - before, total })
-    }
-
-    if (risen.length) {
-      risen.sort((a, b) => b.amount - a.amount)
-      celebrations.value = [...celebrations.value, ...risen.slice(0, MAX_CELEBRATIONS)]
-    }
-  }
-
-  salesBaseline = { period, deals: next }
-}
-
-function dismissCelebration() {
-  celebrations.value = celebrations.value.slice(1)
-}
-
 // ------------------------------------------------------------------- loading
 async function load() {
   if (!hasSupabaseConfig) {
@@ -230,11 +172,8 @@ async function load() {
     if (teamRes.error) throw teamRes.error
     if (agentRes.error) throw agentRes.error
 
-    const agentRows = (agentRes.data ?? []) as AgentStanding[]
-    detectSales(agentRows, `${y}:${q}`)
-
     rawTeams.value = (teamRes.data ?? []) as TeamStanding[]
-    rawAgents.value = agentRows
+    rawAgents.value = (agentRes.data ?? []) as AgentStanding[]
 
     const prev = new Map<string, number>()
     for (const row of prevRes.data ?? []) {
@@ -338,8 +277,6 @@ export function useBoardData() {
     status,
     teamDeltas,
     agentDeltas,
-    celebrations,
-    dismissCelebration,
     reload: load,
     loadHistory,
     loadQuarterTotals,

@@ -9,14 +9,15 @@ import PeriodsAdmin from '@/components/admin/PeriodsAdmin.vue'
 import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
+import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
 
 const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, isAdmin, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'agents' | 'teams' | 'reports' | 'data'
+type Tab = 'periods' | 'celebrate' | 'agents' | 'teams' | 'reports' | 'data'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'agents', 'teams', 'reports', 'data']
+const tabs: Tab[] = ['periods', 'celebrate', 'agents', 'teams', 'reports', 'data']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -157,6 +158,7 @@ const FIELD =
         <p v-if="saveError" role="alert" class="m-0 font-medium text-down text-sm">{{ saveError }}</p>
 
         <PeriodsAdmin v-if="tab === 'periods'" />
+        <CelebrateAdmin v-else-if="tab === 'celebrate'" />
         <AgentsAdmin v-else-if="tab === 'agents'" />
         <TeamsAdmin v-else-if="tab === 'teams'" />
         <ReportsAdmin v-else-if="tab === 'reports'" />

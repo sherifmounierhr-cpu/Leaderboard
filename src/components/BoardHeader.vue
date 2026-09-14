@@ -9,6 +9,7 @@ import ViewToggle from './ViewToggle.vue'
 import StatusBadge from './StatusBadge.vue'
 import BoardClock from './BoardClock.vue'
 import SettingsMenu from './SettingsMenu.vue'
+import NotificationsMenu from './NotificationsMenu.vue'
 import ExportMenu from './ExportMenu.vue'
 
 const props = defineProps<{
@@ -90,6 +91,11 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
 
       <div v-if="!isKiosk" data-kiosk-hide data-export-hide>
         <ExportMenu :target="exportTarget" />
+      </div>
+
+      <!-- الاحتفالات تظهر في الكشك أيضاً؛ القائمة نفسها للشاشات التفاعلية فقط -->
+      <div v-if="!isKiosk" data-kiosk-hide data-export-hide>
+        <NotificationsMenu />
       </div>
 
       <div v-if="!isKiosk" data-kiosk-hide data-export-hide>

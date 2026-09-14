@@ -80,7 +80,18 @@
     "amount": "قيمة الصفقة",
     "newTotal": "إجمالي المبيعات الآن",
     "rank": "المركز {n}",
-    "announce": "صفقة جديدة لـ {name} بقيمة {amount}"
+    "announce": "صفقة جديدة لـ {name} بقيمة {amount}",
+    "manualTitle": "تهنئة",
+    "announceManual": "تهنئة خاصة لـ {name}"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "open": "فتح الإشعارات",
+    "openUnread": "فتح الإشعارات — {n} جديد",
+    "empty": "لا إشعارات بعد. تظهر هنا كل صفقة جديدة وكل تهنئة.",
+    "sale": "صفقة جديدة لـ {name} بقيمة {amount}",
+    "manual": "تهنئة خاصة لـ {name}",
+    "replay": "إعادة عرض الاحتفال على هذه الشاشة"
   },
   "spotlight": {
     "topAgent": "متصدّر المبيعات",
@@ -190,6 +201,15 @@
     "removePhoto": "إزالة",
     "photoHint": "JPG أو PNG أو WebP · حتى 2 ميجابايت",
     "reports": "التقارير",
+    "celebrate": "احتفال",
+    "celebrateTitle": "اعرض احتفالاً على الشاشات",
+    "celebrateHint": "يظهر فوراً بملء الشاشة على كل لوحة مفتوحة الآن — ومنها شاشة المكتب — ويُسجَّل في الإشعارات. الاحتفال بالصفقات الجديدة يحدث تلقائياً؛ هذا للتهنئة اليدوية.",
+    "celebratePick": "اختر المستشار",
+    "celebrateNote": "رسالة التهنئة (اختياري)",
+    "celebrateNotePlaceholder": "مثال: مستشار الشهر",
+    "celebrateSend": "اعرض على الشاشات",
+    "celebrateSending": "جارٍ الإرسال…",
+    "celebrateDone": "تم — الاحتفال بـ {name} ظهر على كل الشاشات المفتوحة.",
     "data": "استيراد وتصدير",
     "dataHint": "البيانات المعروضة تخصّ سنة {year} كاملة بأرباعها الأربعة.",
     "exportExcel": "تنزيل ملف Excel",

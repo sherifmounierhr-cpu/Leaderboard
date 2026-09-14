@@ -100,6 +100,27 @@ export function clockDate(date: Date): string {
   return f.format(date)
 }
 
+const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
+  ['second', 60],
+  ['minute', 60],
+  ['hour', 24],
+  ['day', 7],
+  ['week', Infinity],
+]
+
+/** «منذ 5 دقائق» / «5 minutes ago» — للإشعارات. */
+export function relativeTime(date: Date, now = new Date()): string {
+  let value = (date.getTime() - now.getTime()) / 1000
+  const f = new Intl.RelativeTimeFormat(LOCALE_TAG[activeLocale], { numeric: 'auto' })
+  // أقل من دقيقة تُقرأ «الآن» بدل عدّاد ثوانٍ يتغيّر أمام العين
+  if (Math.abs(value) < 60) return f.format(0, 'second')
+  for (const [unit, size] of RELATIVE_STEPS) {
+    if (Math.abs(value) < size) return f.format(Math.round(value), unit)
+    value /= size
+  }
+  return f.format(Math.round(value), 'week')
+}
+
 /** الربع التقويمي الحالي (1..4). */
 export function currentQuarter(date = new Date()): number {
   return Math.floor(date.getMonth() / 3) + 1

@@ -56,7 +56,7 @@ const locales: LocaleName[] = ['ar', 'en']
       v-if="open"
       role="dialog"
       :aria-label="t('settings.title')"
-      class="max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:max-h-[calc(100dvh-5rem)] max-sm:overflow-y-auto sm:absolute sm:end-0 sm:top-[calc(100%+8px)] sm:w-72 z-50rounded-xl border border-card-border bg-card p-4 text-strong shadow-[var(--shadow-panel)]"
+      class="max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:max-h-[calc(100dvh-5rem)] max-sm:overflow-y-auto sm:absolute sm:end-0 sm:top-[calc(100%+8px)] sm:w-72 z-50 rounded-xl border border-card-border bg-card p-4 text-strong shadow-[var(--shadow-panel)]"
     >
       <!-- المظهر -->
       <p class="m-0 mb-2 font-semibold text-caption uppercase tracking-[0.08em] text-mute">

@@ -80,7 +80,18 @@
     "amount": "Deal value",
     "newTotal": "Total sales now",
     "rank": "Rank {n}",
-    "announce": "{name} closed a new deal worth {amount}"
+    "announce": "{name} closed a new deal worth {amount}",
+    "manualTitle": "Congratulations",
+    "announceManual": "Special congratulations to {name}"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Open notifications",
+    "openUnread": "Open notifications — {n} new",
+    "empty": "No notifications yet. Every new deal and congratulation shows up here.",
+    "sale": "{name} closed a new deal worth {amount}",
+    "manual": "Special congratulations to {name}",
+    "replay": "Replay the celebration on this screen"
   },
   "spotlight": {
     "topAgent": "Top performer",
@@ -190,6 +201,15 @@
     "removePhoto": "Remove",
     "photoHint": "JPG, PNG or WebP · up to 2 MB",
     "reports": "Reports",
+    "celebrate": "Celebrate",
+    "celebrateTitle": "Show a celebration on the screens",
+    "celebrateHint": "Appears full-screen right away on every open board — including the office display — and is logged in notifications. New deals are celebrated automatically; this is for manual congratulations.",
+    "celebratePick": "Choose an agent",
+    "celebrateNote": "Message (optional)",
+    "celebrateNotePlaceholder": "e.g. Agent of the month",
+    "celebrateSend": "Show on screens",
+    "celebrateSending": "Sending…",
+    "celebrateDone": "Done — the celebration for {name} is showing on every open screen.",
     "data": "Import & export",
     "dataHint": "Covers all four quarters of {year}.",
     "exportExcel": "Download Excel",

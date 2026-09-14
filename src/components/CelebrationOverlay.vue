@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compact, egp } from '@/lib/format'
-import { useBoardData } from '@/composables/useBoardData'
+import { compact, drivePhotoUrl, egp } from '@/lib/format'
+import { useBoardData, type BoardEntity } from '@/composables/useBoardData'
+import { useSaleEvents } from '@/composables/useSaleEvents'
+import { useLocalName } from '@/composables/useLocalName'
 import Avatar from './Avatar.vue'
 
 /** مدة عرض كل احتفال قبل الانتقال للتالي في الطابور. */
@@ -10,21 +12,51 @@ const HOLD_MS = 8000
 const PIECES = 28
 
 const { t } = useI18n()
-const { agents, celebrations, dismissCelebration } = useBoardData()
+const localName = useLocalName()
+const { agents, year, quarter } = useBoardData()
+const { celebrations, dismissCelebration } = useSaleEvents()
 
 const current = computed(() => celebrations.value[0] ?? null)
+const isManual = computed(() => current.value?.event.kind === 'manual')
 
-/** المستشار قد يُحذف بين الكشف والعرض، فالعنصر قد يكون غير موجود. */
-const agent = computed(() => {
-  const id = current.value?.agentId
-  return id ? (agents.value.find((a) => a.id === id) ?? null) : null
+/**
+ * الحدث يحمل الاسم والصورة بنفسه، فالاحتفال يُعرض حتى لو المستشار خارج
+ * الربع المعروض على اللوحة لحظتها.
+ */
+const agent = computed<BoardEntity | null>(() => {
+  const e = current.value?.event
+  if (!e) return null
+  return {
+    id: e.agent_id,
+    name: localName(e.name, e.name_ar),
+    team: e.team ? localName(e.team, e.team_ar) : '',
+    photo: drivePhotoUrl(e.photo_url),
+    deals: e.total_egp,
+    target: 0,
+    pct: 0,
+  }
 })
 
+/** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. */
 const rank = computed(() => {
-  const id = current.value?.agentId
-  if (!id) return 0
-  return agents.value.findIndex((a) => a.id === id) + 1
+  const e = current.value?.event
+  if (!e || e.year !== year.value || e.quarter !== quarter.value) return 0
+  return agents.value.findIndex((a) => a.id === e.agent_id) + 1
 })
+
+/** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي للتهنئة اليدوية. */
+const headline = computed(() => {
+  const e = current.value?.event
+  if (!e) return null
+  if (e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
+  return e.total_egp > 0 ? { label: t('celebrate.newTotal'), value: e.total_egp } : null
+})
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && current.value) dismissCelebration()
+}
+onMounted(() => document.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 const CONFETTI_COLORS = [
   'var(--color-accent)',
@@ -55,17 +87,12 @@ function clear() {
   timer = null
 }
 
-// كل احتفال يبدأ مؤقّته الخاص؛ لو اختفى المستشار نمرّ للتالي فوراً
+// كل احتفال يبدأ مؤقّته الخاص
 watch(
   () => current.value?.key,
   (key) => {
     clear()
-    if (!key) return
-    if (!agent.value) {
-      dismissCelebration()
-      return
-    }
-    timer = setTimeout(dismissCelebration, HOLD_MS)
+    if (key) timer = setTimeout(dismissCelebration, HOLD_MS)
   },
   { immediate: true },
 )
@@ -76,13 +103,19 @@ onBeforeUnmount(clear)
 <template>
   <Transition name="celebrate">
     <!-- data-export-hide: لا يظهر في صور PNG المصدَّرة -->
+    <!-- النقر في أي مكان أو Esc يغلق الاحتفال مبكراً -->
     <div
       v-if="current && agent"
       data-export-hide
-      class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-header/80 px-5 backdrop-blur-sm"
+      class="fixed inset-0 z-[60] flex cursor-pointer items-center justify-center overflow-hidden bg-header/80 px-5 backdrop-blur-sm"
+      @click="dismissCelebration"
     >
       <p class="sr-only" role="status" aria-live="polite">
-        {{ t('celebrate.announce', { name: agent.name, amount: egp(current.amount) }) }}
+        {{
+          isManual
+            ? t('celebrate.announceManual', { name: agent.name })
+            : t('celebrate.announce', { name: agent.name, amount: egp(current.event.amount_egp) })
+        }}
       </p>
 
       <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0">
@@ -109,8 +142,12 @@ onBeforeUnmount(clear)
         <div
           class="flex items-center gap-2 rounded-full bg-accent-strong px-5 py-2 font-semibold tracking-[0.14em] text-white text-caption"
         >
-          <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="text-gold text-lg" />
-          {{ t('celebrate.title') }}
+          <iconify-icon
+            :icon="isManual ? 'mdi:trophy' : 'mdi:party-popper'"
+            aria-hidden="true"
+            class="text-gold text-lg"
+          />
+          {{ isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
         </div>
 
         <div class="relative">
@@ -132,23 +169,29 @@ onBeforeUnmount(clear)
           </div>
         </div>
 
-        <div class="flex flex-col items-center gap-1" :title="egp(current.amount)">
+        <p
+          v-if="current.event.note"
+          class="m-0 max-w-full break-words font-semibold leading-snug text-strong text-[clamp(18px,2.6vh,24px)]"
+        >“{{ current.event.note }}”</p>
+
+        <div v-if="headline" class="flex flex-col items-center gap-1" :title="egp(headline.value)">
           <span class="font-medium uppercase tracking-[0.16em] text-mute text-caption">
-            {{ t('celebrate.amount') }}
+            {{ headline.label }}
           </span>
           <span
             class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-accent-text text-stat-2"
           >
-            {{ compact(current.amount) }}
+            {{ compact(headline.value) }}
           </span>
         </div>
 
         <div
+          v-if="!isManual || rank > 0"
           class="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 border-t border-divider pt-4 w-full font-medium text-mute text-caption"
         >
-          <span :title="egp(current.total)">
+          <span v-if="!isManual" :title="egp(current.event.total_egp)">
             {{ t('celebrate.newTotal') }}
-            <b class="font-bold tabular-nums text-strong">{{ compact(current.total) }}</b>
+            <b class="font-bold tabular-nums text-strong">{{ compact(current.event.total_egp) }}</b>
           </span>
           <span v-if="rank > 0" class="tabular-nums">{{ t('celebrate.rank', { n: rank }) }}</span>
         </div>
