@@ -9,6 +9,8 @@ export interface AdminTeam {
   name_ar: string | null
   photo_url: string | null
   active: boolean
+  manager_agent_id: string | null
+  supervisor_agent_id: string | null
 }
 
 export interface AdminAgent {
@@ -91,8 +93,12 @@ export function useAdminData() {
     await loadPeriods()
   }
 
+  /**
+   * الفريق وقيادته في نداءين: الحفظ يرجّع المعرّف، وهو لازم لفريق جديد قبل
+   * ربط مديره. لو فشل الثاني يبقى الفريق محفوظاً وتظهر رسالة الخطأ.
+   */
   async function saveTeam(team: Partial<AdminTeam> & { name: string }) {
-    const { error } = await supabase.rpc('lb_admin_save_team', {
+    const { data, error } = await supabase.rpc('lb_admin_save_team', {
       p_id: team.id ?? null,
       p_name: team.name,
       p_name_ar: team.name_ar ?? null,
@@ -100,6 +106,19 @@ export function useAdminData() {
       p_active: team.active ?? true,
     })
     if (error) fail(error)
+
+    const teamId = (data as string | null) ?? team.id
+    if (teamId && ('manager_agent_id' in team || 'supervisor_agent_id' in team)) {
+      const leads = await supabase.rpc('lb_admin_set_team_leads', {
+        p_team_id: teamId,
+        p_manager_id: team.manager_agent_id ?? null,
+        p_supervisor_id: team.supervisor_agent_id ?? null,
+      })
+      if (leads.error) {
+        await loadRoster()
+        fail(leads.error)
+      }
+    }
     await loadRoster()
   }
 

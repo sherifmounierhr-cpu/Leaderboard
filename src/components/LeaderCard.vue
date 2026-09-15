@@ -5,6 +5,7 @@ import { compact, egp } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
 import ProgressTrack from './ProgressTrack.vue'
+import TeamLeads from './TeamLeads.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -54,6 +55,8 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       </div>
       <div v-if="subtitle" class="font-medium text-mute text-sm lg:text-note">{{ subtitle }}</div>
     </div>
+
+    <TeamLeads v-if="kind === 'team'" :leads="entity.leads" :size="size === 'hero' ? 'hero' : 'compact'" />
 
     <div class="flex items-baseline gap-2" :title="egp(entity.deals)">
       <span

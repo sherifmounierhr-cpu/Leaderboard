@@ -1,20 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminData, type AdminTeam } from '@/composables/useAdminData'
+import { useLocalName } from '@/composables/useLocalName'
 import PhotoField from './PhotoField.vue'
 
-const { teams, saveTeam, deleteTeam } = useAdminData()
-const { t } = useI18n()
+const { teams, agents, saveTeam, deleteTeam } = useAdminData()
+const { t, locale } = useI18n()
+const localName = useLocalName()
 
-type Draft = { id: string | null; name: string; name_ar: string; photo_url: string | null; active: boolean }
+type Draft = {
+  id: string | null
+  name: string
+  name_ar: string
+  photo_url: string | null
+  active: boolean
+  manager_agent_id: string
+  supervisor_agent_id: string
+}
 
 const editing = ref<Draft | null>(null)
 const saving = ref(false)
 const formError = ref<string | null>(null)
 
 function blank(): Draft {
-  return { id: null, name: '', name_ar: '', photo_url: null, active: true }
+  return { id: null, name: '', name_ar: '', photo_url: null, active: true, manager_agent_id: '', supervisor_agent_id: '' }
 }
 
 function edit(team: AdminTeam) {
@@ -25,11 +35,38 @@ function edit(team: AdminTeam) {
     name_ar: team.name_ar ?? '',
     photo_url: team.photo_url,
     active: team.active,
+    manager_agent_id: team.manager_agent_id ?? '',
+    supervisor_agent_id: team.supervisor_agent_id ?? '',
   }
+}
+
+/** مستشارو الفريق أولاً — الغالب أن المدير منهم — ثم بقية الفرق. */
+const leadOptions = computed(() => {
+  const collator = new Intl.Collator(locale.value)
+  const teamId = editing.value?.id
+  const toOption = (a: (typeof agents.value)[number]) => ({
+    id: a.id,
+    label: a.active ? localName(a.name, a.name_ar) : `${localName(a.name, a.name_ar)} (${t('admin.inactive')})`,
+  })
+  const sort = (x: { label: string }, y: { label: string }) => collator.compare(x.label, y.label)
+  return {
+    own: agents.value.filter((a) => teamId && a.team_id === teamId).map(toOption).sort(sort),
+    other: agents.value.filter((a) => !teamId || a.team_id !== teamId).map(toOption).sort(sort),
+  }
+})
+
+const agentName = (id: string | null) => {
+  const a = id ? agents.value.find((x) => x.id === id) : null
+  return a ? localName(a.name, a.name_ar) : ''
 }
 
 async function submit() {
   if (!editing.value) return
+  const { manager_agent_id: manager, supervisor_agent_id: supervisor } = editing.value
+  if (manager && manager === supervisor) {
+    formError.value = t('admin.leadsSame')
+    return
+  }
   saving.value = true
   formError.value = null
   try {
@@ -39,6 +76,8 @@ async function submit() {
       name_ar: editing.value.name_ar || null,
       photo_url: editing.value.photo_url,
       active: editing.value.active,
+      manager_agent_id: manager || null,
+      supervisor_agent_id: supervisor || null,
     })
     editing.value = null
   } catch (err) {
@@ -102,6 +141,31 @@ const FIELD =
         </label>
       </div>
 
+      <fieldset class="m-0 flex flex-col gap-3 rounded-lg border border-card-border p-3 lg:p-4">
+        <legend class="px-1 font-semibold text-strong text-sm">{{ t('admin.leads') }}</legend>
+        <p class="m-0 text-caption text-mute">{{ t('admin.leadsHint') }}</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <label
+            v-for="field in (['manager_agent_id', 'supervisor_agent_id'] as const)"
+            :key="field"
+            class="flex flex-col gap-1.5"
+          >
+            <span class="font-semibold text-caption text-mute">
+              {{ field === 'manager_agent_id' ? t('admin.manager') : t('admin.supervisor') }}
+            </span>
+            <select v-model="editing[field]" :class="FIELD">
+              <option value="">{{ t('admin.noLead') }}</option>
+              <optgroup v-if="leadOptions.own.length" :label="editing.name_ar || editing.name">
+                <option v-for="o in leadOptions.own" :key="o.id" :value="o.id">{{ o.label }}</option>
+              </optgroup>
+              <optgroup :label="leadOptions.own.length ? t('admin.otherTeams') : t('admin.agents')">
+                <option v-for="o in leadOptions.other" :key="o.id" :value="o.id">{{ o.label }}</option>
+              </optgroup>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
       <label class="flex items-center gap-2.5 text-sm font-semibold text-strong">
         <input v-model="editing.active" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
         {{ t('admin.active') }}
@@ -141,6 +205,11 @@ const FIELD =
           <p class="m-0 font-semibold text-strong truncate">{{ team.name_ar || team.name }}</p>
           <p class="m-0 text-caption text-mute truncate">
             {{ team.name }}<template v-if="!team.active"> · {{ t('admin.inactive') }}</template>
+          </p>
+          <p v-if="team.manager_agent_id || team.supervisor_agent_id" class="m-0 mt-0.5 text-caption text-mute truncate">
+            <template v-if="team.manager_agent_id">{{ t('admin.manager') }}: <b class="font-semibold text-strong">{{ agentName(team.manager_agent_id) }}</b></template>
+            <template v-if="team.manager_agent_id && team.supervisor_agent_id"> · </template>
+            <template v-if="team.supervisor_agent_id">{{ t('admin.supervisor') }}: <b class="font-semibold text-strong">{{ agentName(team.supervisor_agent_id) }}</b></template>
           </p>
         </div>
 

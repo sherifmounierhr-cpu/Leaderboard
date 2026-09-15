@@ -13,6 +13,15 @@ export interface TeamStanding {
   members: number
   pct: number
   rank: number
+  /** قيادة الفريق — مستشاران اختياريان، null لو الخانة فارغة. */
+  manager_id?: string | null
+  manager_name?: string | null
+  manager_name_ar?: string | null
+  manager_photo_url?: string | null
+  supervisor_id?: string | null
+  supervisor_name?: string | null
+  supervisor_name_ar?: string | null
+  supervisor_photo_url?: string | null
 }
 
 /** صف من public.lb_agent_standings */

@@ -4,6 +4,7 @@ import { compact, egp } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
 import ProgressTrack from './ProgressTrack.vue'
+import TeamLeads from './TeamLeads.vue'
 
 defineProps<{ team: BoardEntity; rank: number }>()
 const { t } = useI18n()
@@ -29,6 +30,8 @@ const { t } = useI18n()
     >
       {{ team.name }}
     </div>
+
+    <TeamLeads :leads="team.leads" />
 
     <div class="flex items-baseline gap-2" :title="egp(team.deals)">
       <span class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-strong text-stat-2">

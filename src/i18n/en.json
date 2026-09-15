@@ -46,7 +46,9 @@
     "topTeam": "#1 TEAM",
     "sales": "SALES",
     "target": "Target",
-    "ofTarget": "{pct}% of {target} EGP target"
+    "ofTarget": "{pct}% of {target} EGP target",
+    "manager": "Team manager",
+    "supervisor": "Team supervisor"
   },
   "lock": {
     "title": "Everest Leaderboard",
@@ -235,6 +237,13 @@
     "passwordPwned": "This password has appeared in {count} known data breaches — choose a different one",
     "passwordCheckFailed": "Couldn't check the password against the leak database (connection issue) — proceed at your own risk or try again later",
     "passwordChanged": "Password changed successfully",
-    "continueAnyway": "Continue anyway"
+    "continueAnyway": "Continue anyway",
+    "leads": "Team leadership",
+    "leadsHint": "Pick from the agents. The supervisor is optional — leave it empty if there isn't one.",
+    "manager": "Team manager",
+    "supervisor": "Team supervisor",
+    "noLead": "— None —",
+    "leadsSame": "Manager and supervisor must be different people",
+    "otherTeams": "From other teams"
   }
 }

@@ -21,6 +21,15 @@ export interface BoardEntity {
   target: number
   pct: number
   members?: number
+  /** مدير الفريق ثم مشرفه، للفرق فقط — الفارغ لا يُضاف. */
+  leads?: TeamLead[]
+}
+
+export interface TeamLead {
+  id: string
+  role: 'manager' | 'supervisor'
+  name: string
+  photo: string
 }
 
 /** شبكة أمان: إن تعذّر الوصول للبيانات تُعرض هذه بدل شاشة فارغة على التلفزيون. */
@@ -94,8 +103,30 @@ const teams = computed<BoardEntity[]>(() => {
     target: Number(t.target) || 0,
     pct: t.pct,
     members: t.members,
+    leads: teamLeads(t),
   }))
 })
+
+function teamLeads(t: TeamStanding): TeamLead[] {
+  const leads: TeamLead[] = []
+  if (t.manager_id && t.manager_name) {
+    leads.push({
+      id: t.manager_id,
+      role: 'manager',
+      name: localName(t.manager_name, t.manager_name_ar),
+      photo: drivePhotoUrl(t.manager_photo_url),
+    })
+  }
+  if (t.supervisor_id && t.supervisor_name) {
+    leads.push({
+      id: t.supervisor_id,
+      role: 'supervisor',
+      name: localName(t.supervisor_name, t.supervisor_name_ar),
+      photo: drivePhotoUrl(t.supervisor_photo_url),
+    })
+  }
+  return leads
+}
 
 const agents = computed<BoardEntity[]>(() => {
   if (!rawAgents.value) return showDemo.value ? DEMO_AGENTS : []
