@@ -22,12 +22,10 @@ async function loadRole() {
     isDemo.value = false
     return
   }
-  const [profile, demo] = await Promise.all([
-    supabase.from('profiles').select('role').eq('id', session.value.user.id).maybeSingle(),
-    supabase.rpc('lb_is_demo'),
-  ])
-  role.value = profile.error ? null : ((profile.data?.role as string) ?? null)
-  isDemo.value = !demo.error && demo.data === true
+  // دور خاص باللوحة (admin | demo | viewer) من مشروعها المستقل
+  const { data, error } = await supabase.rpc('lb_role')
+  role.value = error ? null : ((data as string) ?? null)
+  isDemo.value = role.value === 'demo'
 }
 
 function start() {

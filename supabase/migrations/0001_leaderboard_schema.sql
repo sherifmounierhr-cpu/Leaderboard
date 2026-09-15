@@ -189,10 +189,7 @@ end $do$;
 drop policy if exists lb_sync_log_admin on leaderboard.sync_log;
 create policy lb_sync_log_admin on leaderboard.sync_log
   for select to authenticated
-  using (exists (
-    select 1 from public.profiles p
-    where p.id = auth.uid() and p.role = 'admin'
-  ));
+  using (public.is_admin());
 
 -- لا سياسات كتابة: كل insert/update/delete يمر عبر service_role فقط.
 

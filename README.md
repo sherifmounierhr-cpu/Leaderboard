@@ -57,7 +57,8 @@ npm run dev
 ## صفحة الإدارة
 
 على `/?admin=1` (أو من قائمة الإعدادات ← الإدارة). محمية بـ Supabase Auth،
-ولا تفتح إلا لحساب دوره `admin` في جدول `profiles`.
+ولا تفتح إلا لحساب مسجَّل في `leaderboard.admins`، أو حساب عرض في
+`leaderboard.demo_accounts` (يرى كل شيء، والخادم يرفض أي كتابة منه).
 
 | التبويب | ما يفعله |
 |---|---|
@@ -85,8 +86,15 @@ views الإدارة (`lb_teams`, `lb_agents`, `lb_periods`) مقصورة على
 
 ### ترقية حساب إلى مسؤول
 
+الحساب يُنشأ أولاً من لوحة Supabase (Authentication ← Users)، ثم:
+
 ```sql
-update public.profiles set role = 'admin' where email = '<البريد>';
+-- مسؤول
+insert into leaderboard.admins (user_id)
+select id from auth.users where lower(email) = lower('<البريد>');
+
+-- حساب عرض للاطلاع فقط
+insert into leaderboard.demo_accounts (email) values (lower('<البريد>'));
 ```
 
 ## معاملات الرابط
@@ -123,12 +131,14 @@ update public.profiles set role = 'admin' where email = '<البريد>';
 ### تطبيق الـ migrations
 
 ```bash
-supabase link --project-ref nhmbbulidexzczrwjmyx
+supabase link --project-ref mbvscayjwnuvkvolbpoz
 supabase db push
 ```
 
-`0001` و `0002` و `0004` مطبَّقة بالفعل على المشروع.
-`0003_cron.sql` هو الوحيد المتبقّي — طبّقه بعد نشر الدالة وضبط الأسرار، لأنه يستدعيها فعلياً.
+اللوحة على مشروع Supabase مستقل («Everest Leader») منفصل عن تطبيق الموارد
+البشرية. كل الملفات مطبَّقة عليه عدا `0003` و `0005` (مزامنة جوجل شيت
+وجدولتها) — طبّقهما بعد نشر الدالة وضبط الأسرار، لأنهما يستدعيانها فعلياً.
+`0000` يُطبَّق أولاً: يعرّف `is_admin()` الذي تحتاجه سياسات التخزين في `0004`.
 
 ## Edge Function
 
