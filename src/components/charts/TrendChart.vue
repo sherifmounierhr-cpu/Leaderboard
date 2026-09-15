@@ -26,10 +26,10 @@ const rtl = computed(() => locale.value === 'ar')
  * على الشاشات الواسعة (التلفزيون) يكبر النص والرسم، ويُعنوَن كل خط باسمه عند
  * نهايته — من بعيد لا أحد يمرّر الماوس ليعرف أي خط رمادي لأي فرع.
  */
-const wide = computed(() => width.value >= 720)
+const wide = computed(() => width.value >= 560)
 const size = computed(() =>
   wide.value
-    ? { tick: 13, label: 14, axis: 64, endBand: 150, xBand: 36 }
+    ? { tick: 13, label: 14, axis: 64, endBand: width.value >= 720 ? 150 : 120, xBand: 36 }
     : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
 )
 
