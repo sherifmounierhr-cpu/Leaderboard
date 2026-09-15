@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
@@ -9,9 +9,9 @@ import type { LegendItem, RankHistoryPoint } from '@/lib/types'
 
 const props = defineProps<{
   history: RankHistoryPoint[]
-  /** Ø§Ù„Ù…ØªØµØ¯Ù‘Ø± ÙŠÙØ­Ø¯ÙŽÙ‘Ø¯ Ø¨Ø§Ù„Ù…Ø¹Ø±Ù‘Ù: Ø§Ù„Ù„Ù‚Ø·Ø§Øª ØªØ®Ø²Ù‘Ù† Ø§Ù„Ø§Ø³Ù… Ø§Ù„Ø¥Ù†Ø¬Ù„ÙŠØ²ÙŠ ÙÙ‚Ø·. */
+  /** المتصدّر يُحدَّد بالمعرّف: اللقطات تخزّن الاسم الإنجليزي فقط. */
   leaderId: string
-  /** Ù…Ø¹Ø±Ù‘Ù Ø§Ù„ÙØ±Ø¹ â†’ Ø§Ø³Ù…Ù‡ Ø¨Ù„ØºØ© Ø§Ù„Ø¹Ø±Ø¶. */
+  /** معرّف الفرع → اسمه بلغة العرض. */
   names: Record<string, string>
 }>()
 
@@ -23,8 +23,8 @@ const { width } = useElementSize(host)
 const rtl = computed(() => locale.value === 'ar')
 
 /**
- * Ø¹Ù„Ù‰ Ø§Ù„Ø´Ø§Ø´Ø§Øª Ø§Ù„ÙˆØ§Ø³Ø¹Ø© (Ø§Ù„ØªÙ„ÙØ²ÙŠÙˆÙ†) ÙŠÙƒØ¨Ø± Ø§Ù„Ù†Øµ ÙˆØ§Ù„Ø±Ø³Ù…ØŒ ÙˆÙŠÙØ¹Ù†ÙˆÙŽÙ† ÙƒÙ„ Ø®Ø· Ø¨Ø§Ø³Ù…Ù‡ Ø¹Ù†Ø¯
- * Ù†Ù‡Ø§ÙŠØªÙ‡ â€” Ù…Ù† Ø¨Ø¹ÙŠØ¯ Ù„Ø§ Ø£Ø­Ø¯ ÙŠÙ…Ø±Ù‘Ø± Ø§Ù„Ù…Ø§ÙˆØ³ Ù„ÙŠØ¹Ø±Ù Ø£ÙŠ Ø®Ø· Ø±Ù…Ø§Ø¯ÙŠ Ù„Ø£ÙŠ ÙØ±Ø¹.
+ * على الشاشات الواسعة (التلفزيون) يكبر النص والرسم، ويُعنوَن كل خط باسمه عند
+ * نهايته — من بعيد لا أحد يمرّر الماوس ليعرف أي خط رمادي لأي فرع.
  */
 const wide = computed(() => width.value >= 500)
 const size = computed(() =>
@@ -33,7 +33,7 @@ const size = computed(() =>
     : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
 )
 
-/** Ø§Ù„ØªÙˆØ§Ø±ÙŠØ® Ø§Ù„Ù…ØªØ§Ø­Ø© Ù…Ø±ØªØ¨Ø© ØªØµØ§Ø¹Ø¯ÙŠØ§Ù‹. */
+/** التواريخ المتاحة مرتبة تصاعدياً. */
 const dates = computed(() => {
   const set = new Set(props.history.map((p) => p.taken_on))
   return [...set].sort()
@@ -64,7 +64,7 @@ const series = computed<TrendSeries[]>(() => {
       values: dates.value.map((d) => entry.points.get(d) ?? null),
       isLeader: id === props.leaderId,
     }))
-    // Ø§Ù„Ù…ØªØµØ¯Ù‘Ø± ÙŠÙØ±Ø³Ù… Ø£Ø®ÙŠØ±Ø§Ù‹ Ù„ÙŠØ¹Ù„Ùˆ Ø¨Ù‚ÙŠØ© Ø§Ù„Ø®Ø·ÙˆØ·
+    // المتصدّر يُرسم أخيراً ليعلو بقية الخطوط
     .sort((a, b) => Number(a.isLeader) - Number(b.isLeader))
 })
 
@@ -79,7 +79,7 @@ const maxValue = computed(() => {
 const plot = computed(() => {
   const w = Math.max(width.value, 320)
   const h = wide.value ? Math.round(Math.min(Math.max(w * 0.55, 320), 500)) : 300
-  // Ø§Ù„Ø·Ø±Ù Ø§Ù„Ù…Ù‚Ø§Ø¨Ù„ Ù„Ù„Ù…Ø­ÙˆØ± ÙŠØ­Ù…Ù„ Ù†Ù‡Ø§ÙŠØ§Øª Ø§Ù„Ø®Ø·ÙˆØ· ÙˆØ£Ø³Ù…Ø§Ø¡Ù‡Ø§ØŒ ÙÙŠØ­ØªØ§Ø¬ Ù‡Ø§Ù…Ø´Ø§Ù‹ Ù„Ø§ ÙŠÙ‚ØµÙ‘Ù‡Ø§
+  // الطرف المقابل للمحور يحمل نهايات الخطوط وأسماءها، فيحتاج هامشاً لا يقصّها
   const { axis, endBand, xBand } = size.value
   return {
     w,
@@ -100,7 +100,7 @@ const yScale = computed(() => makeYScale([0, top.value], [plot.value.y1, plot.va
 
 const ticks = computed(() => scale.value.ticks)
 
-/** Ù†Ù‚Ø§Ø· Ø§Ù„Ù…Ø­ÙˆØ± Ø§Ù„Ø£ÙÙ‚ÙŠ: 5 ØªÙˆØ§Ø±ÙŠØ® ÙƒØ­Ø¯Ù‘ Ø£Ù‚ØµÙ‰ Ø­ØªÙ‰ Ù„Ø§ ØªØªØ±Ø§ÙƒÙ…. */
+/** نقاط المحور الأفقي: 5 تواريخ كحدّ أقصى حتى لا تتراكم. */
 const dateTicks = computed(() => {
   const n = dates.value.length
   if (!n) return []
@@ -142,8 +142,8 @@ const leader = computed(() => series.value.find((s) => s.isLeader) ?? null)
 const leaderEnd = computed(() => (leader.value ? lastPoint(leader.value) : null))
 
 /**
- * Ø§Ø³Ù… ÙƒÙ„ ÙØ±Ø¹ Ø¹Ù†Ø¯ Ù†Ù‡Ø§ÙŠØ© Ø®Ø·Ù‡ØŒ Ù…Ø¹ Ø¯ÙØ¹ Ø§Ù„Ø£Ø³Ù…Ø§Ø¡ Ø§Ù„Ù…ØªÙ‚Ø§Ø±Ø¨Ø© Ø¨Ø¹ÙŠØ¯Ø§Ù‹ Ø¹Ù† Ø¨Ø¹Ø¶Ù‡Ø§ Ø­ØªÙ‰
- * Ù„Ø§ ØªØªØ±Ø§ÙƒØ¨ (Ø§Ù„Ø®Ø·ÙˆØ· ØªÙ†ØªÙ‡ÙŠ ØºØ§Ù„Ø¨Ø§Ù‹ Ø¹Ù†Ø¯ Ù‚ÙŠÙ… Ù…ØªÙ‚Ø§Ø±Ø¨Ø©).
+ * اسم كل فرع عند نهاية خطه، مع دفع الأسماء المتقاربة بعيداً عن بعضها حتى
+ * لا تتراكب (الخطوط تنتهي غالباً عند قيم متقاربة).
  */
 const endLabels = computed(() => {
   if (!wide.value) return []
@@ -159,7 +159,7 @@ const endLabels = computed(() => {
   for (let i = 1; i < items.length; i++) {
     items[i].y = Math.max(items[i].y, items[i - 1].y + gap)
   }
-  // Ù„Ùˆ ØªØ¬Ø§ÙˆØ² Ø¢Ø®Ø±Ù‡Ø§ Ø£Ø³ÙÙ„ Ø§Ù„Ø±Ø³Ù… Ù†Ø±ÙØ¹ Ø§Ù„ÙƒÙ„ Ù…Ù† Ø§Ù„Ø£Ø³ÙÙ„ Ù„Ù„Ø£Ø¹Ù„Ù‰
+  // لو تجاوز آخرها أسفل الرسم نرفع الكل من الأسفل للأعلى
   const bottom = plot.value.y1
   if (items.length && items[items.length - 1].y > bottom) {
     items[items.length - 1].y = bottom
@@ -176,7 +176,7 @@ const activeIndex = ref<number | null>(null)
 
 function onPointerMove(event: PointerEvent) {
   const rect = (event.currentTarget as SVGRectElement).getBoundingClientRect()
-  // Ø¹Ù„Ù‰ Ø´Ø§Ø´Ø© Ø£Ø¶ÙŠÙ‚ Ù…Ù† Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ø¯Ù†Ù‰ ÙŠÙØµØºÙŽÙ‘Ø± Ø§Ù„Ù€ SVG Ø¨Ù€ max-widthØŒ ÙÙ†Ù‚Ø³Ù… Ø¹Ù„Ù‰ Ø§Ù„Ù†Ø³Ø¨Ø©
+  // على شاشة أضيق من الحد الأدنى يُصغَّر الـ SVG بـ max-width، فنقسم على النسبة
   const drawn = plot.value.x1 - plot.value.x0
   const scale = drawn > 0 && rect.width > 0 ? rect.width / drawn : 1
   const x = (event.clientX - rect.left) / scale + plot.value.x0
@@ -207,7 +207,7 @@ const tooltip = computed(() => {
   return { date: dates.value[i], x: xScale.value(i), rows }
 })
 
-// Ù„Ø§ ÙˆØ³ÙŠÙ„Ø© Ø¥ÙŠØ¶Ø§Ø­ Ù„Ø±Ø³Ù… ÙØ§Ø±Øº: Ù„Ø§ Ø¹Ù„Ø§Ù…Ø§Øª ØªØ´Ø±Ø­Ù‡Ø§
+// لا وسيلة إيضاح لرسم فارغ: لا علامات تشرحها
 const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
   {
     label: props.names[props.leaderId] || t('chart.leader'),
@@ -235,8 +235,8 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
           class="block max-w-full overflow-visible"
           style="direction: ltr"
         >
-          <!-- direction: ltr: ÙÙŠ RTL ÙŠÙ†Ù‚Ù„Ø¨ Ù…Ø¹Ù†Ù‰ text-anchor ÙØªÙÙ‚ØµÙ‘ Ø§Ù„Ø¹Ù„Ø§Ù…Ø§ØªØ› Ø§Ù„Ø¥Ø­Ø¯Ø§Ø«ÙŠØ§Øª Ù…Ø­Ø³ÙˆØ¨Ø© Ù„ÙƒÙ„ Ø§ØªØ¬Ø§Ù‡ -->
-          <!-- Ø´Ø¨ÙƒØ© Ø£ÙÙ‚ÙŠØ©: Ø®Ø·ÙˆØ· Ø´Ø¹Ø±ÙŠØ© ØµÙ„Ø¨Ø©ØŒ Ù…ØªØ±Ø§Ø¬Ø¹Ø© Ø¨ØµØ±ÙŠØ§Ù‹ -->
+          <!-- direction: ltr: في RTL ينقلب معنى text-anchor فتُقصّ العلامات؛ الإحداثيات محسوبة لكل اتجاه -->
+          <!-- شبكة أفقية: خطوط شعرية صلبة، متراجعة بصرياً -->
           <g>
             <line
               v-for="tick in ticks"
@@ -251,7 +251,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             />
           </g>
 
-          <!-- Ø¹Ù„Ø§Ù…Ø§Øª Ø§Ù„Ù…Ø­ÙˆØ± Ø§Ù„Ø±Ø£Ø³ÙŠ Ø¹Ù„Ù‰ Ø¬Ù‡Ø© Ø¨Ø¯Ø§ÙŠØ© Ø§Ù„Ù‚Ø±Ø§Ø¡Ø© -->
+          <!-- علامات المحور الرأسي على جهة بداية القراءة -->
           <g>
             <text
               v-for="tick in ticks"
@@ -264,7 +264,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             >{{ compact(tick) }}</text>
           </g>
 
-          <!-- Ø§Ù„ØªÙˆØ§Ø±ÙŠØ® -->
+          <!-- التواريخ -->
           <g>
             <text
               v-for="i in dateTicks"
@@ -277,7 +277,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             >{{ formatDate(dates[i]) }}</text>
           </g>
 
-          <!-- Ø®Ø· Ø§Ù„ØªÙ‚Ø§Ø·Ø¹ Ø¹Ù†Ø¯ Ø§Ù„ØªØ­ÙˆÙŠÙ… -->
+          <!-- خط التقاطع عند التحويم -->
           <line
             v-if="tooltip"
             :x1="tooltip.x"
@@ -288,7 +288,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             stroke-width="1"
           />
 
-          <!-- Ø§Ù„Ø®Ø·ÙˆØ·: Ø§Ù„Ù…ØªØµØ¯Ù‘Ø± Ø¨Ù„ÙˆÙ† Ø§Ù„Ø¥Ø¨Ø±Ø§Ø² ÙˆØ§Ù„Ø¨Ù‚ÙŠØ© Ø³ÙŠØ§Ù‚ Ø±Ù…Ø§Ø¯ÙŠ -->
+          <!-- الخطوط: المتصدّر بلون الإبراز والبقية سياق رمادي -->
           <g fill="none" stroke-linejoin="round" stroke-linecap="round">
             <path
               v-for="s in series"
@@ -300,7 +300,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             />
           </g>
 
-          <!-- Ù†Ù‚Ø·Ø© Ù†Ù‡Ø§ÙŠØ© Ø§Ù„Ù…ØªØµØ¯Ù‘Ø± Ù…Ø¹ Ø­Ù„Ù‚Ø© Ø¨Ù„ÙˆÙ† Ø§Ù„Ø³Ø·Ø­ -->
+          <!-- نقطة نهاية المتصدّر مع حلقة بلون السطح -->
           <circle
             v-if="leaderEnd"
             :cx="leaderEnd.x"
@@ -311,7 +311,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             stroke-width="2"
           />
 
-          <!-- Ø§Ù„Ø´Ø§Ø´Ø§Øª Ø§Ù„ÙˆØ§Ø³Ø¹Ø©: Ø§Ø³Ù… ÙƒÙ„ Ø®Ø· Ø¹Ù†Ø¯ Ù†Ù‡Ø§ÙŠØªÙ‡ -->
+          <!-- الشاشات الواسعة: اسم كل خط عند نهايته -->
           <text
             v-for="label in endLabels"
             :key="`l${label.id}`"
@@ -323,7 +323,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             :class="label.isLeader ? 'fill-[var(--chart-emphasis)] font-bold' : 'fill-[var(--color-mute)] font-medium'"
           >{{ label.name }}</text>
 
-          <!-- Ø§Ù„Ø´Ø§Ø´Ø§Øª Ø§Ù„Ø¶ÙŠÙ‚Ø©: Ø¹Ù†ÙˆØ§Ù† Ù…Ø¨Ø§Ø´Ø± ÙˆØ§Ø­Ø¯ Ù„Ù„Ù…ØªØµØ¯Ù‘Ø±ØŒ ÙˆØ§Ù„Ø¨Ù‚ÙŠØ© Ø¹Ù„Ù‰ Ø§Ù„Ù€ tooltip ÙˆØ§Ù„Ø¬Ø¯ÙˆÙ„ -->
+          <!-- الشاشات الضيقة: عنوان مباشر واحد للمتصدّر، والبقية على الـ tooltip والجدول -->
           <text
             v-if="!wide && leaderEnd && leader"
             :x="leaderEnd.x + (rtl ? 10 : -10)"
@@ -332,7 +332,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             class="fill-[var(--color-strong)] text-[12px] font-semibold"
           >{{ leader.name }}</text>
 
-          <!-- Ø·Ø¨Ù‚Ø© Ø§Ù„Ø§Ù„ØªÙ‚Ø§Ø·: ÙƒØ§Ù…Ù„ Ù…Ø³Ø§Ø­Ø© Ø§Ù„Ø±Ø³Ù…ØŒ Ø£ÙƒØ¨Ø± Ø¨ÙƒØ«ÙŠØ± Ù…Ù† Ø£ÙŠ Ø¹Ù„Ø§Ù…Ø© -->
+          <!-- طبقة الالتقاط: كامل مساحة الرسم، أكبر بكثير من أي علامة -->
           <rect
             :x="plot.x0"
             :y="plot.y0"
@@ -350,7 +350,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
           />
         </svg>
 
-        <!-- Ø§Ù„Ù€ tooltip ÙŠÙØ«Ø±ÙŠ ÙˆÙ„Ø§ ÙŠØ­Ø¬Ø¨: ÙƒÙ„ Ø§Ù„Ù‚ÙŠÙ… Ù…ÙˆØ¬ÙˆØ¯Ø© ÙÙŠ ØªÙˆØ£Ù… Ø§Ù„Ø¬Ø¯ÙˆÙ„ -->
+        <!-- الـ tooltip يُثري ولا يحجب: كل القيم موجودة في توأم الجدول -->
         <div
           v-if="tooltip"
           class="pointer-events-none absolute top-2 z-10 rounded-lg border border-card-border bg-card px-3 py-2 shadow-[var(--shadow-panel)] min-w-40"
@@ -411,7 +411,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
               class="py-2 px-3 text-end tabular-nums whitespace-nowrap"
               :class="s.isLeader ? 'text-strong font-semibold' : 'text-mute'"
               :title="s.values[i] == null ? '' : egp(s.values[i])"
-            >{{ s.values[i] == null ? 'â€”' : compact(s.values[i]) }}</td>
+            >{{ s.values[i] == null ? '—' : compact(s.values[i]) }}</td>
           </tr>
         </tbody>
       </table>
