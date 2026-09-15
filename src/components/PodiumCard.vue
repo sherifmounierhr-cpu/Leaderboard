@@ -21,7 +21,8 @@ const { t } = useI18n()
     <Avatar
       :entity="team"
       kind="team"
-      class="size-20 lg:size-[clamp(66px,10.5vh,104px)] rounded-2xl ring-1 ring-card-border text-2xl"
+      class="size-20 rounded-2xl ring-1 ring-card-border text-2xl"
+      :class="team.leads?.length ? 'lg:size-[clamp(52px,8vh,88px)]' : 'lg:size-[clamp(66px,10.5vh,104px)]'"
     />
 
     <div

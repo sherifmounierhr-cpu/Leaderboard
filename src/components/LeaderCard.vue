@@ -40,10 +40,12 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       {{ ribbon }}
     </div>
 
+    <!-- مع صف القيادة يصغر الشعار قليلاً حتى لا تدفع البطاقة الجدول خارج الشاشة -->
     <Avatar
       :entity="entity"
       :kind="kind"
-      class="size-24 lg:size-[clamp(84px,13.5vh,136px)] rounded-3xl ring-2 ring-accent/80 text-3xl"
+      class="size-24 rounded-3xl ring-2 ring-accent/80 text-3xl"
+      :class="entity.leads?.length ? 'lg:size-[clamp(64px,9.5vh,112px)]' : 'lg:size-[clamp(84px,13.5vh,136px)]'"
     />
 
     <div class="flex flex-col items-center gap-0.5 w-full">
