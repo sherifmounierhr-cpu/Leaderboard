@@ -12,7 +12,7 @@ import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
 
 const { t } = useI18n()
-const { ready, busy, authError, isSignedIn, isAdmin, email, signIn, signOut } = useAuth()
+const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
 type Tab = 'periods' | 'celebrate' | 'agents' | 'teams' | 'reports' | 'data'
@@ -34,8 +34,8 @@ async function onSignIn() {
 }
 
 // البيانات تُحمَّل بعد ثبوت صلاحية المسؤول، لا قبلها
-watch(isAdmin, (allowed) => { if (allowed) void reload() })
-onMounted(() => { if (isAdmin.value) void reload() })
+watch(canViewAdmin, (allowed) => { if (allowed) void reload() })
+onMounted(() => { if (canViewAdmin.value) void reload() })
 
 const FIELD =
   'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
@@ -61,8 +61,9 @@ const FIELD =
           <iconify-icon icon="mdi:view-dashboard-outline" aria-hidden="true" />
           {{ t('admin.backToBoard') }}
         </a>
+        <!-- حساب العرض مشترك بين المقيّمين: تغيير كلمته يقفله على الباقين -->
         <button
-          v-if="isSignedIn"
+          v-if="isSignedIn && !isDemo"
           type="button"
           class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
           @click="showChangePassword = !showChangePassword"
@@ -79,7 +80,7 @@ const FIELD =
     <main class="flex-1 px-4 py-6 sm:px-8 lg:px-12 lg:py-10">
       <p v-if="!ready" class="text-center font-medium text-mute py-20">{{ t('admin.checking') }}</p>
 
-      <div v-if="isSignedIn && showChangePassword" class="mx-auto mb-6 max-w-sm">
+      <div v-if="isSignedIn && showChangePassword && !isDemo" class="mx-auto mb-6 max-w-sm">
         <ChangePasswordCard />
       </div>
 
@@ -126,7 +127,7 @@ const FIELD =
 
       <!-- مسجَّل لكن ليس مسؤولاً -->
       <div
-        v-else-if="!isAdmin"
+        v-else-if="!canViewAdmin"
         class="mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-card-border bg-card p-8 text-center shadow-[var(--shadow-panel)]"
       >
         <iconify-icon icon="mdi:lock-outline" aria-hidden="true" class="text-dim text-5xl" />
@@ -136,6 +137,19 @@ const FIELD =
 
       <!-- لوحة الإدارة -->
       <div v-else class="flex flex-col gap-6">
+        <div
+          v-if="isDemo"
+          role="note"
+          data-export-hide
+          class="flex items-start gap-3 rounded-xl border border-gold/50 bg-gold/10 px-4 py-3 text-strong"
+        >
+          <iconify-icon icon="mdi:eye-outline" aria-hidden="true" class="mt-0.5 shrink-0 text-gold text-xl" />
+          <div class="flex flex-col gap-0.5">
+            <p class="m-0 font-semibold text-sm">{{ t('admin.demoTitle') }}</p>
+            <p class="m-0 text-mute text-caption leading-relaxed">{{ t('admin.demoHint') }}</p>
+          </div>
+        </div>
+
         <div
           class="flex flex-wrap items-center gap-1 self-start rounded-lg border border-card-border bg-card p-1"
           role="tablist"

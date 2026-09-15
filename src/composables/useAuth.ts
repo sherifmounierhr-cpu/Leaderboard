@@ -4,6 +4,8 @@ import { hasSupabaseConfig, supabase } from '@/lib/supabase'
 
 const session = ref<Session | null>(null)
 const role = ref<string | null>(null)
+/** حساب عرض: يرى صفحة الإدارة، والخادم يرفض أي كتابة منه. */
+const isDemo = ref(false)
 const ready = ref(false)
 const busy = ref(false)
 const authError = ref<string | null>(null)
@@ -17,14 +19,15 @@ let started = false
 async function loadRole() {
   if (!session.value) {
     role.value = null
+    isDemo.value = false
     return
   }
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', session.value.user.id)
-    .maybeSingle()
-  role.value = error ? null : ((data?.role as string) ?? null)
+  const [profile, demo] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', session.value.user.id).maybeSingle(),
+    supabase.rpc('lb_is_demo'),
+  ])
+  role.value = profile.error ? null : ((profile.data?.role as string) ?? null)
+  isDemo.value = !demo.error && demo.data === true
 }
 
 function start() {
@@ -72,6 +75,7 @@ export function useAuth() {
     await supabase.auth.signOut()
     session.value = null
     role.value = null
+    isDemo.value = false
   }
 
   async function changePassword(newPassword: string) {
@@ -87,6 +91,9 @@ export function useAuth() {
     role,
     isSignedIn: computed(() => Boolean(session.value)),
     isAdmin: computed(() => role.value === 'admin'),
+    isDemo,
+    /** من يرى صفحة الإدارة: المسؤول، أو حساب العرض للاطلاع فقط. */
+    canViewAdmin: computed(() => role.value === 'admin' || isDemo.value),
     email: computed(() => session.value?.user.email ?? ''),
     signIn,
     signOut,

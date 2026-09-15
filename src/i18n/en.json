@@ -201,6 +201,8 @@
     "removePhoto": "Remove",
     "photoHint": "JPG, PNG or WebP · up to 2 MB",
     "reports": "Reports",
+    "demoTitle": "Demo account — view only",
+    "demoHint": "Browse every tab, view reports and download Excel files. Saving, deleting, uploading photos and sending celebrations are disabled for this account.",
     "celebrate": "Celebrate",
     "celebrateTitle": "Show a celebration on the screens",
     "celebrateHint": "Appears full-screen right away on every open board — including the office display — and is logged in notifications. New deals are celebrated automatically; this is for manual congratulations.",
