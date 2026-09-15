@@ -36,7 +36,8 @@ const date = computed(() => (locale.value, clockDate(now.value)))
       <time class="font-bold tabular-nums text-base lg:text-lg" :datetime="now.toISOString()">
         {{ time }}
       </time>
-      <span class="hidden sm:block text-white/55 text-eyebrow whitespace-nowrap">{{ date }}</span>
+      <!-- 10px كان لا يُقرأ على التلفزيون: يكبر مع ارتفاع الشاشة من lg -->
+      <span class="hidden sm:block text-white/70 text-eyebrow lg:text-[clamp(12px,1.35vh,15px)] whitespace-nowrap">{{ date }}</span>
     </div>
   </div>
 </template>

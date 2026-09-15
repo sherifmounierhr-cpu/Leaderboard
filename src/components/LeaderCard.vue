@@ -69,7 +69,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 
     <ProgressTrack :pct="entity.pct" soft tall />
 
-    <div class="font-medium text-accent-text/80 text-sm lg:text-note">
+    <div class="font-semibold text-accent-text/85 text-sm lg:text-[clamp(15px,1.9vh,21px)]">
       {{ t('card.ofTarget', { pct: entity.pct, target: compact(entity.target) }) }}
     </div>
   </div>

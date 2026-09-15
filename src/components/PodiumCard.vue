@@ -41,7 +41,7 @@ const { t } = useI18n()
 
     <ProgressTrack :pct="team.pct" />
 
-    <div class="font-medium text-mute text-caption lg:text-sm">
+    <div class="font-medium text-mute text-caption lg:text-[clamp(14px,1.7vh,19px)]">
       {{ t('card.ofTarget', { pct: team.pct, target: compact(team.target) }) }}
     </div>
   </div>

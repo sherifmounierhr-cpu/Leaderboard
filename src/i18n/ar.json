@@ -82,6 +82,7 @@
     "rank": "المركز {n}",
     "announce": "صفقة جديدة لـ {name} بقيمة {amount}",
     "manualTitle": "تهنئة",
+    "total": "إجمالي المبيعات",
     "announceManual": "تهنئة خاصة لـ {name}"
   },
   "notifications": {

@@ -82,6 +82,7 @@
     "rank": "Rank {n}",
     "announce": "{name} closed a new deal worth {amount}",
     "manualTitle": "Congratulations",
+    "total": "Total sales",
     "announceManual": "Special congratulations to {name}"
   },
   "notifications": {

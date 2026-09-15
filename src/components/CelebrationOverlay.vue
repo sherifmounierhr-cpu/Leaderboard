@@ -9,7 +9,8 @@ import Avatar from './Avatar.vue'
 
 /** مدة عرض كل احتفال قبل الانتقال للتالي في الطابور. */
 const HOLD_MS = 8000
-const PIECES = 28
+/** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
+const PIECES = 64
 
 const { t } = useI18n()
 const localName = useLocalName()
@@ -49,7 +50,8 @@ const headline = computed(() => {
   const e = current.value?.event
   if (!e) return null
   if (e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
-  return e.total_egp > 0 ? { label: t('celebrate.newTotal'), value: e.total_egp } : null
+  // التهنئة قد تُعاد لاحقاً من الإشعارات، فلا نقول «الآن» عن رقم وقت إرسالها
+  return e.total_egp > 0 ? { label: t('celebrate.total'), value: e.total_egp } : null
 })
 
 function onKeydown(event: KeyboardEvent) {
@@ -74,7 +76,7 @@ const pieces = computed(() => {
     drift: `${(Math.random() - 0.5) * 28}vw`,
     delay: `${Math.random() * 2.4}s`,
     duration: `${2.6 + Math.random() * 1.6}s`,
-    size: `${6 + Math.random() * 7}px`,
+    size: `clamp(${7 + Math.random() * 5}px, ${0.8 + Math.random() * 0.9}vw, ${14 + Math.random() * 12}px)`,
     color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
     radius: i % 3 === 0 ? '50%' : '2px',
   }))
@@ -136,16 +138,20 @@ onBeforeUnmount(clear)
         />
       </div>
 
+      <!--
+        المقاسات بـ vh: الاحتفال يُقرأ من آخر المكتب على التلفزيون، فيكبر مع
+        ارتفاع الشاشة بدل أن يبقى بطاقة صغيرة وسط 1920 بكسل.
+      -->
       <div
-        class="animate-celebrate-in relative flex w-full max-w-lg flex-col items-center gap-5 rounded-3xl border border-accent/60 bg-card px-8 py-10 text-center shadow-[0_30px_80px_-30px_rgba(21,122,74,0.75)] ring-1 ring-accent/20"
+        class="animate-celebrate-in relative flex w-full max-w-[min(92vw,44rem)] lg:max-w-[clamp(34rem,50vw,58rem)] flex-col items-center gap-[clamp(14px,2.4vh,30px)] rounded-[clamp(20px,3vh,40px)] border border-accent/60 bg-card px-[clamp(24px,4vh,64px)] py-[clamp(28px,4.8vh,64px)] text-center shadow-[0_30px_80px_-30px_rgba(21,122,74,0.75)] ring-1 ring-accent/20"
       >
         <div
-          class="flex items-center gap-2 rounded-full bg-accent-strong px-5 py-2 font-semibold tracking-[0.14em] text-white text-caption"
+          class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-white text-[clamp(14px,2.2vh,26px)]"
         >
           <iconify-icon
             :icon="isManual ? 'mdi:trophy' : 'mdi:party-popper'"
             aria-hidden="true"
-            class="text-gold text-lg"
+            class="text-gold text-[1.3em]"
           />
           {{ isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
         </div>
@@ -153,33 +159,43 @@ onBeforeUnmount(clear)
         <div class="relative">
           <span
             aria-hidden="true"
-            class="animate-celebrate-halo absolute -inset-3 rounded-full bg-accent/25 blur-lg"
+            class="animate-celebrate-halo absolute -inset-[8%] rounded-full bg-accent/25 blur-xl"
           />
           <Avatar
             :entity="agent"
             kind="agent"
-            class="relative size-28 rounded-3xl text-4xl ring-4 ring-accent/70"
+            class="relative size-[clamp(7rem,20vh,14rem)] rounded-[22%] text-[clamp(2.25rem,6vh,4.5rem)] ring-[clamp(3px,0.5vh,6px)] ring-accent/70"
           />
         </div>
 
-        <div class="flex flex-col gap-1">
-          <div class="font-semibold text-strong text-[clamp(22px,3.4vh,30px)]">{{ agent.name }}</div>
-          <div v-if="agent.team" class="font-medium text-mute text-note">
+        <div class="flex flex-col gap-[0.25em] max-w-full">
+          <div class="font-bold leading-tight text-strong text-[clamp(26px,5.2vh,62px)] break-words">
+            {{ agent.name }}
+          </div>
+          <div v-if="agent.team" class="font-medium text-mute text-[clamp(15px,2.6vh,30px)]">
             {{ t('spotlight.ofTeam', { team: agent.team }) }}
           </div>
         </div>
 
+        <!--
+          بلا علامات تنصيص: الرسالة قد تكون إنجليزية داخل صفحة عربية فتنقلب
+          العلامات حولها (”Good One“). dir="auto" يضبط اتجاه الرسالة نفسها.
+        -->
         <p
           v-if="current.event.note"
-          class="m-0 max-w-full break-words font-semibold leading-snug text-strong text-[clamp(18px,2.6vh,24px)]"
-        >“{{ current.event.note }}”</p>
+          dir="auto"
+          class="m-0 flex max-w-full items-start gap-[0.4em] rounded-2xl bg-accent/10 px-[0.9em] py-[0.5em] break-words font-semibold leading-snug text-strong text-[clamp(18px,3.4vh,40px)]"
+        >
+          <iconify-icon icon="mdi:format-quote-open" aria-hidden="true" class="shrink-0 text-accent-text text-[1.1em]" />
+          <span>{{ current.event.note }}</span>
+        </p>
 
-        <div v-if="headline" class="flex flex-col items-center gap-1" :title="egp(headline.value)">
-          <span class="font-medium uppercase tracking-[0.16em] text-mute text-caption">
+        <div v-if="headline" class="flex flex-col items-center gap-[0.4em]" :title="egp(headline.value)">
+          <span class="font-semibold tracking-[0.06em] text-mute text-[clamp(14px,2.3vh,28px)]">
             {{ headline.label }}
           </span>
           <span
-            class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-accent-text text-stat-2"
+            class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-accent-text text-[clamp(3rem,12vh,9rem)]"
           >
             {{ compact(headline.value) }}
           </span>
@@ -187,13 +203,13 @@ onBeforeUnmount(clear)
 
         <div
           v-if="!isManual || rank > 0"
-          class="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 border-t border-divider pt-4 w-full font-medium text-mute text-caption"
+          class="flex flex-wrap items-center justify-center gap-x-[1.5em] gap-y-1 border-t border-divider pt-[0.8em] w-full font-medium text-mute text-[clamp(15px,2.6vh,30px)]"
         >
           <span v-if="!isManual" :title="egp(current.event.total_egp)">
             {{ t('celebrate.newTotal') }}
             <b class="font-bold tabular-nums text-strong">{{ compact(current.event.total_egp) }}</b>
           </span>
-          <span v-if="rank > 0" class="tabular-nums">{{ t('celebrate.rank', { n: rank }) }}</span>
+          <span v-if="rank > 0" class="font-bold tabular-nums text-strong">{{ t('celebrate.rank', { n: rank }) }}</span>
         </div>
       </div>
     </div>

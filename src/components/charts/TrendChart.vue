@@ -20,11 +20,18 @@ const { t, locale } = useI18n()
 const host = ref<HTMLElement | null>(null)
 const { width } = useElementSize(host)
 
-const HEIGHT = 300
-const AXIS_BAND = 52 // مساحة علامات المحور الرأسي
-const X_BAND = 30 // شريط التواريخ أسفل الرسم — جزء من الارتفاع لا خارجه
-const END_PAD = 26 // متّسع لنقطة نهاية المتصدّر وحلقتها
 const rtl = computed(() => locale.value === 'ar')
+
+/**
+ * على الشاشات الواسعة (التلفزيون) يكبر النص والرسم، ويُعنوَن كل خط باسمه عند
+ * نهايته — من بعيد لا أحد يمرّر الماوس ليعرف أي خط رمادي لأي فرع.
+ */
+const wide = computed(() => width.value >= 720)
+const size = computed(() =>
+  wide.value
+    ? { tick: 13, label: 14, axis: 64, endBand: 150, xBand: 36 }
+    : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
+)
 
 /** التواريخ المتاحة مرتبة تصاعدياً. */
 const dates = computed(() => {
@@ -71,16 +78,16 @@ const maxValue = computed(() => {
 
 const plot = computed(() => {
   const w = Math.max(width.value, 320)
-  // الطرف المقابل للمحور يحمل نقطة النهاية وحلقتها، فيحتاج هامشاً لا يقصّها
-  const axisLeft = rtl.value ? END_PAD : AXIS_BAND
-  const axisRight = rtl.value ? AXIS_BAND : END_PAD
+  const h = wide.value ? Math.round(Math.min(Math.max(w * 0.55, 320), 500)) : 300
+  // الطرف المقابل للمحور يحمل نهايات الخطوط وأسماءها، فيحتاج هامشاً لا يقصّها
+  const { axis, endBand, xBand } = size.value
   return {
     w,
-    h: HEIGHT,
-    x0: axisLeft,
-    x1: w - axisRight,
+    h,
+    x0: rtl.value ? endBand : axis,
+    x1: w - (rtl.value ? axis : endBand),
     y0: 18,
-    y1: HEIGHT - X_BAND,
+    y1: h - xBand,
   }
 })
 
@@ -133,6 +140,36 @@ function lastPoint(s: TrendSeries) {
 
 const leader = computed(() => series.value.find((s) => s.isLeader) ?? null)
 const leaderEnd = computed(() => (leader.value ? lastPoint(leader.value) : null))
+
+/**
+ * اسم كل فرع عند نهاية خطه، مع دفع الأسماء المتقاربة بعيداً عن بعضها حتى
+ * لا تتراكب (الخطوط تنتهي غالباً عند قيم متقاربة).
+ */
+const endLabels = computed(() => {
+  if (!wide.value) return []
+  const gap = size.value.label + 6
+  const items = series.value
+    .map((s) => {
+      const end = lastPoint(s)
+      return end ? { id: s.id, name: s.name, isLeader: s.isLeader, y: end.y } : null
+    })
+    .filter((x): x is { id: string; name: string; isLeader: boolean; y: number } => x !== null)
+    .sort((a, b) => a.y - b.y)
+
+  for (let i = 1; i < items.length; i++) {
+    items[i].y = Math.max(items[i].y, items[i - 1].y + gap)
+  }
+  // لو تجاوز آخرها أسفل الرسم نرفع الكل من الأسفل للأعلى
+  const bottom = plot.value.y1
+  if (items.length && items[items.length - 1].y > bottom) {
+    items[items.length - 1].y = bottom
+    for (let i = items.length - 2; i >= 0; i--) {
+      items[i].y = Math.min(items[i].y, items[i + 1].y - gap)
+    }
+  }
+  const x = rtl.value ? plot.value.x0 - 12 : plot.value.x1 + 12
+  return items.map((item) => ({ ...item, x }))
+})
 
 // ------------------------------------------------------------------ hover
 const activeIndex = ref<number | null>(null)
@@ -196,7 +233,9 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
           role="img"
           :aria-label="t('chart.trend')"
           class="block max-w-full overflow-visible"
+          style="direction: ltr"
         >
+          <!-- direction: ltr: في RTL ينقلب معنى text-anchor فتُقصّ العلامات؛ الإحداثيات محسوبة لكل اتجاه -->
           <!-- شبكة أفقية: خطوط شعرية صلبة، متراجعة بصرياً -->
           <g>
             <line
@@ -220,7 +259,8 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
               :x="rtl ? plot.x1 + 10 : plot.x0 - 10"
               :y="yScale(tick) + 4"
               :text-anchor="rtl ? 'start' : 'end'"
-              class="fill-[var(--color-dim)] text-[11px] tabular-nums"
+              :font-size="size.tick"
+              class="fill-[var(--color-mute)] tabular-nums"
             >{{ compact(tick) }}</text>
           </g>
 
@@ -230,9 +270,10 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
               v-for="i in dateTicks"
               :key="`d${i}`"
               :x="xScale(i)"
-              :y="plot.y1 + 20"
+              :y="plot.y1 + size.tick + 10"
               text-anchor="middle"
-              class="fill-[var(--color-dim)] text-[11px] tabular-nums"
+              :font-size="size.tick"
+              class="fill-[var(--color-mute)] tabular-nums"
             >{{ formatDate(dates[i]) }}</text>
           </g>
 
@@ -270,9 +311,21 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             stroke-width="2"
           />
 
-          <!-- عنوان مباشر واحد فقط: المتصدّر. البقية على الـ tooltip والجدول -->
+          <!-- الشاشات الواسعة: اسم كل خط عند نهايته -->
           <text
-            v-if="leaderEnd && leader"
+            v-for="label in endLabels"
+            :key="`l${label.id}`"
+            :x="label.x"
+            :y="label.y"
+            dominant-baseline="central"
+            :text-anchor="rtl ? 'end' : 'start'"
+            :font-size="size.label"
+            :class="label.isLeader ? 'fill-[var(--chart-emphasis)] font-bold' : 'fill-[var(--color-mute)] font-medium'"
+          >{{ label.name }}</text>
+
+          <!-- الشاشات الضيقة: عنوان مباشر واحد للمتصدّر، والبقية على الـ tooltip والجدول -->
+          <text
+            v-if="!wide && leaderEnd && leader"
             :x="leaderEnd.x + (rtl ? 10 : -10)"
             :y="leaderEnd.y - 12"
             :text-anchor="rtl ? 'start' : 'end'"

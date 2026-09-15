@@ -16,11 +16,17 @@ const { width } = useElementSize(host)
 
 const rtl = computed(() => locale.value === 'ar')
 
-const LABEL_BAND = 132 // مساحة أسماء الفروع
-const VALUE_BAND = 60 // مساحة قيمة الطرف
-const BAR = 14 // ≤ 24px: القضيب لا يملأ خانته
+/**
+ * مقاسان: عادي للكمبيوتر، وكبير لما يتسع الرسم (شاشة التلفزيون) — النص
+ * بالبكسل الحقيقي داخل SVG، فلا يكبر وحده مع الشاشة.
+ */
+const wide = computed(() => width.value >= 720)
+const size = computed(() =>
+  wide.value
+    ? { label: 160, value: 88, bar: 18, rowPad: 26, name: 16, num: 14 }
+    : { label: 132, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
+)
 const GAP = 2 // فجوة بلون السطح بين القضبان المتلاصقة
-const ROW_PAD = 20
 const TOP = 8
 const X_BAND = 26
 
@@ -73,16 +79,18 @@ const maxValue = computed(() => {
 
 const top = computed(() => niceScale(maxValue.value, 3).top)
 
-const groupHeight = computed(
-  () => props.quarters.length * BAR + (props.quarters.length - 1) * GAP + ROW_PAD,
+/** ارتفاع مجموعة قضبان الفرع الواحد بدون الحشوة. */
+const stackHeight = computed(
+  () => props.quarters.length * size.value.bar + (props.quarters.length - 1) * GAP,
 )
+const groupHeight = computed(() => stackHeight.value + size.value.rowPad)
 
 const plot = computed(() => {
   const w = Math.max(width.value, 320)
   const h = TOP + teams.value.length * groupHeight.value + X_BAND
   // القضبان تنمو من جهة بداية القراءة، كما تفعل أشرطة التقدّم في اللوحة
-  const start = rtl.value ? w - LABEL_BAND : LABEL_BAND
-  const end = rtl.value ? VALUE_BAND : w - VALUE_BAND
+  const start = rtl.value ? w - size.value.label : size.value.label
+  const end = rtl.value ? size.value.value : w - size.value.value
   return { w, h, start, end, span: Math.abs(end - start) }
 })
 
@@ -92,17 +100,18 @@ function barLength(value: number) {
 
 function pathFor(value: number, y: number) {
   const length = barLength(value)
+  const bar = size.value.bar
   return rtl.value
-    ? barPath(plot.value.start - length, y, length, BAR, 4, true)
-    : barPath(plot.value.start, y, length, BAR, 4, false)
+    ? barPath(plot.value.start - length, y, length, bar, 4, true)
+    : barPath(plot.value.start, y, length, bar, 4, false)
 }
 
 function rowY(index: number) {
-  return TOP + index * groupHeight.value + ROW_PAD / 2
+  return TOP + index * groupHeight.value + size.value.rowPad / 2
 }
 
 function barY(rowIndex: number, seriesIndex: number) {
-  return rowY(rowIndex) + seriesIndex * (BAR + GAP)
+  return rowY(rowIndex) + seriesIndex * (size.value.bar + GAP)
 }
 
 /** طرف القضيب — موضع قيمة الربع الأخير. */
@@ -140,7 +149,13 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
         role="img"
         :aria-label="t('chart.compare')"
         class="block max-w-full"
+        style="direction: ltr"
       >
+        <!--
+          direction: ltr إلزامي: SVG يرث اتجاه الصفحة، وفي RTL ينقلب معنى
+          text-anchor فتُرسم الأسماء تحت القضبان وتُقصّ. الإحداثيات هنا
+          محسوبة يدوياً لكل اتجاه، والنص العربي يتشكّل صحيحاً في الحالتين.
+        -->
         <!-- خط الأساس: خط شعري صلب واحد -->
         <line
           :x1="plot.start"
@@ -156,9 +171,11 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
           <!-- اسم الفرع بلون النص لا بلون السلسلة -->
           <text
             :x="rtl ? plot.start + 12 : plot.start - 12"
-            :y="rowY(i) + (quarters.length * BAR + (quarters.length - 1) * GAP) / 2 + 4"
+            :y="rowY(i) + stackHeight / 2"
+            dominant-baseline="central"
             :text-anchor="rtl ? 'start' : 'end'"
-            class="fill-[var(--color-strong)] text-[12px] font-semibold"
+            :font-size="size.name"
+            class="fill-[var(--color-strong)] font-semibold"
           >{{ team.name }}</text>
 
           <g v-for="(entry, j) in team.values" :key="entry.quarter">
@@ -168,10 +185,10 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
             />
             <!-- منطقة التقاط بارتفاع الخانة كاملة: أكبر من القضيب نفسه -->
             <rect
-              :x="rtl ? VALUE_BAND : plot.start"
+              :x="rtl ? size.value : plot.start"
               :y="barY(i, j) - GAP"
               :width="Math.max(plot.span, 0)"
-              :height="BAR + GAP * 2"
+              :height="size.bar + GAP * 2"
               fill="transparent"
               @pointerenter="hovered = { team: team.name, quarter: entry.quarter, value: entry.value }"
               @pointerleave="hovered = null"
@@ -183,9 +200,11 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
             <text
               v-if="entry.quarter === latestQuarter"
               :x="tipX(entry.value)"
-              :y="barY(i, j) + BAR - 2"
+              :y="barY(i, j) + size.bar / 2"
+              dominant-baseline="central"
               :text-anchor="rtl ? 'end' : 'start'"
-              class="fill-[var(--color-mute)] text-[11px] font-semibold tabular-nums"
+              :font-size="size.num"
+              class="fill-[var(--color-strong)] font-bold tabular-nums"
             >{{ compact(entry.value) }}</text>
           </g>
         </g>
