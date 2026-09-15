@@ -13,15 +13,33 @@ export interface TeamStanding {
   members: number
   pct: number
   rank: number
-  /** قيادة الفريق — مستشاران اختياريان، null لو الخانة فارغة. */
-  manager_id?: string | null
-  manager_name?: string | null
-  manager_name_ar?: string | null
-  manager_photo_url?: string | null
-  supervisor_id?: string | null
-  supervisor_name?: string | null
-  supervisor_name_ar?: string | null
-  supervisor_photo_url?: string | null
+  /** قيادة الفريق: المديرون ثم المشرفون، بترتيب إدخالهم. */
+  leads?: TeamLeadRow[] | null
+}
+
+export interface TeamLeadRow {
+  id: string
+  role: 'manager' | 'supervisor'
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+}
+
+/** صف من public.lb_team_contributions — مساهمة مستشار في فريق بعينه. */
+export interface TeamContribution {
+  team_id: string
+  team: string
+  team_ar: string | null
+  agent_id: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+  year: number
+  quarter: number
+  deals: number
+  target: number
+  pct: number
+  rank: number
 }
 
 /** صف من public.lb_agent_standings */

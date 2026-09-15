@@ -48,7 +48,9 @@
     "target": "Target",
     "ofTarget": "{pct}% of {target} EGP target",
     "manager": "Team manager",
-    "supervisor": "Team supervisor"
+    "supervisor": "Team supervisor",
+    "managers": "Team managers",
+    "supervisors": "Team supervisors"
   },
   "lock": {
     "title": "Everest Leaderboard",
@@ -239,11 +241,16 @@
     "passwordChanged": "Password changed successfully",
     "continueAnyway": "Continue anyway",
     "leads": "Team leadership",
-    "leadsHint": "Pick from the agents. The supervisor is optional — leave it empty if there isn't one.",
+    "leadsHint": "Pick from the agents — a team can have several managers and supervisors; supervisors are optional.",
     "manager": "Team manager",
     "supervisor": "Team supervisor",
-    "noLead": "— None —",
-    "leadsSame": "Manager and supervisor must be different people",
-    "otherTeams": "From other teams"
+    "managers": "Team managers",
+    "supervisors": "Team supervisors",
+    "addLead": "Add…",
+    "removeLead": "Remove {name}",
+    "noLeads": "Nobody yet",
+    "leadsSame": "The same person can't be both manager and supervisor of a team",
+    "otherTeams": "From other teams",
+    "transferHint": "Moving an agent to another team doesn't change their current team's numbers: sales so far and this quarter's target stay with it, and new sales count for the new team."
   }
 }

@@ -9,8 +9,9 @@ export interface AdminTeam {
   name_ar: string | null
   photo_url: string | null
   active: boolean
-  manager_agent_id: string | null
-  supervisor_agent_id: string | null
+  /** بترتيب الإدخال — الأول يظهر أولاً على البطاقة. */
+  manager_ids: string[]
+  supervisor_ids: string[]
 }
 
 export interface AdminAgent {
@@ -108,11 +109,11 @@ export function useAdminData() {
     if (error) fail(error)
 
     const teamId = (data as string | null) ?? team.id
-    if (teamId && ('manager_agent_id' in team || 'supervisor_agent_id' in team)) {
+    if (teamId && (team.manager_ids || team.supervisor_ids)) {
       const leads = await supabase.rpc('lb_admin_set_team_leads', {
         p_team_id: teamId,
-        p_manager_id: team.manager_agent_id ?? null,
-        p_supervisor_id: team.supervisor_agent_id ?? null,
+        p_manager_ids: team.manager_ids ?? [],
+        p_supervisor_ids: team.supervisor_ids ?? [],
       })
       if (leads.error) {
         await loadRoster()

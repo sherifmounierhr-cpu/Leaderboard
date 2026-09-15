@@ -6,7 +6,7 @@ import { compact, egp, percent } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
 import { useLocalName } from '@/composables/useLocalName'
 import { exportRows } from '@/lib/workbook'
-import type { AgentStanding, TeamStanding } from '@/lib/types'
+import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
 
 type ReportKind = 'exec' | 'branch' | 'agent' | 'hr'
 
@@ -22,6 +22,8 @@ const teamRows = ref<TeamStanding[]>([])
 const agentRows = ref<AgentStanding[]>([])
 /** كل أرباع السنة — يحتاجها تقرير المستشار الفردي. */
 const agentYearRows = ref<AgentStanding[]>([])
+/** مساهمة كل مستشار في كل فريق — أساس تقرير الفريق. */
+const contributions = ref<TeamContribution[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const busy = ref(false)
@@ -33,19 +35,23 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const [teamRes, agentRes, yearRes] = await Promise.all([
+    const [teamRes, agentRes, yearRes, contribRes] = await Promise.all([
       supabase.from('lb_team_standings').select('*')
         .eq('year', year.value).eq('quarter', quarter.value).order('rank'),
       supabase.from('lb_agent_standings').select('*')
         .eq('year', year.value).eq('quarter', quarter.value).order('rank'),
       supabase.from('lb_agent_standings').select('*').eq('year', year.value),
+      supabase.from('lb_team_contributions').select('*')
+        .eq('year', year.value).eq('quarter', quarter.value).order('rank'),
     ])
     if (teamRes.error) throw teamRes.error
     if (agentRes.error) throw agentRes.error
     if (yearRes.error) throw yearRes.error
+    if (contribRes.error) throw contribRes.error
     teamRows.value = (teamRes.data ?? []) as TeamStanding[]
     agentRows.value = (agentRes.data ?? []) as AgentStanding[]
     agentYearRows.value = (yearRes.data ?? []) as AgentStanding[]
+    contributions.value = (contribRes.data ?? []) as TeamContribution[]
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
@@ -86,8 +92,12 @@ const totals = computed(() => {
 })
 
 const branch = computed(() => teamRows.value.find((r) => r.name === branchName.value) ?? null)
-const branchAgents = computed(() =>
-  agentRows.value.filter((r) => r.team === branchName.value),
+/**
+ * من المساهمات لا من فريق المستشار الحالي: مستشار انتقل يبقى ظاهراً في تقرير
+ * فريقه القديم بما باعه له، فيتطابق الجدول مع إجمالي الفريق.
+ */
+const branchAgents = computed<AgentStanding[]>(() =>
+  contributions.value.filter((r) => r.team === branchName.value),
 )
 
 const agent = computed(() => agentRows.value.find((r) => r.name === agentName.value) ?? null)

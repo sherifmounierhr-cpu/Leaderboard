@@ -15,16 +15,21 @@ type Draft = {
   name_ar: string
   photo_url: string | null
   active: boolean
-  manager_agent_id: string
-  supervisor_agent_id: string
+  manager_ids: string[]
+  supervisor_ids: string[]
 }
+
+type Role = 'manager' | 'supervisor'
+const ROLES: Role[] = ['manager', 'supervisor']
+const idsKey = (role: Role): 'manager_ids' | 'supervisor_ids' =>
+  role === 'manager' ? 'manager_ids' : 'supervisor_ids'
 
 const editing = ref<Draft | null>(null)
 const saving = ref(false)
 const formError = ref<string | null>(null)
 
 function blank(): Draft {
-  return { id: null, name: '', name_ar: '', photo_url: null, active: true, manager_agent_id: '', supervisor_agent_id: '' }
+  return { id: null, name: '', name_ar: '', photo_url: null, active: true, manager_ids: [], supervisor_ids: [] }
 }
 
 function edit(team: AdminTeam) {
@@ -35,35 +40,54 @@ function edit(team: AdminTeam) {
     name_ar: team.name_ar ?? '',
     photo_url: team.photo_url,
     active: team.active,
-    manager_agent_id: team.manager_agent_id ?? '',
-    supervisor_agent_id: team.supervisor_agent_id ?? '',
+    manager_ids: [...(team.manager_ids ?? [])],
+    supervisor_ids: [...(team.supervisor_ids ?? [])],
   }
 }
 
-/** مستشارو الفريق أولاً — الغالب أن المدير منهم — ثم بقية الفرق. */
+const agentLabel = (id: string) => {
+  const a = agents.value.find((x) => x.id === id)
+  if (!a) return ''
+  const name = localName(a.name, a.name_ar)
+  return a.active ? name : `${name} (${t('admin.inactive')})`
+}
+
+/**
+ * مستشارو الفريق أولاً — الغالب أن القيادة منهم — ثم بقية الفرق. من اختير
+ * بأي دور في هذا الفريق يختفي من القائمتين: الشخص بدور واحد داخل الفريق.
+ */
 const leadOptions = computed(() => {
+  const draft = editing.value
   const collator = new Intl.Collator(locale.value)
-  const teamId = editing.value?.id
-  const toOption = (a: (typeof agents.value)[number]) => ({
-    id: a.id,
-    label: a.active ? localName(a.name, a.name_ar) : `${localName(a.name, a.name_ar)} (${t('admin.inactive')})`,
-  })
-  const sort = (x: { label: string }, y: { label: string }) => collator.compare(x.label, y.label)
-  return {
-    own: agents.value.filter((a) => teamId && a.team_id === teamId).map(toOption).sort(sort),
-    other: agents.value.filter((a) => !teamId || a.team_id !== teamId).map(toOption).sort(sort),
-  }
+  const taken = new Set([...(draft?.manager_ids ?? []), ...(draft?.supervisor_ids ?? [])])
+  const available = agents.value
+    .filter((a) => !taken.has(a.id))
+    .map((a) => ({ id: a.id, label: agentLabel(a.id), own: Boolean(draft?.id && a.team_id === draft.id) }))
+    .sort((x, y) => collator.compare(x.label, y.label))
+  return { own: available.filter((o) => o.own), other: available.filter((o) => !o.own) }
 })
 
-const agentName = (id: string | null) => {
-  const a = id ? agents.value.find((x) => x.id === id) : null
+function addLead(role: Role, event: Event) {
+  const select = event.target as HTMLSelectElement
+  if (editing.value && select.value) editing.value[idsKey(role)].push(select.value)
+  select.value = ''
+}
+
+function removeLead(role: Role, id: string) {
+  if (!editing.value) return
+  const key = idsKey(role)
+  editing.value[key] = editing.value[key].filter((x) => x !== id)
+}
+
+const agentName = (id: string) => {
+  const a = agents.value.find((x) => x.id === id)
   return a ? localName(a.name, a.name_ar) : ''
 }
 
 async function submit() {
   if (!editing.value) return
-  const { manager_agent_id: manager, supervisor_agent_id: supervisor } = editing.value
-  if (manager && manager === supervisor) {
+  const { manager_ids, supervisor_ids } = editing.value
+  if (manager_ids.some((id) => supervisor_ids.includes(id))) {
     formError.value = t('admin.leadsSame')
     return
   }
@@ -76,8 +100,8 @@ async function submit() {
       name_ar: editing.value.name_ar || null,
       photo_url: editing.value.photo_url,
       active: editing.value.active,
-      manager_agent_id: manager || null,
-      supervisor_agent_id: supervisor || null,
+      manager_ids,
+      supervisor_ids,
     })
     editing.value = null
   } catch (err) {
@@ -144,17 +168,32 @@ const FIELD =
       <fieldset class="m-0 flex flex-col gap-3 rounded-lg border border-card-border p-3 lg:p-4">
         <legend class="px-1 font-semibold text-strong text-sm">{{ t('admin.leads') }}</legend>
         <p class="m-0 text-caption text-mute">{{ t('admin.leadsHint') }}</p>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <label
-            v-for="field in (['manager_agent_id', 'supervisor_agent_id'] as const)"
-            :key="field"
-            class="flex flex-col gap-1.5"
-          >
-            <span class="font-semibold text-caption text-mute">
-              {{ field === 'manager_agent_id' ? t('admin.manager') : t('admin.supervisor') }}
-            </span>
-            <select v-model="editing[field]" :class="FIELD">
-              <option value="">{{ t('admin.noLead') }}</option>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div v-for="role in ROLES" :key="role" class="flex flex-col gap-2">
+            <span class="font-semibold text-caption text-mute">{{ t(`admin.${role}s`) }}</span>
+
+            <!-- المختارون كرقاقات قابلة للإزالة، بترتيب إضافتهم -->
+            <ul class="m-0 p-0 list-none flex flex-wrap gap-1.5 min-h-8 items-center">
+              <li
+                v-for="id in editing[idsKey(role)]"
+                :key="id"
+                class="inline-flex items-center gap-1 rounded-full border border-accent/40 bg-accent/10 ps-3 pe-1 py-1 text-caption font-semibold text-strong"
+              >
+                {{ agentLabel(id) }}
+                <button
+                  type="button"
+                  class="inline-flex size-6 items-center justify-center rounded-full text-mute transition-colors hover:bg-down/10 hover:text-down"
+                  :aria-label="t('admin.removeLead', { name: agentLabel(id) })"
+                  @click="removeLead(role, id)"
+                >
+                  <iconify-icon icon="mdi:close" aria-hidden="true" />
+                </button>
+              </li>
+              <li v-if="!editing[idsKey(role)].length" class="text-caption text-dim">{{ t('admin.noLeads') }}</li>
+            </ul>
+
+            <select :class="FIELD" :aria-label="`${t('admin.addLead')} ${t(`admin.${role}`)}`" @change="addLead(role, $event)">
+              <option value="">{{ t('admin.addLead') }}</option>
               <optgroup v-if="leadOptions.own.length" :label="editing.name_ar || editing.name">
                 <option v-for="o in leadOptions.own" :key="o.id" :value="o.id">{{ o.label }}</option>
               </optgroup>
@@ -162,7 +201,7 @@ const FIELD =
                 <option v-for="o in leadOptions.other" :key="o.id" :value="o.id">{{ o.label }}</option>
               </optgroup>
             </select>
-          </label>
+          </div>
         </div>
       </fieldset>
 
@@ -206,10 +245,16 @@ const FIELD =
           <p class="m-0 text-caption text-mute truncate">
             {{ team.name }}<template v-if="!team.active"> · {{ t('admin.inactive') }}</template>
           </p>
-          <p v-if="team.manager_agent_id || team.supervisor_agent_id" class="m-0 mt-0.5 text-caption text-mute truncate">
-            <template v-if="team.manager_agent_id">{{ t('admin.manager') }}: <b class="font-semibold text-strong">{{ agentName(team.manager_agent_id) }}</b></template>
-            <template v-if="team.manager_agent_id && team.supervisor_agent_id"> · </template>
-            <template v-if="team.supervisor_agent_id">{{ t('admin.supervisor') }}: <b class="font-semibold text-strong">{{ agentName(team.supervisor_agent_id) }}</b></template>
+          <p v-if="team.manager_ids.length || team.supervisor_ids.length" class="m-0 mt-0.5 text-caption text-mute truncate">
+            <template v-if="team.manager_ids.length">
+              {{ t(team.manager_ids.length > 1 ? 'admin.managers' : 'admin.manager') }}:
+              <b class="font-semibold text-strong">{{ team.manager_ids.map(agentName).join('، ') }}</b>
+            </template>
+            <template v-if="team.manager_ids.length && team.supervisor_ids.length"> · </template>
+            <template v-if="team.supervisor_ids.length">
+              {{ t(team.supervisor_ids.length > 1 ? 'admin.supervisors' : 'admin.supervisor') }}:
+              <b class="font-semibold text-strong">{{ team.supervisor_ids.map(agentName).join('، ') }}</b>
+            </template>
           </p>
         </div>
 

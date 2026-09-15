@@ -143,6 +143,16 @@ const FIELD =
         </label>
       </div>
 
+      <!-- يظهر فقط عند نقل مستشار موجود: يطمئن أن أرقام فريقه القديم لن تتحرك -->
+      <p
+        v-if="editing.id && editing.team_id !== agents.find((a) => a.id === editing!.id)?.team_id"
+        role="note"
+        class="m-0 flex items-start gap-2 rounded-lg bg-accent/10 px-3 py-2 text-caption text-strong"
+      >
+        <iconify-icon icon="mdi:swap-horizontal" aria-hidden="true" class="mt-0.5 shrink-0 text-accent-text text-base" />
+        {{ t('admin.transferHint') }}
+      </p>
+
       <label class="flex items-center gap-2.5 text-sm font-semibold text-strong">
         <input v-model="editing.active" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
         {{ t('admin.active') }}
