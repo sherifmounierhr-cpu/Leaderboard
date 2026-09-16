@@ -45,8 +45,8 @@
   --text-metric: 1.875rem;
   --text-stat-3: clamp(1.75rem, 2.2vw, 2.1rem);
   --text-stat-3-lead: clamp(2rem, 2.6vw, 2.4rem);
-  --text-stat-2: clamp(2.4rem, min(4vw, 6.5vh), 3.6rem);
-  --text-stat-hero: clamp(3.75rem, min(6vw, 9.5vh), 5.5rem);
+  --text-stat-2: clamp(2rem, min(3.4vw, 5.4vh), 3.3rem);
+  --text-stat-hero: clamp(3rem, min(5.2vw, 7.8vh), 5rem);
 
   /* Motion */
   --animate-bar-grow: bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;

@@ -43,7 +43,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
 
 <template>
   <header
-    class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-header text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-16 lg:min-h-[clamp(104px,15.5vh,148px)]"
+    class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-header text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
   >
     <h1 class="sr-only">{{ t('brand') }} — {{ heading.title }}</h1>
 
@@ -51,7 +51,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
       <img
         src="/logo.png"
         :alt="t('brand')"
-        class="w-auto shrink-0 select-none h-8 sm:h-9 lg:h-[clamp(34px,5.2vh,46px)]"
+        class="w-auto shrink-0 select-none h-8 sm:h-9 lg:h-[clamp(30px,4.4vh,42px)]"
         draggable="false"
       />
       <div class="hidden md:block w-px h-9 bg-white/10 mx-1.5 lg:mx-2.5" />

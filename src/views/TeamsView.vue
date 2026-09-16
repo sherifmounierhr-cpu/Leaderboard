@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { compact, egp } from '@/lib/format'
+import { egp, millions } from '@/lib/format'
 import { useBoardData } from '@/composables/useBoardData'
 import Avatar from '@/components/Avatar.vue'
 import ProgressTrack from '@/components/ProgressTrack.vue'
@@ -19,7 +19,7 @@ const GRID =
 
 <template>
   <div
-    class="flex-1 flex flex-col justify-center gap-6 lg:gap-[clamp(16px,3vh,36px)] px-4 py-6 sm:px-8 lg:px-16 lg:py-[clamp(20px,4vh,44px)] min-h-0"
+    class="flex-1 flex flex-col justify-center gap-6 lg:gap-[clamp(12px,2.2vh,28px)] px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(14px,2.6vh,32px)] min-h-0"
   >
     <p class="sr-only" role="status" aria-live="polite">
       <template v-if="teams.length">
@@ -51,7 +51,7 @@ const GRID =
       </div>
 
       <!-- الديسكتوب: منصة التتويج ثم جدول -->
-      <div class="hidden md:flex md:flex-col lg:flex-1 gap-6 lg:gap-[clamp(16px,3vh,36px)] min-h-0">
+      <div class="hidden md:flex md:flex-col lg:flex-1 gap-6 lg:gap-[clamp(12px,2.2vh,28px)] min-h-0">
         <div class="grid grid-cols-[1fr_1.22fr_1fr] gap-5 lg:gap-7 items-end">
           <PodiumCard v-if="teams[1]" :team="teams[1]" :rank="2" />
           <div v-else aria-hidden="true" />
@@ -69,13 +69,13 @@ const GRID =
           <div role="rowgroup">
             <div
               role="row"
-              class="grid items-center py-5 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
+              class="grid items-center py-2.5 2xl:py-4 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
               :class="GRID"
             >
               <span role="columnheader">{{ t('table.rank') }}</span>
               <span role="columnheader">{{ t('table.team') }}</span>
               <span role="columnheader" class="text-center">{{ t('table.members') }}</span>
-              <span role="columnheader" class="text-center">{{ t('table.sales') }}</span>
+              <span role="columnheader" class="text-center">{{ t('table.salesM') }}</span>
               <span role="columnheader">{{ t('table.progress') }}</span>
             </div>
           </div>
@@ -90,7 +90,7 @@ const GRID =
               v-for="(team, i) in teams.slice(3)"
               :key="team.id"
               role="row"
-              class="grid items-center flex-1 min-h-[4.5rem] border-b border-divider last:border-b-0 transition-colors duration-150 hover:bg-accent/[0.04]"
+              class="grid items-center flex-1 min-h-[clamp(2.75rem,6vh,4.5rem)] border-b border-divider last:border-b-0 transition-colors duration-150 hover:bg-accent/[0.04]"
               :class="[GRID, i % 2 === 0 ? 'bg-card-alt' : '']"
             >
               <span
@@ -100,7 +100,7 @@ const GRID =
               >{{ i + 4 }}</span>
 
               <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
-                <Avatar :entity="team" kind="team" class="size-14 2xl:size-[66px] rounded-xl 2xl:rounded-2xl shrink-0" />
+                <Avatar :entity="team" kind="team" class="size-10 2xl:size-[clamp(48px,5.6vh,66px)] rounded-xl 2xl:rounded-2xl shrink-0" />
                 <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ team.name }}</span>
                 <RankDelta :delta="teamDeltas.get(team.id) || 0" class="shrink-0 text-sm 2xl:text-base" />
               </div>
@@ -116,7 +116,7 @@ const GRID =
                 :aria-label="t('a11y.salesAmount', { amount: egp(team.deals) })"
                 :title="egp(team.deals)"
                 class="text-center font-bold tracking-[-0.01em] tabular-nums text-strong text-stat-3"
-              >{{ compact(team.deals) }}</span>
+              >{{ millions(team.deals) }}</span>
 
               <div
                 role="cell"

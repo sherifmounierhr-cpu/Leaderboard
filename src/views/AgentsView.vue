@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compact, egp } from '@/lib/format'
+import { compact, egp, millions } from '@/lib/format'
 import { useBoardData } from '@/composables/useBoardData'
 import { isKiosk } from '@/composables/useSettings'
 import Avatar from '@/components/Avatar.vue'
@@ -49,7 +49,7 @@ const GRID =
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col px-4 py-6 sm:px-8 lg:px-16 lg:py-11 min-h-0 gap-4">
+  <div class="flex-1 flex flex-col px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(16px,3vh,44px)] min-h-0 gap-4">
     <p class="sr-only" role="status" aria-live="polite">
       <template v-if="agents.length">
         {{ t('a11y.topAgent', { name: agents[0].name, amount: egp(agents[0].deals) }) }}
@@ -177,8 +177,8 @@ const GRID =
           <span role="columnheader">{{ t('table.rank') }}</span>
           <span role="columnheader">{{ t('table.agent') }}</span>
           <span role="columnheader">{{ t('table.team') }}</span>
-          <span role="columnheader" class="text-center">{{ t('table.sales') }}</span>
-          <span role="columnheader" class="text-center">{{ t('table.target') }}</span>
+          <span role="columnheader" class="text-center">{{ t('table.salesM') }}</span>
+          <span role="columnheader" class="text-center">{{ t('table.targetM') }}</span>
           <span role="columnheader">{{ t('table.progressShort') }}</span>
         </div>
       </div>
@@ -188,7 +188,7 @@ const GRID =
           v-for="{ agent, rank } in listed"
           :key="agent.id"
           role="row"
-          class="grid items-center flex-1 min-h-[5.5rem] 2xl:min-h-[6.5rem] py-2 border-b border-divider last:border-b-0"
+          class="grid items-center flex-1 min-h-[clamp(3.75rem,7.5vh,5.5rem)] 2xl:min-h-[clamp(4rem,8.5vh,6.5rem)] py-2 border-b border-divider last:border-b-0"
           :class="[
             GRID,
             rank === 1
@@ -222,13 +222,13 @@ const GRID =
             :title="egp(agent.deals)"
             class="text-center font-bold tracking-[-0.01em] tabular-nums"
             :class="rank === 1 ? 'text-accent-text text-stat-3-lead' : 'text-strong text-stat-3'"
-          >{{ compact(agent.deals) }}</span>
+          >{{ millions(agent.deals) }}</span>
 
           <span
             role="cell"
             :title="egp(agent.target)"
             class="text-center font-medium tabular-nums text-mute text-lg 2xl:text-metric-sm"
-          >{{ compact(agent.target) }}</span>
+          >{{ millions(agent.target) }}</span>
 
           <div role="cell" class="flex items-center gap-2.5 2xl:gap-3.5">
             <ProgressTrack :pct="agent.pct" :soft="rank === 1" tall class="flex-1" />

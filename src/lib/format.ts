@@ -50,6 +50,18 @@ export function compact(value: unknown): string {
   return compactFormatter().format(Number(value) || 0)
 }
 
+/**
+ * بالمليون بدون كلمة الوحدة — للجداول، والوحدة في عنوان العمود.
+ * رقم عشري واحد، واثنين تحت المليون حتى لا يظهر 950 ألف كـ «0.9».
+ */
+export function millions(value: unknown): string {
+  const m = (Number(value) || 0) / 1_000_000
+  return new Intl.NumberFormat(LOCALE_TAG[activeLocale], {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: Math.abs(m) < 1 ? 2 : 1,
+  }).format(m)
+}
+
 /** المبلغ كاملاً مع العملة — يُستخدم في الـ tooltip وقارئ الشاشة. */
 export function egp(value: unknown): string {
   const n = fullFormatter().format(Number(value) || 0)

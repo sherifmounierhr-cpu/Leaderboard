@@ -31,7 +31,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 
 <template>
   <div
-    class="relative flex flex-col items-center gap-3.5 lg:gap-[clamp(8px,1.7vh,14px)] rounded-2xl border border-accent/70 bg-card px-6 pb-8 lg:pb-[clamp(16px,3vh,32px)] pt-0 lg:px-8 ring-1 ring-accent/15 shadow-[0_1px_2px_-1px_rgba(27,34,42,0.08),0_24px_50px_-28px_rgba(21,122,74,0.5)] animate-leader-pulse origin-bottom"
+    class="relative flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] rounded-2xl border border-accent/70 bg-card px-6 pb-8 lg:pb-[clamp(12px,2.4vh,28px)] pt-0 lg:px-8 ring-1 ring-accent/15 shadow-[0_1px_2px_-1px_rgba(27,34,42,0.08),0_24px_50px_-28px_rgba(21,122,74,0.5)] animate-leader-pulse origin-bottom"
   >
     <div
       class="flex items-center gap-2 rounded-b-lg bg-accent-strong px-6 py-2 font-semibold tracking-[0.12em] text-white text-xs lg:text-sm shadow-[0_5px_12px_-5px_rgba(15,99,56,0.6)]"
@@ -45,7 +45,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       :entity="entity"
       :kind="kind"
       class="size-24 rounded-3xl ring-2 ring-accent/80 text-3xl"
-      :class="entity.leads?.length ? 'lg:size-[clamp(64px,9.5vh,112px)]' : 'lg:size-[clamp(84px,13.5vh,136px)]'"
+      :class="entity.leads?.length ? 'lg:size-[clamp(56px,8vh,104px)]' : 'lg:size-[clamp(72px,11vh,128px)]'"
     />
 
     <div class="flex flex-col items-center gap-0.5 w-full">

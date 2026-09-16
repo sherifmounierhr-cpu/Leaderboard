@@ -40,7 +40,9 @@
     "sales": "Sales (EGP)",
     "target": "Target (EGP)",
     "progress": "Progress to target",
-    "progressShort": "Progress"
+    "progressShort": "Progress",
+    "salesM": "Sales (M)",
+    "targetM": "Target (M)"
   },
   "card": {
     "topTeam": "#1 TEAM",
@@ -319,5 +321,24 @@
       "demoNoClean": "The demo account is view-only — cleanup is for admins.",
       "year": "1 year"
     }
+  },
+  "kpi": {
+    "label": "Company quarter summary",
+    "total": "Quarter sales",
+    "of": "of {target}",
+    "achieved": "Achieved",
+    "daysLeft": "Days left",
+    "ofDays": "of {n} · {elapsed}% elapsed",
+    "ended": "Quarter ended",
+    "notStarted": "Not started",
+    "perDay": "Needed per day",
+    "perDayUnit": "EGP / day",
+    "reached": "Target reached 🎉",
+    "shortBy": "Short by {amount}"
+  },
+  "pace": {
+    "markerTitle": "Expected pace today: {pct}%",
+    "aheadBy": "{n} pts ahead of pace",
+    "behindBy": "{n} pts behind pace"
   }
 }

@@ -12,7 +12,7 @@ const { t } = useI18n()
 
 <template>
   <div
-    class="flex flex-col items-center gap-3.5 lg:gap-[clamp(8px,1.7vh,14px)] rounded-xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(14px,2.6vh,32px)] shadow-[var(--shadow-podium)]"
+    class="flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] rounded-xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(8px,1.6vh,28px)] shadow-[var(--shadow-podium)]"
   >
     <div class="font-semibold tracking-[0.02em] text-mute text-lg lg:text-metric-sm">
       <span class="text-dim">#</span>{{ rank }}
@@ -22,7 +22,7 @@ const { t } = useI18n()
       :entity="team"
       kind="team"
       class="size-20 rounded-2xl ring-1 ring-card-border text-2xl"
-      :class="team.leads?.length ? 'lg:size-[clamp(52px,8vh,88px)]' : 'lg:size-[clamp(66px,10.5vh,104px)]'"
+      :class="team.leads?.length ? 'lg:size-[clamp(48px,6.5vh,80px)]' : 'lg:size-[clamp(60px,9vh,96px)]'"
     />
 
     <div
