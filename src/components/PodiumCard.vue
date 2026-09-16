@@ -22,7 +22,7 @@ const medal = computed(() =>
 
 <template>
   <div
-    class="flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] rounded-xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(8px,1.6vh,28px)] shadow-[var(--shadow-podium)]"
+    class="flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 rounded-xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(8px,1.6vh,28px)] [@media(max-height:820px)]:py-2 shadow-[var(--shadow-podium)]"
   >
     <div
       class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-bold text-base lg:text-[clamp(15px,1.9vh,20px)]"
@@ -37,7 +37,7 @@ const medal = computed(() =>
       :entity="team"
       kind="team"
       class="size-20 rounded-2xl ring-2 text-2xl"
-      :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(48px,6.5vh,80px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
+      :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(40px,5.5vh,80px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
     />
 
     <div

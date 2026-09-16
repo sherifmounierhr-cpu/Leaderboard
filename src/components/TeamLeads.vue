@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{ leads?: TeamLead[]; size?: 'hero' | 'co
 
 const MAX_FACES = 3
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 const groups = computed(() =>
   (['manager', 'supervisor'] as const)
@@ -27,7 +27,7 @@ const groups = computed(() =>
         faces: people.slice(0, MAX_FACES),
         extra: Math.max(people.length - MAX_FACES, 0),
         label: t(people.length > 1 ? `card.${role}s` : `card.${role}`),
-        names: people.map((p) => p.name).join('، '),
+        names: people.map((p) => p.name).join(locale.value === 'ar' ? '، ' : ', '),
       }
     })
     .filter((g) => g.people.length),

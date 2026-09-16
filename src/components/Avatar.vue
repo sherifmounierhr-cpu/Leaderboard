@@ -8,7 +8,7 @@ const props = withDefaults(
   { kind: 'agent' },
 )
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 /**
  * الأحرف الأولى مرسومة دائماً تحت الصورة — فإن سقطت الصورة (شبكة، أو كتمها
@@ -30,7 +30,8 @@ const initials = computed(() =>
  * أي شعار حقيقي مرفوع يظهر كما هو.
  */
 const generated = computed(() => {
-  if (props.kind !== 'team' || !props.entity.photo.includes('ui-avatars.com')) return null
+  // بالإنجليزي الشعار المولَّد نفسه (CAP/CST/CAI) أوضح: الحرف الأول يتكرر (New Capital, New Cairo, North Coast)
+  if (props.kind !== 'team' || locale.value !== 'ar' || !props.entity.photo.includes('ui-avatars.com')) return null
   let color = '157a4a'
   try {
     color = new URL(props.entity.photo).searchParams.get('background')?.replace(/[^0-9a-f]/gi, '') || color

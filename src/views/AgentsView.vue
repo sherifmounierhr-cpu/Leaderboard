@@ -47,7 +47,7 @@ const listed = computed(() => (searching.value ? filtered.value : filtered.value
  * الحد الأدنى يتبع أكبر خط ممكن، والـ vw يكبر مع الشاشة مثل حجم الخط نفسه.
  */
 const GRID =
-  'grid-cols-[60px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[60px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
 
 <template>

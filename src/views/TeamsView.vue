@@ -70,7 +70,7 @@ const GRID =
           <div role="rowgroup">
             <div
               role="row"
-              class="grid items-center py-2.5 2xl:py-4 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
+              class="grid items-center py-2.5 2xl:py-4 [@media(max-height:820px)]:py-1.5 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
               :class="GRID"
             >
               <span role="columnheader">{{ t('table.rank') }}</span>
@@ -91,7 +91,7 @@ const GRID =
               v-for="(team, i) in teams.slice(3)"
               :key="team.id"
               role="row"
-              class="grid items-center flex-1 min-h-[clamp(2.75rem,6vh,4.5rem)] border-b border-divider last:border-b-0 transition-colors duration-150 hover:bg-accent/[0.04]"
+              class="grid items-center flex-1 min-h-[clamp(2.75rem,6vh,4.5rem)] [@media(max-height:820px)]:min-h-10 border-b border-divider last:border-b-0 transition-colors duration-150 hover:bg-accent/[0.04]"
               :class="[GRID, i % 2 === 0 ? 'bg-card-alt' : '']"
             >
               <span
