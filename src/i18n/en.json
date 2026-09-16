@@ -316,7 +316,8 @@
       "confirmNoBackup": "You have not downloaded a backup this session, and deletion is permanent. Continue without a backup?",
       "cleanDone": "Done: removed {events} notifications, {snapshots} snapshots, {sync} sync entries, {photos} photos.",
       "lastCleanup": "Last cleanup: {when}",
-      "demoNoClean": "The demo account is view-only — cleanup is for admins."
+      "demoNoClean": "The demo account is view-only — cleanup is for admins.",
+      "year": "1 year"
     }
   }
 }

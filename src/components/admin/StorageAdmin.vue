@@ -286,7 +286,7 @@ const FIELD =
             <select v-model.number="clean.eventsMonths" :class="FIELD" :disabled="!clean.events">
               <option :value="3">{{ t('admin.storage.months', { n: 3 }) }}</option>
               <option :value="6">{{ t('admin.storage.months', { n: 6 }) }}</option>
-              <option :value="12">{{ t('admin.storage.months', { n: 12 }) }}</option>
+              <option :value="12">{{ t('admin.storage.year') }}</option>
             </select>
             <span class="text-caption text-dim">({{ t('admin.storage.total', { n: count(table('sale_events')?.rows ?? 0) }) }})</span>
           </span>
