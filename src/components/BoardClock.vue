@@ -32,7 +32,8 @@ const date = computed(() => (locale.value, clockDate(now.value)))
       aria-hidden="true"
       class="text-accent-live text-base lg:text-lg shrink-0"
     />
-    <div class="flex flex-col leading-tight">
+    <!-- في المنتصف: السطران لا يتبدّل اتجاه محاذاتهما بين العربية والإنجليزية -->
+    <div class="flex flex-col items-center text-center leading-tight">
       <time class="font-bold tabular-nums text-base lg:text-lg" :datetime="now.toISOString()">
         {{ time }}
       </time>

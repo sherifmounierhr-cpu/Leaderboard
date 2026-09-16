@@ -4,14 +4,15 @@ import en from './en.json'
 import type { LocaleName } from '@/lib/types'
 import { setNumberLocale } from '@/lib/format'
 
-const STORAGE_KEY = 'everest.locale'
-
+/**
+ * الإنجليزية أول ما تفتح اللوحة، حتى على جهاز اختار العربية قبل كده —
+ * التبديل من الإعدادات يسري على الجلسة فقط. لتثبيت العربية على شاشة
+ * بعينها: ?lang=ar في الرابط.
+ */
 function initialLocale(): LocaleName {
   const fromQuery = new URLSearchParams(location.search).get('lang')
   if (fromQuery === 'ar' || fromQuery === 'en') return fromQuery
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'ar' || stored === 'en') return stored
-  return 'ar'
+  return 'en'
 }
 
 export const i18n = createI18n({
@@ -27,11 +28,6 @@ export function applyLocale(locale: LocaleName) {
   document.documentElement.lang = locale
   document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
   setNumberLocale(locale)
-  try {
-    localStorage.setItem(STORAGE_KEY, locale)
-  } catch {
-    /* وضع التصفح الخاص */
-  }
 }
 
 applyLocale(i18n.global.locale.value as LocaleName)
