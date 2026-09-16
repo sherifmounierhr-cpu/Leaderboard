@@ -11,6 +11,7 @@ import AgentsView from '@/views/AgentsView.vue'
 import InsightsView from '@/views/InsightsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 import KpiStrip from '@/components/KpiStrip.vue'
+import { settings } from '@/composables/useSettings'
 
 const { t } = useI18n()
 const { ready, isSignedIn } = useAuth()
@@ -43,6 +44,14 @@ const board = ref<HTMLElement | null>(null)
       :export-target="board"
       @fullscreen="toggleFullscreen"
     />
+    <!-- الوقت الباقي قبل الانتقال للشاشة التالية في التبديل التلقائي -->
+    <div v-if="settings.rotate" class="h-1 bg-header" aria-hidden="true" data-export-hide>
+      <div
+        :key="`${view}-${settings.rotateSeconds}`"
+        class="h-full bg-accent-live/80 animate-rotate-progress"
+        :style="{ animationDuration: `${settings.rotateSeconds}s` }"
+      />
+    </div>
     <main class="flex-1 flex flex-col min-h-0">
       <!-- ملخص الشركة فوق كل الشاشات، بنفس هوامش الشاشات -->
       <div class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import { useBoardData } from '@/composables/useBoardData'
 import { usePace } from '@/composables/usePace'
+import { useCountUp } from '@/composables/useCountUp'
 
 /**
  * «الصورة الكبيرة» للشركة في الربع المعروض: إجمالي مقابل المستهدف، الإيقاع،
@@ -20,6 +21,7 @@ const totals = computed(() => {
   return { deals, target, pct }
 })
 
+const shownDeals = useCountUp(computed(() => totals.value.deals))
 const status = computed(() => statusOf(totals.value.pct))
 const gap = computed(() => (expectedPct.value === null ? 0 : totals.value.pct - expectedPct.value))
 
@@ -47,7 +49,7 @@ const TONE = {
     <div class="flex flex-col justify-center gap-1 px-4 py-3 lg:px-6 lg:py-[clamp(6px,1vh,14px)] min-w-0">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.total') }}</span>
       <span class="flex items-baseline gap-2 min-w-0" :title="`${egp(totals.deals)} / ${egp(totals.target)}`">
-        <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none">{{ compact(totals.deals) }}</b>
+        <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none">{{ compact(shownDeals) }}</b>
         <span class="font-medium tabular-nums text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] truncate">
           {{ t('kpi.of', { target: compact(totals.target) }) }}
         </span>

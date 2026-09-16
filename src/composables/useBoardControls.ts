@@ -88,6 +88,8 @@ export function useBoardControls() {
   })
 
   watch(() => [settings.rotate, settings.rotateSeconds], restartRotation)
+  // تبديل يدوي يبدأ العدّ من الأول، فمؤشر التقدم يفضل مطابق للتبديل الفعلي
+  watch(view, () => { if (settings.rotate) restartRotation() })
 
   return {
     view,

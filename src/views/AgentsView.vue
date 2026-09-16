@@ -8,8 +8,9 @@ import Avatar from '@/components/Avatar.vue'
 import ProgressTrack from '@/components/ProgressTrack.vue'
 import RankDelta from '@/components/RankDelta.vue'
 import LeaderCard from '@/components/LeaderCard.vue'
+import BoardSkeleton from '@/components/BoardSkeleton.vue'
 
-const { agents, agentDeltas } = useBoardData()
+const { agents, agentDeltas, updatedAt } = useBoardData()
 const { t } = useI18n()
 
 const query = ref('')
@@ -212,7 +213,7 @@ const GRID =
               :class="rank === 1 ? 'size-14 2xl:size-[72px] ring-2 ring-accent/70' : 'size-14 2xl:size-[66px]'"
             />
             <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ agent.name }}</span>
-            <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-sm 2xl:text-base" />
+            <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
           </div>
 
           <span role="cell" class="font-medium truncate text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
@@ -243,7 +244,9 @@ const GRID =
       </div>
     </div>
 
-    <div v-if="!agents.length" class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">
+    <BoardSkeleton v-if="!agents.length && !updatedAt" />
+
+    <div v-else-if="!agents.length" class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">
       <iconify-icon icon="mdi:account-tie" aria-hidden="true" class="text-dim text-6xl" />
       <p class="m-0 font-semibold text-strong text-2xl">{{ t('empty.agentsTitle') }}</p>
       <p class="m-0 font-medium text-mute text-base max-w-sm">{{ t('empty.agentsBody') }}</p>

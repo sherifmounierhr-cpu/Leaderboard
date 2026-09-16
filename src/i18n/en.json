@@ -52,7 +52,9 @@
     "manager": "Team manager",
     "supervisor": "Team supervisor",
     "managers": "Team managers",
-    "supervisors": "Team supervisors"
+    "supervisors": "Team supervisors",
+    "place2": "2nd place",
+    "place3": "3rd place"
   },
   "lock": {
     "title": "Everest Leaderboard",

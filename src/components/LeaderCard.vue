@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useCountUp } from '@/composables/useCountUp'
 import { compact, egp } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
@@ -26,6 +27,7 @@ const props = withDefaults(
 
 const { t } = useI18n()
 const ribbon = computed(() => props.label ?? t('card.topTeam'))
+const deals = useCountUp(computed(() => props.entity.deals))
 const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'text-stat-2'))
 </script>
 
@@ -65,7 +67,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
         class="font-bold leading-[0.85] tracking-[-0.02em] tabular-nums text-accent-text"
         :class="statSize"
       >
-        {{ compact(entity.deals) }}
+        {{ compact(deals) }}
       </span>
       <span class="font-medium uppercase text-accent-text/65 tracking-[0.16em] text-sm lg:text-label">
         {{ t('card.sales') }}

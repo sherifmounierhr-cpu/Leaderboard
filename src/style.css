@@ -33,6 +33,8 @@
   /* Semantic */
   --color-gold: #c39a4b;
   --color-down: #cf4a41;
+  --color-silver: #7d8894;
+  --color-bronze: #a8683a;
 
   /* Typographic scale (يُكمل مقاييس Tailwind الافتراضية) */
   --text-eyebrow: 0.625rem;
@@ -111,6 +113,8 @@
   --color-dim: #6b7688;
   --color-avatar-text: #c7cdd6;
   --color-gold: #d8b768;
+  --color-silver: #b9c3cd;
+  --color-bronze: #d49a68;
 
   --shadow-panel: 0 1px 2px -1px #00000080, 0 16px 30px -18px #0009;
   --shadow-podium: 0 1px 2px -1px #00000080, 0 20px 36px -18px #000000a8;
@@ -125,6 +129,15 @@
 }
 [dir="ltr"] .animate-bar-grow { transform-origin: left center; }
 [dir="rtl"] .animate-bar-grow { transform-origin: right center; }
+
+@keyframes rotate-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.animate-rotate-progress { animation: rotate-progress linear both; }
+[dir="ltr"] .animate-rotate-progress { transform-origin: left center; }
+[dir="rtl"] .animate-rotate-progress { transform-origin: right center; }
+@media (prefers-reduced-motion: reduce) { .animate-rotate-progress { animation: none; } }
 
 @keyframes pulse-dot {
   0%, 100% { opacity: 1; }

@@ -24,6 +24,30 @@ const initials = computed(() =>
     .toUpperCase(),
 )
 
+/**
+ * شعار مولَّد من ui-avatars (حروف لاتينية على لون) مش شعار حقيقي: نرسم بداله
+ * شارة بحرف الاسم المعروض على نفس اللون، فتبقى عربية في الواجهة العربية.
+ * أي شعار حقيقي مرفوع يظهر كما هو.
+ */
+const generated = computed(() => {
+  if (props.kind !== 'team' || !props.entity.photo.includes('ui-avatars.com')) return null
+  let color = '157a4a'
+  try {
+    color = new URL(props.entity.photo).searchParams.get('background')?.replace(/[^0-9a-f]/gi, '') || color
+  } catch { /* رابط غير صالح — اللون الافتراضي */ }
+  return { color: `#${color}`, letter: monogram(props.entity.name) }
+})
+
+/** «العاصمة الإدارية» ← «ع»؛ اسم لاتيني قصير مثل F1 يبقى كما هو. */
+function monogram(name: string) {
+  const clean = name.trim()
+  if (/^[A-Za-z0-9]{1,3}$/.test(clean)) return clean.toUpperCase()
+  const first = clean.split(/\s+/)[0] ?? ''
+  const word = /^ال./.test(first) ? first.slice(2) : first
+  // الألف منفردة (إ/أ/ا) تشبه «!» أو «l» على الشاشة — نضيف الحرف التالي: «إس»
+  return (/^[اأإآ]/.test(word) ? word.slice(0, 2) : (word[0] ?? '')).toUpperCase()
+}
+
 const label = computed(() =>
   props.kind === 'team' ? t('a11y.logo', { name: props.entity.name }) : props.entity.name,
 )
@@ -35,17 +59,31 @@ const label = computed(() =>
     role="img"
     :aria-label="label"
   >
-    <span
-      aria-hidden="true"
-      class="font-bold text-avatar-text tracking-tight text-[0.9em] leading-none"
-    >{{ initials }}</span>
+    <template v-if="generated">
+      <span
+        aria-hidden="true"
+        class="absolute inset-0"
+        :style="{ background: `linear-gradient(145deg, color-mix(in oklab, ${generated.color} 78%, white), ${generated.color} 55%, color-mix(in oklab, ${generated.color} 70%, black))` }"
+      />
+      <span
+        aria-hidden="true"
+        class="relative font-extrabold text-white leading-none text-[1.35em] drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)]"
+      >{{ generated.letter }}</span>
+    </template>
 
-    <span
-      v-if="entity.photo"
-      aria-hidden="true"
-      data-avatar-photo
-      class="absolute inset-0 bg-cover bg-center"
-      :style="{ backgroundImage: `url('${entity.photo}')` }"
-    />
+    <template v-else>
+      <span
+        aria-hidden="true"
+        class="font-bold text-avatar-text tracking-tight text-[0.9em] leading-none"
+      >{{ initials }}</span>
+
+      <span
+        v-if="entity.photo"
+        aria-hidden="true"
+        data-avatar-photo
+        class="absolute inset-0 bg-cover bg-center"
+        :style="{ backgroundImage: `url('${entity.photo}')` }"
+      />
+    </template>
   </div>
 </template>

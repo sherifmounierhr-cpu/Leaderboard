@@ -8,8 +8,9 @@ import RankDelta from '@/components/RankDelta.vue'
 import LeaderCard from '@/components/LeaderCard.vue'
 import PodiumCard from '@/components/PodiumCard.vue'
 import TeamRow from '@/components/TeamRow.vue'
+import BoardSkeleton from '@/components/BoardSkeleton.vue'
 
-const { teams, teamDeltas } = useBoardData()
+const { teams, teamDeltas, updatedAt } = useBoardData()
 const { t } = useI18n()
 
 // عمود المبيعات بـ clamp لنفس سبب شاشة المستشارين: «مليون» بالعربية أعرض من «M»
@@ -102,7 +103,7 @@ const GRID =
               <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
                 <Avatar :entity="team" kind="team" class="size-10 2xl:size-[clamp(48px,5.6vh,66px)] rounded-xl 2xl:rounded-2xl shrink-0" />
                 <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ team.name }}</span>
-                <RankDelta :delta="teamDeltas.get(team.id) || 0" class="shrink-0 text-sm 2xl:text-base" />
+                <RankDelta :delta="teamDeltas.get(team.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
               </div>
 
               <span
@@ -133,6 +134,9 @@ const GRID =
         </div>
       </div>
     </template>
+
+    <!-- قبل أول تحميل ناجح: هيكل اللوحة، لا رسالة «لا توجد فرق» -->
+    <BoardSkeleton v-else-if="!updatedAt" podium />
 
     <div v-else class="flex-1 flex flex-col items-center justify-center text-center gap-4 py-16">
       <iconify-icon icon="mdi:office-building-outline" aria-hidden="true" class="text-dim text-6xl" />
