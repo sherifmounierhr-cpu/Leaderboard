@@ -27,7 +27,8 @@
   /* Text */
   --color-strong: #1b222a;
   --color-mute: #5b6472;
-  --color-dim: #9aa0a8;
+  /* كان #9aa0a8 (2.6:1 على الأبيض) — غُمّق ليُقرأ النص الصغير (4.6:1) */
+  --color-dim: #6f767f;
   --color-avatar-text: #5b6472;
 
   /* Semantic */
@@ -110,7 +111,7 @@
   --color-avatar: #333c47;
   --color-strong: #f3f5f7;
   --color-mute: #9aa3b2;
-  --color-dim: #6b7688;
+  --color-dim: #8590a2;
   --color-avatar-text: #c7cdd6;
   --color-gold: #d8b768;
   --color-silver: #b9c3cd;
@@ -187,6 +188,13 @@
 }
 
 /* انتقال تبديل الشاشة */
+.ticker-enter-active,
+.ticker-leave-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.ticker-enter-from { opacity: 0; transform: translateY(8px); }
+.ticker-leave-to { opacity: 0; transform: translateY(-8px); }
+
 .view-enter-active,
 .view-leave-active {
   transition: opacity 0.28s ease, transform 0.28s ease;

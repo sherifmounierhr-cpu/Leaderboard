@@ -11,6 +11,7 @@ import BoardClock from './BoardClock.vue'
 import SettingsMenu from './SettingsMenu.vue'
 import NotificationsMenu from './NotificationsMenu.vue'
 import ExportMenu from './ExportMenu.vue'
+import LatestDeals from './LatestDeals.vue'
 
 const props = defineProps<{
   view: BoardView
@@ -64,6 +65,15 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
         </p>
       </div>
     </div>
+
+    <!-- الكشك بلا جرس إشعارات: آخر الصفقات تتبدّل في المساحة الفاضية بالترويسة -->
+    <LatestDeals
+      v-if="isKiosk"
+      variant="ticker"
+      :limit="8"
+      class="hidden xl:flex flex-1 max-w-[42rem] mx-4"
+      data-export-hide
+    />
 
     <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end ms-auto">
       <!-- الفترة تبقى في التصدير: التقرير يجب أن يقول أي ربع يغطّي -->

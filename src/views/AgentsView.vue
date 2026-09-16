@@ -9,6 +9,7 @@ import ProgressTrack from '@/components/ProgressTrack.vue'
 import RankDelta from '@/components/RankDelta.vue'
 import LeaderCard from '@/components/LeaderCard.vue'
 import BoardSkeleton from '@/components/BoardSkeleton.vue'
+import LatestDeals from '@/components/LatestDeals.vue'
 
 const { agents, agentDeltas, updatedAt } = useBoardData()
 const { t } = useI18n()
@@ -46,7 +47,7 @@ const listed = computed(() => (searching.value ? filtered.value : filtered.value
  * الحد الأدنى يتبع أكبر خط ممكن، والـ vw يكبر مع الشاشة مثل حجم الخط نفسه.
  */
 const GRID =
-  'grid-cols-[60px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(84px,6vw,110px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(84px,6vw,110px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[60px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_1.7fr_1fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
 
 <template>
@@ -85,15 +86,17 @@ const GRID =
       v-if="filtered.length"
       class="flex-1 min-h-0 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(270px,330px)_1fr] lg:gap-6 2xl:grid-cols-[minmax(320px,400px)_1fr]"
     >
-      <LeaderCard
-        v-if="leader"
-        :entity="leader.agent"
-        kind="agent"
-        size="compact"
-        :label="t('spotlight.topAgent')"
-        :subtitle="leader.agent.team || undefined"
-        class="lg:self-start"
-      />
+      <div v-if="leader" class="flex flex-col gap-4 lg:gap-[clamp(10px,1.8vh,20px)] min-h-0">
+        <LeaderCard
+          :entity="leader.agent"
+          kind="agent"
+          size="compact"
+          :label="t('spotlight.topAgent')"
+          :subtitle="leader.agent.team || undefined"
+        />
+        <!-- كانت مساحة فاضية تحت بطاقة المتصدّر على الشاشات الكبيرة -->
+        <LatestDeals class="hidden lg:flex" :limit="5" />
+      </div>
 
       <div class="flex flex-col min-h-0">
     <!-- الموبايل -->
