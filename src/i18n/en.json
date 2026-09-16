@@ -251,6 +251,72 @@
     "noLeads": "Nobody yet",
     "leadsSame": "The same person can't be both manager and supervisor of a team",
     "otherTeams": "From other teams",
-    "transferHint": "Moving an agent to another team doesn't change their current team's numbers: sales so far and this quarter's target stay with it, and new sales count for the new team."
+    "transferHint": "Moving an agent to another team doesn't change their current team's numbers: sales so far and this quarter's target stay with it, and new sales count for the new team.",
+    "storage": {
+      "tab": "Storage",
+      "title": "Storage used",
+      "hint": "Supabase database and photo usage, plus the GitHub code repository. Warning at 70%, critical at 90%.",
+      "checked": "checked {when}",
+      "refresh": "Refresh",
+      "open": "Open storage page",
+      "never": "never",
+      "alert": {
+        "warn": "Storage use passed 70% — take a backup and free up space soon.",
+        "critical": "Storage almost full (over 90%) — back up and free space now to keep the board fast."
+      },
+      "suggestBackup": "Last backup: {when}. A monthly backup is recommended.",
+      "suggestCleanup": "After backing up, remove old notifications, snapshots and unused photos under “Free up space”.",
+      "meter": {
+        "db": "Database — Supabase",
+        "files": "Photos — Supabase",
+        "github": "Code repository — GitHub"
+      },
+      "meterHint": {
+        "db": "Numbers, notifications and daily snapshots. Free plan limit 500MB.",
+        "files": "Uploaded team and agent photos. Free plan limit 1GB.",
+        "github": "Code only; size is nearly constant. Recommended limit 1GB."
+      },
+      "githubUnavailable": "Could not read the repository size right now (GitHub rate limit). Try later.",
+      "breakdown": "What uses the space",
+      "col": {
+        "data": "Data",
+        "rows": "Records",
+        "size": "Size",
+        "oldest": "Oldest"
+      },
+      "table": {
+        "sale_events": "Notifications & shout-outs",
+        "snapshots": "Daily snapshots (charts & arrows)",
+        "sync_log": "Sync log",
+        "sales": "Sales & targets",
+        "photos": "Photos"
+      },
+      "backupTitle": "Viewable backup",
+      "backupHint": "A single HTML file that opens in any browser, offline and without sign-in: team and agent rankings per quarter, notification log, daily snapshots, and the full raw data inside.",
+      "lastBackup": "Last backup: {when}",
+      "backup": "Download backup",
+      "backingUp": "Collecting data…",
+      "backupDone": "Backup downloaded. Keep it somewhere safe (e.g. Google Drive).",
+      "excelToo": "Or download the year’s Excel file from “Import & export”",
+      "cleanTitle": "Free up space",
+      "cleanHint": "Deletes old supporting data only, to keep the board fast. Take a backup first.",
+      "cleanEvents": "Notifications & shout-outs older than",
+      "months": "{n} months",
+      "total": "{n} total",
+      "cleanSnapshots": "Daily snapshots",
+      "olderThanYear": "older than a year",
+      "pastQuarters": "all past quarters",
+      "snapshotsNote": "Trend charts and rank arrows for deleted quarters will no longer show.",
+      "cleanSync": "Sync log older than 30 days",
+      "cleanPhotos": "Unused photos",
+      "cleanSafe": "Sales, targets, teams and agents are never deleted, and current-quarter data is protected.",
+      "clean": "Free up space",
+      "cleaning": "Cleaning…",
+      "confirmCleanup": "The selected data will be permanently deleted. Continue?",
+      "confirmNoBackup": "You have not downloaded a backup this session, and deletion is permanent. Continue without a backup?",
+      "cleanDone": "Done: removed {events} notifications, {snapshots} snapshots, {sync} sync entries, {photos} photos.",
+      "lastCleanup": "Last cleanup: {when}",
+      "demoNoClean": "The demo account is view-only — cleanup is for admins."
+    }
   }
 }

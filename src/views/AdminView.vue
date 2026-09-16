@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useAdminData } from '@/composables/useAdminData'
@@ -10,14 +10,16 @@ import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
+import StorageAdmin from '@/components/admin/StorageAdmin.vue'
+import { useStorageHealth } from '@/composables/useStorageHealth'
 
 const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'celebrate' | 'agents' | 'teams' | 'reports' | 'data'
+type Tab = 'periods' | 'celebrate' | 'agents' | 'teams' | 'reports' | 'data' | 'storage'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'celebrate', 'agents', 'teams', 'reports', 'data']
+const tabs: Tab[] = ['periods', 'celebrate', 'agents', 'teams', 'reports', 'data', 'storage']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -34,8 +36,19 @@ async function onSignIn() {
 }
 
 // البيانات تُحمَّل بعد ثبوت صلاحية المسؤول، لا قبلها
-watch(canViewAdmin, (allowed) => { if (allowed) void reload() })
-onMounted(() => { if (canViewAdmin.value) void reload() })
+// مؤشر المساحة يبدأ معها، فالتحذير يظهر على أي تبويب مفتوح
+const { worst: storageWorst, start: startStorage, stop: stopStorage } = useStorageHealth()
+let watchingStorage = false
+function onAllowed() {
+  void reload()
+  if (!watchingStorage) {
+    watchingStorage = true
+    startStorage()
+  }
+}
+watch(canViewAdmin, (allowed) => { if (allowed) onAllowed() })
+onMounted(() => { if (canViewAdmin.value) onAllowed() })
+onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
 
 const FIELD =
   'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
@@ -150,6 +163,28 @@ const FIELD =
           </div>
         </div>
 
+        <!-- تحذير المساحة على كل التبويبات، لا في تبويب المساحة وحده -->
+        <div
+          v-if="storageWorst !== 'ok' && tab !== 'storage'"
+          role="alert"
+          data-export-hide
+          class="flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-strong"
+          :class="storageWorst === 'critical' ? 'border-down/50 bg-down/10' : 'border-gold/50 bg-gold/10'"
+        >
+          <iconify-icon
+            icon="mdi:alert-outline"
+            aria-hidden="true"
+            class="shrink-0 text-xl"
+            :class="storageWorst === 'critical' ? 'text-down' : 'text-gold'"
+          />
+          <p class="m-0 flex-1 font-semibold text-sm">{{ t(`admin.storage.alert.${storageWorst}`) }}</p>
+          <button
+            type="button"
+            class="rounded-lg bg-accent px-3 py-1.5 text-caption font-semibold text-white transition-colors hover:bg-accent-strong"
+            @click="tab = 'storage'"
+          >{{ t('admin.storage.open') }}</button>
+        </div>
+
         <div
           class="flex flex-wrap items-center gap-1 self-start rounded-lg border border-card-border bg-card p-1"
           role="tablist"
@@ -165,7 +200,7 @@ const FIELD =
             class="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
             :class="tab === name ? 'bg-accent text-white' : 'text-mute hover:text-strong'"
             @click="tab = name"
-          >{{ t(`admin.${name}`) }}</button>
+          >{{ t(name === 'storage' ? 'admin.storage.tab' : `admin.${name}`) }}</button>
         </div>
 
         <p v-if="loading" class="m-0 font-medium text-mute text-sm">{{ t('admin.loading') }}</p>
@@ -176,6 +211,7 @@ const FIELD =
         <AgentsAdmin v-else-if="tab === 'agents'" />
         <TeamsAdmin v-else-if="tab === 'teams'" />
         <ReportsAdmin v-else-if="tab === 'reports'" />
+        <StorageAdmin v-else-if="tab === 'storage'" @goto="tab = $event" />
         <DataTransfer v-else />
       </div>
     </main>
