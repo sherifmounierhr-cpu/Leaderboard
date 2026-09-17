@@ -109,11 +109,15 @@ async function onCleanup() {
     const res = data as { events: number; snapshots: number; sync_log: number }
 
     let photos = 0
-    const paths = usage.value?.files.orphan_paths ?? []
-    if (clean.value.photos && paths.length) {
-      const { data: removed, error: storageError } = await supabase.storage.from('avatars').remove(paths)
+    // الصور والصوتيات غير المستخدمة، كل واحدة من مخزنها
+    for (const [bucket, paths] of [
+      ['avatars', usage.value?.files.orphan_paths ?? []],
+      ['media', usage.value?.files.orphan_media_paths ?? []],
+    ] as const) {
+      if (!clean.value.photos || !paths.length) continue
+      const { data: removed, error: storageError } = await supabase.storage.from(bucket).remove([...paths])
       if (storageError) throw new Error(storageError.message)
-      photos = removed?.length ?? 0
+      photos += removed?.length ?? 0
     }
 
     cleanResult.value = t('admin.storage.cleanDone', {

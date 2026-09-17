@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAdminData } from '@/composables/useAdminData'
 import { useCelebrate } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
+import { useBoardMedia } from '@/composables/useBoardMedia'
 
 const NOTE_MAX = 140
 
@@ -11,6 +12,14 @@ const { t, locale } = useI18n()
 const localName = useLocalName()
 const { agents } = useAdminData()
 const { celebrate } = useCelebrate()
+const { songs, settings, byId } = useBoardMedia()
+
+/** 'default' = أغنية الإعدادات · 'none' = بدون صوت · غير كده = معرّف أغنية */
+const songChoice = ref<string>('default')
+/** null = مدة الإعدادات */
+const customSeconds = ref<number | null>(null)
+
+const defaultSongName = computed(() => byId.value.get(settings.value.celebration_song_id ?? '')?.name ?? null)
 
 const agentId = ref('')
 const note = ref('')
@@ -37,7 +46,11 @@ async function onSubmit() {
   sending.value = true
   message.value = null
   try {
-    await celebrate(agentId.value, note.value)
+    await celebrate(agentId.value, note.value, {
+      songId: songChoice.value === 'default' || songChoice.value === 'none' ? null : songChoice.value,
+      mute: songChoice.value === 'none',
+      seconds: customSeconds.value,
+    })
     const name = options.value.find((o) => o.id === agentId.value)?.label ?? ''
     note.value = ''
     message.value = { ok: true, text: t('admin.celebrateDone', { name }) }
@@ -54,7 +67,7 @@ const FIELD =
 
 <template>
   <form
-    class="flex max-w-xl flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]"
+    class="flex w-full flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]"
     @submit.prevent="onSubmit"
   >
     <div class="flex items-start gap-3">
@@ -88,6 +101,27 @@ const FIELD =
         :class="FIELD"
       />
     </label>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <label class="flex flex-col gap-1.5">
+        <span class="font-semibold text-caption text-mute">{{ t('screen.celebrationSong') }}</span>
+        <select v-model="songChoice" :class="FIELD">
+          <option value="default">
+            {{ defaultSongName ? t('screen.useDefaultSong', { name: defaultSongName }) : t('screen.useDefaultNone') }}
+          </option>
+          <option v-for="s in songs" :key="s.id" :value="s.id">{{ s.name }}</option>
+          <option value="none">{{ t('screen.noSong') }}</option>
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="font-semibold text-caption text-mute">{{ t('screen.duration') }}</span>
+        <select v-model="customSeconds" :class="FIELD">
+          <option :value="null">{{ t('screen.useDefaultDuration', { n: settings.celebration_seconds }) }}</option>
+          <option v-for="n in [5, 10, 15, 20, 30, 45, 60]" :key="n" :value="n">{{ t('screen.seconds', { n }) }}</option>
+        </select>
+      </label>
+    </div>
 
     <p
       v-if="message"

@@ -11,15 +11,20 @@ import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
+import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
+import MediaLibrary from '@/components/admin/MediaLibrary.vue'
+import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
+import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
+import SoundUnlock from '@/components/SoundUnlock.vue'
 import { useStorageHealth } from '@/composables/useStorageHealth'
 
 const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'celebrate' | 'agents' | 'teams' | 'reports' | 'data' | 'storage'
+type Tab = 'periods' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'storage'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'celebrate', 'agents', 'teams', 'reports', 'data', 'storage']
+const tabs: Tab[] = ['periods', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'storage']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -200,14 +205,22 @@ const FIELD =
             class="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
             :class="tab === name ? 'bg-accent text-white' : 'text-mute hover:text-strong'"
             @click="tab = name"
-          >{{ t(name === 'storage' ? 'admin.storage.tab' : `admin.${name}`) }}</button>
+          >{{ t(name === 'storage' ? 'admin.storage.tab' : name === 'messages' ? 'messages.tab' : `admin.${name}`) }}</button>
         </div>
 
         <p v-if="loading" class="m-0 font-medium text-mute text-sm">{{ t('admin.loading') }}</p>
         <p v-if="saveError" role="alert" class="m-0 font-medium text-down text-sm">{{ saveError }}</p>
 
         <PeriodsAdmin v-if="tab === 'periods'" />
-        <CelebrateAdmin v-else-if="tab === 'celebrate'" />
+        <!-- الاحتفال: التهنئة والإعدادات جنب مكتبة الصوت -->
+        <div v-else-if="tab === 'celebrate'" class="grid items-start gap-6 xl:grid-cols-2">
+          <div class="flex flex-col gap-6">
+            <CelebrateAdmin />
+            <CelebrationSettings />
+          </div>
+          <MediaLibrary />
+        </div>
+        <AnnouncementsAdmin v-else-if="tab === 'messages'" />
         <AgentsAdmin v-else-if="tab === 'agents'" />
         <TeamsAdmin v-else-if="tab === 'teams'" />
         <ReportsAdmin v-else-if="tab === 'reports'" />
@@ -215,5 +228,9 @@ const FIELD =
         <DataTransfer v-else />
       </div>
     </main>
+
+    <!-- معاينة الرسائل على هذه الشاشة فقط -->
+    <AnnouncementOverlay preview-only />
+    <SoundUnlock />
   </div>
 </template>

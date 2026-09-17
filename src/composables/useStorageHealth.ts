@@ -41,6 +41,8 @@ export interface StorageUsage {
     orphan_count: number
     orphan_bytes: number
     orphan_paths: string[]
+    orphan_media_paths?: string[]
+    audio_bytes?: number
   }
   tables: TableUsage[]
   last_backup: string | null

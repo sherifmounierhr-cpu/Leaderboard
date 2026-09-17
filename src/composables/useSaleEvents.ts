@@ -66,7 +66,13 @@ function markAllRead() {
 }
 
 function normalize(row: SaleEventRow): SaleEventRow {
-  return { ...row, amount_egp: Number(row.amount_egp) || 0, total_egp: Number(row.total_egp) || 0 }
+  return {
+    ...row,
+    amount_egp: Number(row.amount_egp) || 0,
+    total_egp: Number(row.total_egp) || 0,
+    mute: Boolean(row.mute),
+    duration_s: row.duration_s === null || row.duration_s === undefined ? null : Number(row.duration_s),
+  }
 }
 
 // ------------------------------------------------------------ celebrations
@@ -120,10 +126,21 @@ async function load() {
 }
 
 /** تهنئة يدوية تظهر على كل الشاشات المفتوحة — المسؤولون فقط (يتحقق الخادم). */
-async function celebrate(agentId: string, note: string) {
+export interface CelebrateOptions {
+  /** null = الأغنية الافتراضية */
+  songId?: string | null
+  mute?: boolean
+  /** null = مدة الإعدادات */
+  seconds?: number | null
+}
+
+async function celebrate(agentId: string, note: string, options: CelebrateOptions = {}) {
   const { error } = await supabase.rpc('lb_admin_celebrate', {
     p_agent_id: agentId,
     p_note: note.trim() || null,
+    p_song_id: options.songId ?? null,
+    p_mute: options.mute ?? false,
+    p_seconds: options.seconds ?? null,
   })
   if (error) throw new Error(error.message)
 }

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, drivePhotoUrl, egp } from '@/lib/format'
 import { useBoardData, type BoardEntity } from '@/composables/useBoardData'
 import { useSaleEvents } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
+import { useBoardMedia } from '@/composables/useBoardMedia'
+import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import Avatar from './Avatar.vue'
 
-/** مدة عرض كل احتفال قبل الانتقال للتالي في الطابور. */
-const HOLD_MS = 8000
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
 const PIECES = 64
 
@@ -16,6 +16,8 @@ const { t } = useI18n()
 const localName = useLocalName()
 const { agents, year, quarter } = useBoardData()
 const { celebrations, dismissCelebration } = useSaleEvents()
+const { settings, urlOf } = useBoardMedia()
+const { play, stop } = useAudioPlayer()
 
 const current = computed(() => celebrations.value[0] ?? null)
 const isManual = computed(() => current.value?.event.kind === 'manual')
@@ -55,8 +57,23 @@ const headline = computed(() => {
 })
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape' && current.value) dismissCelebration()
+  if (event.key === 'Escape' && current.value) close()
 }
+
+function close() {
+  stop()
+  dismissCelebration()
+}
+
+/** مدة الاحتفال: الخاصة بالتهنئة لو اتحددت، وإلا مدة الإعدادات. */
+const holdSeconds = computed(() => current.value?.event.duration_s ?? settings.value.celebration_seconds)
+
+/** الأغنية: المختارة للتهنئة، وإلا الافتراضية — إلا لو «بدون صوت». */
+const songUrl = computed(() => {
+  const e = current.value?.event
+  if (!e || e.mute) return null
+  return urlOf(e.song_id) ?? urlOf(settings.value.celebration_song_id)
+})
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
@@ -83,23 +100,41 @@ const pieces = computed(() => {
 })
 
 let timer: ReturnType<typeof setTimeout> | null = null
+const startedAt = ref(0)
+const now = ref(Date.now())
+let clock: ReturnType<typeof setInterval> | null = null
 
 function clear() {
   if (timer) clearTimeout(timer)
   timer = null
 }
 
-// كل احتفال يبدأ مؤقّته الخاص
+// كل احتفال يبدأ مؤقّته وأغنيته
 watch(
   () => current.value?.key,
   (key) => {
     clear()
-    if (key) timer = setTimeout(dismissCelebration, HOLD_MS)
+    stop()
+    if (!key) return
+    startedAt.value = Date.now()
+    timer = setTimeout(close, holdSeconds.value * 1000)
+    if (songUrl.value) void play(songUrl.value, settings.value.volume, holdSeconds.value)
   },
   { immediate: true },
 )
 
-onBeforeUnmount(clear)
+/** الوقت الباقي كشريط تحت البطاقة. */
+const progress = computed(() => {
+  if (!current.value) return 0
+  return Math.min(100, ((now.value - startedAt.value) / (holdSeconds.value * 1000)) * 100)
+})
+
+onMounted(() => { clock = setInterval(() => { now.value = Date.now() }, 200) })
+onBeforeUnmount(() => {
+  clear()
+  stop()
+  if (clock) clearInterval(clock)
+})
 </script>
 
 <template>
@@ -110,7 +145,7 @@ onBeforeUnmount(clear)
       v-if="current && agent"
       data-export-hide
       class="fixed inset-0 z-[60] flex cursor-pointer items-center justify-center overflow-hidden bg-header/80 px-5 backdrop-blur-sm"
-      @click="dismissCelebration"
+      @click="close"
     >
       <p class="sr-only" role="status" aria-live="polite">
         {{
@@ -211,6 +246,10 @@ onBeforeUnmount(clear)
           </span>
           <span v-if="rank > 0" class="font-bold tabular-nums text-strong">{{ t('celebrate.rank', { n: rank }) }}</span>
         </div>
+      </div>
+
+      <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
+        <div class="h-full bg-gold transition-[width] duration-200 ease-linear" :style="{ width: `${progress}%` }" />
       </div>
     </div>
   </Transition>

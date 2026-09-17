@@ -88,6 +88,49 @@ export interface SaleEventRow {
   photo_url: string | null
   team: string | null
   team_ar: string | null
+  /** أغنية مختارة للتهنئة اليدوية؛ null = الأغنية الافتراضية. */
+  song_id: string | null
+  mute: boolean
+  /** مدة خاصة بالثواني؛ null = مدة الإعدادات. */
+  duration_s: number | null
+}
+
+/** صف من public.lb_media_files */
+export interface MediaFile {
+  id: string
+  /** song: أغنية احتفال · clip: مقطع قصير للرسائل */
+  kind: 'song' | 'clip'
+  name: string
+  path: string
+  duration_s: number | null
+  size_bytes: number
+  created_at: string
+}
+
+/** صف من public.lb_board_settings */
+export interface BoardSettings {
+  celebration_seconds: number
+  celebration_song_id: string | null
+  volume: number
+}
+
+/** صف من public.lb_announcements */
+export interface Announcement {
+  id: string
+  style: 'welcome' | 'motivation'
+  title: string
+  body: string | null
+  duration_s: number
+  clip_id: string | null
+  schedule: 'once' | 'daily'
+  starts_at: string | null
+  /** HH:MM بتوقيت القاهرة */
+  daily_time: string | null
+  /** 0 = الأحد … 6 = السبت */
+  weekdays: number[]
+  active: boolean
+  created_at: string
+  updated_at: string
 }
 
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'

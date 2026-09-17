@@ -11,6 +11,8 @@ import AgentsView from '@/views/AgentsView.vue'
 import InsightsView from '@/views/InsightsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 import KpiStrip from '@/components/KpiStrip.vue'
+import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
+import SoundUnlock from '@/components/SoundUnlock.vue'
 import { settings } from '@/composables/useSettings'
 
 const { t } = useI18n()
@@ -65,5 +67,7 @@ const board = ref<HTMLElement | null>(null)
     </main>
 
     <CelebrationOverlay />
+    <AnnouncementOverlay />
+    <SoundUnlock />
   </div>
 </template>
