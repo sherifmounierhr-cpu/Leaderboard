@@ -37,7 +37,7 @@ const medal = computed(() =>
       :entity="team"
       kind="team"
       class="size-20 rounded-2xl ring-2 text-2xl"
-      :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(40px,5.5vh,80px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
+      :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(56px,8.6vh,104px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
     />
 
     <div

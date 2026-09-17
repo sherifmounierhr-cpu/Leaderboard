@@ -47,7 +47,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       :entity="entity"
       :kind="kind"
       class="size-24 rounded-3xl ring-2 ring-accent/80 text-3xl"
-      :class="entity.leads?.length ? 'lg:size-[clamp(44px,7vh,104px)]' : 'lg:size-[clamp(72px,11vh,128px)]'"
+      :class="entity.leads?.length ? 'lg:size-[clamp(72px,11.5vh,140px)]' : 'lg:size-[clamp(72px,11vh,128px)]'"
     />
 
     <div class="flex flex-col items-center gap-0.5 w-full">

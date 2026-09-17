@@ -40,7 +40,7 @@ const hero = computed(() => props.size === 'hero')
   <ul
     v-if="groups.length"
     class="m-0 p-0 list-none flex flex-wrap items-center justify-center w-full"
-    :class="hero ? 'gap-x-[clamp(16px,2.2vw,36px)] gap-y-2' : 'gap-x-[clamp(12px,1.5vw,24px)] gap-y-1.5'"
+    :class="hero ? 'gap-x-[clamp(12px,1.8vw,28px)] gap-y-1' : 'gap-x-[clamp(10px,1.3vw,20px)] gap-y-1'"
   >
     <li v-for="group in groups" :key="group.role" class="flex items-center gap-2 min-w-0 max-w-full">
       <!-- space-x في Tailwind 4 منطقي (margin-inline) فيتراكب صحيحاً في RTL بلا عكس -->
@@ -52,28 +52,28 @@ const hero = computed(() => props.size === 'hero')
           kind="agent"
           class="rounded-full ring-2 ring-card"
           :class="hero
-            ? 'size-10 lg:size-[clamp(34px,4.2vh,48px)] text-sm'
-            : 'size-9 lg:size-[clamp(28px,3.4vh,40px)] text-xs'"
+            ? 'size-8 lg:size-[clamp(26px,3.2vh,38px)] text-xs'
+            : 'size-7 lg:size-[clamp(22px,2.6vh,32px)] text-[11px]'"
           :title="person.name"
         />
         <span
           v-if="group.extra"
           class="relative flex items-center justify-center rounded-full bg-avatar ring-2 ring-card font-bold text-avatar-text tabular-nums"
           :class="hero
-            ? 'size-10 lg:size-[clamp(34px,4.2vh,48px)] text-xs lg:text-sm'
-            : 'size-9 lg:size-[clamp(28px,3.4vh,40px)] text-[11px] lg:text-xs'"
+            ? 'size-8 lg:size-[clamp(26px,3.2vh,38px)] text-[11px] lg:text-xs'
+            : 'size-7 lg:size-[clamp(22px,2.6vh,32px)] text-[10px] lg:text-[11px]'"
         >+{{ group.extra }}</span>
       </div>
       <div class="flex flex-col items-start min-w-0 leading-tight text-start">
         <span
           class="font-medium text-mute whitespace-nowrap"
-          :class="hero ? 'text-caption lg:text-[clamp(12px,1.4vh,16px)]' : 'text-[11px] lg:text-[clamp(11px,1.25vh,14px)]'"
+          :class="hero ? 'text-[11px] lg:text-[clamp(11px,1.2vh,14px)]' : 'text-[10px] lg:text-[clamp(10px,1.05vh,12px)]'"
         >{{ group.label }}</span>
         <span
           class="font-semibold text-strong truncate"
           :class="hero
-            ? 'max-w-[24ch] text-sm lg:text-[clamp(14px,1.8vh,20px)]'
-            : 'max-w-[18ch] text-caption lg:text-[clamp(13px,1.55vh,17px)]'"
+            ? 'max-w-[22ch] text-caption lg:text-[clamp(13px,1.5vh,17px)]'
+            : 'max-w-[16ch] text-[11px] lg:text-[clamp(11px,1.3vh,14px)]'"
           :title="group.names"
         >{{ group.names }}</span>
       </div>

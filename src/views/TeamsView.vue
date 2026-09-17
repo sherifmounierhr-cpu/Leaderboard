@@ -101,7 +101,7 @@ const GRID =
               >{{ i + 4 }}</span>
 
               <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
-                <Avatar :entity="team" kind="team" class="size-10 2xl:size-[clamp(48px,5.6vh,66px)] rounded-xl 2xl:rounded-2xl shrink-0" />
+                <Avatar :entity="team" kind="team" class="size-12 2xl:size-[clamp(56px,6.2vh,74px)] rounded-xl 2xl:rounded-2xl shrink-0" />
                 <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ team.name }}</span>
                 <RankDelta :delta="teamDeltas.get(team.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
               </div>
