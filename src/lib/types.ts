@@ -95,6 +95,24 @@ export interface SaleEventRow {
   duration_s: number | null
 }
 
+/** صف من public.lb_deals — صفقة واحدة بتاريخها ومبلغها */
+export interface DealRow {
+  id: string
+  agent_id: string
+  team_id: string | null
+  /** YYYY-MM-DD */
+  deal_date: string
+  amount_egp: number
+  year: number
+  quarter: number
+  created_at: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+  team: string | null
+  team_ar: string | null
+}
+
 /** صف من public.lb_media_files */
 export interface MediaFile {
   id: string

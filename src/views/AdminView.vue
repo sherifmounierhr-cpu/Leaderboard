@@ -6,6 +6,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import TeamsAdmin from '@/components/admin/TeamsAdmin.vue'
 import AgentsAdmin from '@/components/admin/AgentsAdmin.vue'
 import PeriodsAdmin from '@/components/admin/PeriodsAdmin.vue'
+import DealsAdmin from '@/components/admin/DealsAdmin.vue'
 import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
@@ -22,9 +23,9 @@ const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'storage'
+type Tab = 'periods' | 'deals' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'storage'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'storage']
+const tabs: Tab[] = ['periods', 'deals', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'storage']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -212,6 +213,7 @@ const FIELD =
         <p v-if="saveError" role="alert" class="m-0 font-medium text-down text-sm">{{ saveError }}</p>
 
         <PeriodsAdmin v-if="tab === 'periods'" />
+        <DealsAdmin v-else-if="tab === 'deals'" />
         <!-- الاحتفال: التهنئة والإعدادات جنب مكتبة الصوت -->
         <div v-else-if="tab === 'celebrate'" class="grid items-start gap-6 xl:grid-cols-2">
           <div class="flex flex-col gap-6">

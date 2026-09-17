@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { AgentStanding, RankHistoryPoint, SaleEventRow, TeamStanding } from '@/lib/types'
+import type { AgentStanding, DealRow, RankHistoryPoint, SaleEventRow, TeamStanding } from '@/lib/types'
 
 /**
  * نسخة احتياطية «قابلة للعرض»: ملف HTML واحد يفتح في أي متصفح بدون إنترنت
@@ -30,10 +30,11 @@ export interface BackupData {
   team_contributions: Record<string, unknown>[]
   sale_events: SaleEventRow[]
   rank_history: RankHistoryPoint[]
+  deals: DealRow[]
 }
 
 export async function collectBackup(): Promise<BackupData> {
-  const [teams, agents, team_standings, agent_standings, team_contributions, sale_events, rank_history] =
+  const [teams, agents, team_standings, agent_standings, team_contributions, sale_events, rank_history, deals] =
     await Promise.all([
       fetchAll<Record<string, unknown>>('lb_teams', 'name'),
       fetchAll<Record<string, unknown>>('lb_agents', 'name'),
@@ -42,10 +43,11 @@ export async function collectBackup(): Promise<BackupData> {
       fetchAll<Record<string, unknown>>('lb_team_contributions', 'year'),
       fetchAll<SaleEventRow>('lb_sale_events', 'id'),
       fetchAll<RankHistoryPoint>('lb_rank_history', 'taken_on'),
+      fetchAll<DealRow>('lb_deals', 'deal_date'),
     ])
   return {
     created_at: new Date().toISOString(),
-    teams, agents, team_standings, agent_standings, team_contributions, sale_events, rank_history,
+    teams, agents, team_standings, agent_standings, team_contributions, sale_events, rank_history, deals,
   }
 }
 
@@ -121,6 +123,17 @@ export function renderBackupHtml(d: BackupData): string {
     ]),
   )
 
+  const deals = table(
+    ['تاريخ الصفقة', 'المستشار', 'الفريق', 'المبلغ (ج.م)', 'الربع'],
+    [...d.deals].map((x) => [
+      esc(x.deal_date),
+      nameOf(x.name, x.name_ar),
+      nameOf(x.team, x.team_ar),
+      num(x.amount_egp),
+      `Q${x.quarter} ${x.year}`,
+    ]),
+  )
+
   const history = table(
     ['اليوم', 'النوع', 'الاسم', 'الربع', 'المبيعات (ج.م)', 'الترتيب'],
     d.rank_history.map((r) => [
@@ -177,15 +190,17 @@ export function renderBackupHtml(d: BackupData): string {
     <span>${d.teams.length} فريق</span>
     <span>${d.agents.length} مستشار</span>
     <span>${periods.length} ربع</span>
+    <span>${d.deals.length} صفقة</span>
     <span>${d.sale_events.length} إشعار</span>
     <span>${d.rank_history.length} لقطة يومية</span>
   </div>
 </header>
 <nav>
   ${periods.map(([y, q]) => `<a href="#q-${y}-${q}">Q${q} ${y}</a>`).join('')}
-  <a href="#events">الإشعارات</a><a href="#history">اللقطات اليومية</a>
+  <a href="#deals">الصفقات</a><a href="#events">الإشعارات</a><a href="#history">اللقطات اليومية</a>
 </nav>
 ${quarterSections.replace(/<section>\n  <h2>الربع (\d) — (\d+)<\/h2>/g, '<section id="q-$2-$1">\n  <h2>الربع $1 — $2</h2>')}
+<section id="deals"><h2>الصفقات المسجّلة</h2>${deals}</section>
 <section id="events"><h2>سجل الإشعارات والتهاني</h2>${events}</section>
 <section id="history"><details><summary>اللقطات اليومية للترتيب (${d.rank_history.length})</summary>${history}</details></section>
 <section><h2>البيانات الخام</h2><p class="meta">كل البيانات بصيغة JSON داخل هذا الملف (وسم backup-data) لاسترجاعها عند الحاجة.</p></section>

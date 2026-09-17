@@ -322,7 +322,8 @@
       "lastCleanup": "Last cleanup: {when}",
       "demoNoClean": "The demo account is view-only — cleanup is for admins.",
       "year": "1 year"
-    }
+    },
+    "deals": "Deals"
   },
   "kpi": {
     "label": "Company quarter summary",
@@ -430,5 +431,21 @@
     "workdays": "Sun–Thu",
     "everyDay": "Every day",
     "resend": "Send again now"
+  },
+  "deals": {
+    "title": "Deals",
+    "hint": "Log every deal with its date and amount. Each deal is added to the agent’s quarter total automatically.",
+    "date": "Deal date",
+    "amount": "Amount (EGP)",
+    "amountPlaceholder": "e.g. 1500000",
+    "add": "Add deal",
+    "celebrateNote": "A celebration appears on every screen right away when the deal is in the current quarter. A deal dated in an earlier quarter counts in its numbers without a celebration.",
+    "addedCelebrated": "Added a {amount} deal for {name} — {quarter} total is now {total}. The celebration is on the screens 🎉",
+    "addedQuiet": "Added a {amount} deal for {name} — {quarter} total is now {total}. (Earlier quarter, so no celebration)",
+    "confirmDelete": "Delete the {amount} deal for {name}? The amount will be removed from the quarter total.",
+    "deleted": "Deleted the {amount} deal for {name} and removed it from the total.",
+    "recent": "Recent deals",
+    "empty": "No deals logged yet.",
+    "tab": "Deals"
   }
 }
