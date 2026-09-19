@@ -95,6 +95,20 @@ export interface SaleEventRow {
   duration_s: number | null
 }
 
+/** صف من public.lb_devices — شاشة أو متصفح فاتح البرنامج */
+export interface DeviceRow {
+  id: string
+  label: string | null
+  user_email: string | null
+  user_agent: string | null
+  screen: string | null
+  view: string | null
+  kiosk: boolean
+  first_seen: string
+  last_seen: string
+  revoked_at: string | null
+}
+
 /** صف من public.lb_deals — صفقة واحدة بتاريخها ومبلغها */
 export interface DealRow {
   id: string

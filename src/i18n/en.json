@@ -447,5 +447,28 @@
     "recent": "Recent deals",
     "empty": "No deals logged yet.",
     "tab": "Deals"
+  },
+  "devices": {
+    "tab": "Devices",
+    "title": "Connected devices",
+    "hint": "Every screen or browser running the board checks in each minute. Disconnecting signs the device out at once and ends its session.",
+    "onlineCount": "{n} online",
+    "online": "Online now",
+    "lastSeen": "Last seen {when}",
+    "revokedStatus": "Disconnected",
+    "thisDevice": "This device",
+    "kiosk": "Kiosk",
+    "unknown": "Unnamed device",
+    "revoke": "Disconnect",
+    "restore": "Allow again",
+    "rename": "Rename device",
+    "renamePrompt": "Device name (e.g. Office screen):",
+    "confirmRevoke": "Disconnect “{name}”? It signs out immediately and needs a new sign-in.",
+    "confirmRevokeSelf": "This is the device you are using now. Disconnecting signs you out. Continue?",
+    "confirmDelete": "Delete the record for “{name}”? If the device is still open it will register again.",
+    "revoked": "“{name}” has been disconnected.",
+    "restored": "“{name}” can sign in again.",
+    "empty": "No devices yet. Open the board on any screen and it appears here within a minute.",
+    "demoHint": "The demo account is view-only — disconnecting is for admins."
   }
 }

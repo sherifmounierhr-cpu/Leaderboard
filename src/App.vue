@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useBoardControls } from '@/composables/useBoardControls'
@@ -14,11 +14,14 @@ import KpiStrip from '@/components/KpiStrip.vue'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import { settings } from '@/composables/useSettings'
+import { useDevice } from '@/composables/useDevice'
 
 const { t } = useI18n()
 const { ready, isSignedIn } = useAuth()
 const { view, settingsOpen, isFullscreen, toggleFullscreen } = useBoardControls()
 useWakeLock()
+// تسجيل الشاشة في صفحة الإدارة: مين متصل، ومنها يتقطع الاتصال
+watch(isSignedIn, (signed) => { if (signed) useDevice(() => view.value) }, { immediate: true })
 
 /** هدف التصدير: اللوحة كاملة بترويستها. */
 const board = ref<HTMLElement | null>(null)
