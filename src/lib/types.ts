@@ -186,7 +186,10 @@ export interface NewsItem {
   id: number
   title: string
   excerpt: string
+  /** أكبر مقاس متاح — للخبر الرئيسي وشاشة الخبر العاجل. */
   image: string | null
+  /** مقاس صغير للبطاقات الجانبية. */
+  thumb: string | null
   date: string
   slug: string
   url: string

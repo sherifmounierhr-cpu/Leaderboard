@@ -111,8 +111,8 @@ const updated = computed(() => (fetchedAt.value ? when(fetchedAt.value.toISOStri
               class="flex h-full items-center gap-3 lg:gap-4 overflow-hidden rounded-xl border border-card-border bg-card px-3 py-2.5 no-underline shadow-[var(--shadow-card)]"
             >
               <img
-                v-if="item.image && !broken.has(item.id)"
-                :src="item.image"
+                v-if="(item.thumb || item.image) && !broken.has(item.id)"
+                :src="item.thumb || item.image || ''"
                 alt=""
                 referrerpolicy="no-referrer"
                 class="h-full w-[clamp(84px,9vw,150px)] shrink-0 rounded-lg object-cover bg-avatar"

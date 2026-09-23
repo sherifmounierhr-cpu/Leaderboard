@@ -14,6 +14,7 @@ import KpiStrip from '@/components/KpiStrip.vue'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import NewsView from '@/views/NewsView.vue'
+import BreakingNewsOverlay from '@/components/BreakingNewsOverlay.vue'
 import { settings } from '@/composables/useSettings'
 import { useDevice } from '@/composables/useDevice'
 
@@ -59,8 +60,8 @@ const board = ref<HTMLElement | null>(null)
       />
     </div>
     <main class="flex-1 flex flex-col min-h-0">
-      <!-- ملخص الشركة فوق كل الشاشات، بنفس هوامش الشاشات -->
-      <div class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
+      <!-- ملخص الشركة فوق شاشات الأرقام؛ شاشة الأخبار ليها الشاشة كاملة -->
+      <div v-if="view !== 'news'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
         <KpiStrip />
       </div>
       <Transition name="view" mode="out-in">
@@ -72,6 +73,7 @@ const board = ref<HTMLElement | null>(null)
     </main>
 
     <CelebrationOverlay />
+    <BreakingNewsOverlay />
     <AnnouncementOverlay />
     <SoundUnlock />
   </div>

@@ -62,17 +62,54 @@ function safeUrl(raw: unknown): string | null {
   }
 }
 
-/** أصغر مقاس يكفي بطاقة الشاشة — «full» ممكن يكون عدة ميجابايت. */
-function pickImage(post: Record<string, any>): string | null {
+/**
+ * مقاسان لكل خبر: كبير للخبر الرئيسي وشاشة الخبر العاجل (بيملى شاشة 1920،
+ * فالمقاسات الصغيرة بتبان مبكسلة)، وصغير للبطاقات الجانبية.
+ *
+ * بنختار أعرض نسخة في حدود ميزانية حجم، لأن الأصل في ووردبريس أحياناً PNG
+ * بـ3 ميجا — الشاشة بتحمّل عشر صور فالفرق بيبان.
+ */
+const MAX_BIG_BYTES = 2_000_000
+const MIN_THUMB_WIDTH = 600
+
+interface Variant {
+  url: string
+  width: number
+  bytes: number
+}
+
+function variantsOf(media: Record<string, any>): Variant[] {
+  const details = media.media_details ?? {}
+  const sizes: Record<string, any> = details.sizes ?? {}
+  const origin = safeUrl(media.source_url)
+  // ووردبريس بيسيب filesize فاضي في مقاس "full"، وبيحطه على الأصل نفسه
+  const originBytes = Number(details.filesize) || 0
+  const list: Variant[] = []
+  for (const size of Object.values(sizes)) {
+    const url = safeUrl(size?.source_url)
+    if (!url) continue
+    const bytes = Number(size?.filesize) || (url === origin ? originBytes : 0)
+    list.push({ url, width: Number(size?.width) || 0, bytes })
+  }
+  if (origin && !list.some((v) => v.url === origin)) {
+    list.push({ url: origin, width: Number(details.width) || 0, bytes: originBytes })
+  }
+  return list.sort((a, b) => a.width - b.width)
+}
+
+function pickImage(post: Record<string, any>): { image: string | null; thumb: string | null } {
   const media = post?._embedded?.['wp:featuredmedia']
   const first = Array.isArray(media) ? media[0] : null
-  if (!first || first.code) return null
-  const sizes = first.media_details?.sizes ?? {}
-  for (const name of ['medium_large', 'medium', 'large', 'full']) {
-    const url = safeUrl(sizes[name]?.source_url)
-    if (url) return url
-  }
-  return safeUrl(first.source_url)
+  if (!first || first.code) return { image: null, thumb: null }
+
+  const all = variantsOf(first)
+  if (!all.length) return { image: null, thumb: null }
+
+  // حجم صفر يعني ووردبريس ما ذكرهوش، فبناخده على حسن النية
+  const affordable = all.filter((v) => !v.bytes || v.bytes <= MAX_BIG_BYTES)
+  const big = (affordable.length ? affordable : all).at(-1)
+  const small = all.find((v) => v.width >= MIN_THUMB_WIDTH) ?? all.at(-1)
+  return { image: big?.url ?? null, thumb: small?.url ?? null }
 }
 
 /** مقتطف ووردبريس بيبدأ بالعنوان مكرّراً — نشيله فيفضل الملخّص وحده. */
@@ -89,7 +126,7 @@ function toItem(post: Record<string, any>): NewsItem | null {
     id: Number(post.id) || 0,
     title,
     excerpt: clip(trimTitle(plainText(String(post?.excerpt?.rendered ?? '')), title), EXCERPT_MAX),
-    image: pickImage(post),
+    ...pickImage(post),
     date: String(post?.date_gmt ? `${post.date_gmt}Z` : post?.date ?? ''),
     slug,
     url: `${BLOG_BASE}${slug}/`,

@@ -477,6 +477,7 @@
   "news": {
     "label": "Market news",
     "empty": "No news right now",
-    "updated": "Updated {when}"
+    "updated": "Updated {when}",
+    "breaking": "Just in"
   }
 }

@@ -477,6 +477,7 @@
   "news": {
     "label": "أخبار السوق",
     "empty": "لا توجد أخبار حالياً",
-    "updated": "تحديث {when}"
+    "updated": "تحديث {when}",
+    "breaking": "خبر جديد"
   }
 }
