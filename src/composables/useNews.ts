@@ -1,15 +1,21 @@
 import { computed, ref } from 'vue'
 import type { NewsItem } from '@/lib/types'
+import { postsToNews } from '@/lib/news'
 
 /**
  * أخبار المدونة لشريط الشاشة. الجلب من `/api/news` — دالة على السيرفر تعمل
- * الطلب نيابة عن المتصفح (المدونة على نطاق تاني وما بتسمحش بـ CORS).
+ * الطلب نيابة عن المتصفح، فتتجنّب CORS وتبعت للشاشة نسخة منظّفة صغيرة.
+ *
+ * ولو الاستضافة ساكنة ومفيهاش دالة (GitHub Pages) بنرجع لجلب مباشر من
+ * المتصفح، لأن المدونة بتسمح بالقراءة من أي نطاق.
  *
  * تحديث كل 10 دقائق، ومع أي فشل بنفضل على آخر نسخة ناجحة: الشاشة معلّقة في
  * مكتب طول اليوم، فأسوأ من خبر قديم إن الشريط يفضى فجأة.
  */
 
 const ENDPOINT = '/api/news'
+/** المصدر المباشر، للاحتياطي وحده. */
+const SOURCE = 'https://dashboard.everest-realestate.net/wp-json/wp/v2/posts?per_page=10&_embed'
 const REFRESH_MS = 10 * 60_000
 const RETRY_MS = 60_000
 const CACHE_KEY = 'everest.news'
@@ -50,22 +56,45 @@ function writeCache(payload: CachedPayload) {
   }
 }
 
-async function load(): Promise<boolean> {
+/** المسار الطبيعي: دالة السيرفر. بترجّع null لو مش موجودة (استضافة ساكنة). */
+async function fromServer(): Promise<NewsItem[] | null> {
   try {
     const res = await fetch(ENDPOINT, { headers: { accept: 'application/json' } })
-    if (!res.ok) throw new Error(String(res.status))
-    const payload = (await res.json()) as { items?: NewsItem[]; fetchedAt?: string; stale?: boolean }
-    if (!Array.isArray(payload.items) || !payload.items.length) throw new Error('empty')
-    items.value = payload.items
-    fetchedAt.value = payload.fetchedAt ? new Date(payload.fetchedAt) : new Date()
-    stale.value = payload.stale === true
-    writeCache({ items: payload.items, fetchedAt: fetchedAt.value.toISOString() })
-    return true
+    if (!res.ok) return null
+    const payload = (await res.json()) as { items?: NewsItem[] }
+    return Array.isArray(payload.items) && payload.items.length ? payload.items : null
   } catch {
+    return null
+  }
+}
+
+/**
+ * احتياطي لاستضافة من غير سيرفر (GitHub Pages): نجيب من ووردبريس مباشرةً.
+ * ممكن لأن المدونة بترجّع `Access-Control-Allow-Origin: *` للقراءة العامة.
+ */
+async function fromWordPress(): Promise<NewsItem[] | null> {
+  try {
+    const res = await fetch(SOURCE, { headers: { accept: 'application/json' } })
+    if (!res.ok) return null
+    const list = postsToNews(await res.json())
+    return list.length ? list : null
+  } catch {
+    return null
+  }
+}
+
+async function load(): Promise<boolean> {
+  const fresh = (await fromServer()) ?? (await fromWordPress())
+  if (!fresh) {
     // الطلب فشل: بنسيب المعروض زي ما هو ونعلّمه قديم
     stale.value = true
     return false
   }
+  items.value = fresh
+  fetchedAt.value = new Date()
+  stale.value = false
+  writeCache({ items: fresh, fetchedAt: fetchedAt.value.toISOString() })
+  return true
 }
 
 function schedule(ms: number) {

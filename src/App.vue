@@ -13,7 +13,7 @@ import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 import KpiStrip from '@/components/KpiStrip.vue'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
-import NewsBar from '@/components/NewsBar.vue'
+import NewsView from '@/views/NewsView.vue'
 import { settings } from '@/composables/useSettings'
 import { useDevice } from '@/composables/useDevice'
 
@@ -66,12 +66,10 @@ const board = ref<HTMLElement | null>(null)
       <Transition name="view" mode="out-in">
         <TeamsView v-if="view === 'teams'" key="teams" class="flex-1 flex flex-col min-h-0" />
         <AgentsView v-else-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
-        <InsightsView v-else key="insights" class="flex-1 flex flex-col min-h-0" />
+        <InsightsView v-else-if="view === 'insights'" key="insights" class="flex-1 flex flex-col min-h-0" />
+        <NewsView v-else key="news" class="flex-1 flex flex-col min-h-0" />
       </Transition>
     </main>
-
-    <!-- أخبار السوق أسفل الشاشة — خارج <main> فلا تمسّ تخطيط الجداول -->
-    <NewsBar />
 
     <CelebrationOverlay />
     <AnnouncementOverlay />

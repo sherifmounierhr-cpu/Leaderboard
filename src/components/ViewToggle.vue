@@ -9,10 +9,15 @@ const emit = defineEmits<{ 'update:view': [BoardView] }>()
 
 const { t } = useI18n()
 
-const options: Array<{ value: BoardView; icon: string }> = [
+/**
+ * `compact` يخفي اسم التبويب على الشاشات الأضيق. تبويب الأخبار رابعٌ زائد،
+ * وبعرضه الكامل بيلفّ شريط الترويسة لسطرين على 1366 فيقصّ آخر صف في الجدول.
+ */
+const options: Array<{ value: BoardView; icon: string; compact?: boolean }> = [
   { value: 'teams', icon: 'mdi:office-building-outline' },
   { value: 'agents', icon: 'mdi:account-tie' },
   { value: 'insights', icon: 'mdi:chart-timeline-variant' },
+  { value: 'news', icon: 'mdi:newspaper-variant-outline', compact: true },
 ]
 
 const listEl = ref<HTMLElement | null>(null)
@@ -44,7 +49,7 @@ const { indicatorStyle, ready } = useIndicator(listEl, current)
       @click="emit('update:view', option.value)"
     >
       <iconify-icon :icon="option.icon" aria-hidden="true" class="text-base" />
-      <span class="hidden sm:inline">{{ t(`view.${option.value}`) }}</span>
+      <span :class="option.compact ? 'hidden 2xl:inline' : 'hidden sm:inline'">{{ t(`view.${option.value}`) }}</span>
     </button>
   </div>
 </template>

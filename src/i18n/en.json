@@ -6,7 +6,9 @@
     "agentsTitle": "Sales Agents Leaderboard",
     "agentsSub": "Ranked by total sales",
     "insightsTitle": "Insights",
-    "insightsSub": "Trend this quarter and quarter-over-quarter"
+    "insightsSub": "Trend this quarter and quarter-over-quarter",
+    "newsTitle": "Real-estate market news",
+    "newsSub": "Latest from the Everest blog"
   },
   "status": {
     "live": "LIVE",
@@ -19,7 +21,8 @@
     "teams": "Teams",
     "agents": "Agents",
     "toggle": "Switch view",
-    "insights": "Insights"
+    "insights": "Insights",
+    "news": "News"
   },
   "quarter": {
     "label": "Quarter",
@@ -473,6 +476,7 @@
   },
   "news": {
     "label": "Market news",
-    "empty": "No news right now"
+    "empty": "No news right now",
+    "updated": "Updated {when}"
   }
 }

@@ -1,12 +1,15 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { BoardView } from '@/lib/types'
 import { settings, useSettings } from './useSettings'
+import { useNews } from './useNews'
 
 const query = new URLSearchParams(location.search)
 const initialView = query.get('view')
 
 const view = ref<BoardView>(
-  initialView === 'agents' || initialView === 'insights' ? initialView : 'teams',
+  initialView === 'agents' || initialView === 'insights' || initialView === 'news'
+    ? initialView
+    : 'teams',
 )
 const settingsOpen = ref(false)
 const isFullscreen = ref(false)
@@ -19,9 +22,16 @@ let mounted = false
 export function useBoardControls() {
   const { toggleTheme, toggleLocale } = useSettings()
 
-  // التدوير التلقائي يمرّ على لوحتَي الصدارة فقط — شاشة التحليلات تُفتح يدوياً
+  const { hasNews } = useNews()
+
+  /**
+   * التدوير: الفرق ← المستشارون ← الأخبار. شاشة التحليلات تُفتح يدوياً كما
+   * كانت، وشاشة الأخبار تُتخطّى لو المصدر واقع فلا تظهر شاشة فاضية.
+   */
   function toggleView() {
-    view.value = view.value === 'teams' ? 'agents' : 'teams'
+    const cycle: BoardView[] = hasNews.value ? ['teams', 'agents', 'news'] : ['teams', 'agents']
+    const at = cycle.indexOf(view.value)
+    view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
   }
 
   let rotateTimer: ReturnType<typeof setInterval> | null = null

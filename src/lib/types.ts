@@ -166,7 +166,7 @@ export interface Announcement {
 }
 
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'
-export type BoardView = 'teams' | 'agents' | 'insights'
+export type BoardView = 'teams' | 'agents' | 'insights' | 'news'
 /** المظهر المطبَّق فعلياً على الصفحة. */
 export type ThemeName = 'daylight' | 'midnight'
 
