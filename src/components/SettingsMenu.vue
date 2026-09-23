@@ -143,6 +143,11 @@ const locales: LocaleName[] = ['ar', 'en']
         <input v-model="settings.keepAwake" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
       </label>
 
+      <label class="mb-3 flex items-center justify-between gap-3 text-sm font-semibold">
+        <span>{{ t('settings.chime') }}</span>
+        <input v-model="settings.chime" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
+      </label>
+
       <button
         type="button"
         class="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-card-border px-3 py-2 text-sm font-semibold text-mute transition-colors hover:text-strong"

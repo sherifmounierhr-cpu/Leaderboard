@@ -14,6 +14,8 @@ export const DAY_ENDS_AT = 18
 const THEME_TICK_MS = 60_000
 
 interface Settings {
+  /** نغمة التنبيه مع كل جديد على الشاشة. */
+  chime: boolean
   theme: ThemePreference
   rotate: boolean
   rotateSeconds: number
@@ -45,6 +47,7 @@ function initial(): Settings {
     rotate: qRotate === 'on' || qRotate === '1' ? true : (saved.rotate ?? false),
     rotateSeconds: Number(query.get('interval')) || saved.rotateSeconds || 15,
     keepAwake: saved.keepAwake ?? true,
+    chime: saved.chime ?? true,
     locale: (i18n.global.locale.value as LocaleName) ?? 'ar',
   }
 }

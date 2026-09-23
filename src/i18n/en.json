@@ -148,7 +148,8 @@
     "exitFullscreen": "Exit fullscreen",
     "language": "Language",
     "keepAwake": "Keep screen awake",
-    "shortcuts": "Shortcuts: T view · R rotate · F fullscreen · S settings · L language"
+    "shortcuts": "Shortcuts: T view · R rotate · F fullscreen · S settings · L language",
+    "chime": "Alert chime"
   },
   "search": {
     "placeholder": "Search agent or team",

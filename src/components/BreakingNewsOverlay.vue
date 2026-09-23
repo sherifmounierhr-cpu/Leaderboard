@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { relativeTime } from '@/lib/format'
 import { BREAKING_MS, useBreakingNews } from '@/composables/useBreakingNews'
 import { useSaleEvents } from '@/composables/useSaleEvents'
+import { chime } from '@/composables/useChime'
 
 /**
  * خبر جديد نزل على المدونة — يتعرض بملء الشاشة مرة واحدة لمدة 20 ثانية.
@@ -33,7 +34,11 @@ const remaining = computed(() => (shown.value ? Math.max(0, shown.value.endsAt -
 const progress = computed(() => Math.min(100, Math.max(0, 100 - (remaining.value / BREAKING_MS) * 100)))
 
 watch(remaining, (ms) => { if (shown.value && ms <= 0) dismiss() })
-watch(() => shown.value?.item.id, () => { broken.value = false })
+// immediate: الخبر ممكن يكون جاهز قبل ما المكوّن يركّب، فالـ watch العادي يفوته
+watch(() => shown.value?.item.id, (id) => {
+  broken.value = false
+  if (id) chime()
+}, { immediate: true })
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && shown.value) dismiss()

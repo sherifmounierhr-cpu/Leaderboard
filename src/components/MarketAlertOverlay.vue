@@ -5,6 +5,7 @@ import { ALERT_MS, useMarketAlerts } from '@/composables/useMarketAlerts'
 import { useBreakingNews } from '@/composables/useBreakingNews'
 import { useSaleEvents } from '@/composables/useSaleEvents'
 import Sparkline from './Sparkline.vue'
+import { chime } from '@/composables/useChime'
 
 /**
  * تنبيه حركة سعر بملء الشاشة. آخر واحد في الأولوية: الاحتفال بصفقة أولاً،
@@ -33,6 +34,8 @@ const remaining = computed(() => (shown.value ? Math.max(0, shown.value.endsAt -
 const progress = computed(() => Math.min(100, Math.max(0, 100 - (remaining.value / ALERT_MS) * 100)))
 
 watch(remaining, (ms) => { if (shown.value && ms <= 0) dismiss() })
+// immediate: نفس سبب الخبر العاجل — التنبيه ممكن يسبق تركيب المكوّن
+watch(() => shown.value?.quote.key, (key) => { if (key) chime() }, { immediate: true })
 
 function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && shown.value) dismiss()
