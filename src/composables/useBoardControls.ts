@@ -2,12 +2,13 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { BoardView } from '@/lib/types'
 import { settings, useSettings } from './useSettings'
 import { useNews } from './useNews'
+import { useMarkets } from './useMarkets'
 
 const query = new URLSearchParams(location.search)
 const initialView = query.get('view')
 
 const view = ref<BoardView>(
-  initialView === 'agents' || initialView === 'insights' || initialView === 'news'
+  initialView === 'agents' || initialView === 'insights' || initialView === 'news' || initialView === 'markets'
     ? initialView
     : 'teams',
 )
@@ -23,13 +24,16 @@ export function useBoardControls() {
   const { toggleTheme, toggleLocale } = useSettings()
 
   const { hasNews } = useNews()
+  const { hasQuotes } = useMarkets()
 
   /**
-   * التدوير: الفرق ← المستشارون ← الأخبار. شاشة التحليلات تُفتح يدوياً كما
-   * كانت، وشاشة الأخبار تُتخطّى لو المصدر واقع فلا تظهر شاشة فاضية.
+   * التدوير: الفرق ← المستشارون ← الأخبار ← الأسواق. شاشة التحليلات تُفتح
+   * يدوياً كما كانت، وأي شاشة مصدرها واقع تُتخطّى فلا تظهر شاشة فاضية.
    */
   function toggleView() {
-    const cycle: BoardView[] = hasNews.value ? ['teams', 'agents', 'news'] : ['teams', 'agents']
+    const cycle: BoardView[] = ['teams', 'agents']
+    if (hasNews.value) cycle.push('news')
+    if (hasQuotes.value) cycle.push('markets')
     const at = cycle.indexOf(view.value)
     view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
   }

@@ -166,7 +166,7 @@ export interface Announcement {
 }
 
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'
-export type BoardView = 'teams' | 'agents' | 'insights' | 'news'
+export type BoardView = 'teams' | 'agents' | 'insights' | 'news' | 'markets'
 /** المظهر المطبَّق فعلياً على الصفحة. */
 export type ThemeName = 'daylight' | 'midnight'
 
@@ -193,4 +193,18 @@ export interface NewsItem {
   date: string
   slug: string
   url: string
+}
+
+/** سعر من public /api/markets. */
+export interface MarketQuote {
+  key: string
+  symbol: string
+  group: string
+  currency: string
+  unit?: string
+  price: number
+  prev: number
+  changePct: number
+  /** إغلاقات آخر شهر، لخط الاتجاه الصغير. */
+  spark: number[]
 }

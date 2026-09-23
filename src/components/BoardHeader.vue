@@ -36,6 +36,8 @@ const heading = computed(() => {
       return { title: t('header.insightsTitle'), sub: t('header.insightsSub') }
     case 'news':
       return { title: t('header.newsTitle'), sub: t('header.newsSub') }
+    case 'markets':
+      return { title: t('header.marketsTitle'), sub: t('header.marketsSub') }
     default:
       return { title: t('header.teamsTitle'), sub: t('header.teamsSub') }
   }

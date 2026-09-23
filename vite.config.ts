@@ -4,32 +4,40 @@ import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 
 /**
- * على Vercel بيخدم /api/news من `api/news.ts` تلقائياً. خادم التطوير عنده
- * ما فيش دوال، فبنركّب نفس المنطق كوسيط عشان الشريط يشتغل محلياً بالظبط.
+ * على Vercel بتتخدم دوال `api/*.ts` تلقائياً. خادم التطوير عنده ما فيش دوال،
+ * فبنركّب نفس المنطق كوسيط عشان الشاشات تشتغل محلياً بالظبط.
  */
-function newsDevApi(): Plugin {
+const DEV_ROUTES = [
+  { path: '/api/news', module: '/api/news.ts', load: 'loadNews' },
+  { path: '/api/markets', module: '/api/markets.ts', load: 'loadMarkets' },
+] as const
+
+function apiDevRoutes(): Plugin {
   return {
-    name: 'everest-news-dev-api',
+    name: 'everest-api-dev-routes',
     apply: 'serve',
     configureServer(server) {
-      server.middlewares.use('/api/news', (_req, res) => {
-        void (async () => {
-          res.setHeader('content-type', 'application/json; charset=utf-8')
-          res.setHeader('cache-control', 'no-store')
-          try {
-            const { loadNews } = (await server.ssrLoadModule('/api/news.ts')) as typeof import('./api/news')
-            res.end(JSON.stringify(await loadNews()))
-          } catch (err) {
-            res.statusCode = 502
-            res.end(JSON.stringify({
-              items: [],
-              fetchedAt: new Date().toISOString(),
-              stale: true,
-              error: err instanceof Error ? err.message : 'news unavailable',
-            }))
-          }
-        })()
-      })
+      for (const route of DEV_ROUTES) {
+        server.middlewares.use(route.path, (_req, res) => {
+          void (async () => {
+            res.setHeader('content-type', 'application/json; charset=utf-8')
+            res.setHeader('cache-control', 'no-store')
+            try {
+              const mod = (await server.ssrLoadModule(route.module)) as Record<string, () => Promise<unknown>>
+              res.end(JSON.stringify(await mod[route.load]()))
+            } catch (err) {
+              res.statusCode = 502
+              res.end(JSON.stringify({
+                items: [],
+                quotes: [],
+                fetchedAt: new Date().toISOString(),
+                stale: true,
+                error: err instanceof Error ? err.message : 'unavailable',
+              }))
+            }
+          })()
+        })
+      }
     },
   }
 }
@@ -47,7 +55,7 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
-    newsDevApi(),
+    apiDevRoutes(),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

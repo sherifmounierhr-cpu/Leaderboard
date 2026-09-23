@@ -15,6 +15,8 @@ import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import NewsView from '@/views/NewsView.vue'
 import BreakingNewsOverlay from '@/components/BreakingNewsOverlay.vue'
+import MarketsView from '@/views/MarketsView.vue'
+import MarketAlertOverlay from '@/components/MarketAlertOverlay.vue'
 import { settings } from '@/composables/useSettings'
 import { useDevice } from '@/composables/useDevice'
 
@@ -61,19 +63,21 @@ const board = ref<HTMLElement | null>(null)
     </div>
     <main class="flex-1 flex flex-col min-h-0">
       <!-- ملخص الشركة فوق شاشات الأرقام؛ شاشة الأخبار ليها الشاشة كاملة -->
-      <div v-if="view !== 'news'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
+      <div v-if="view !== 'news' && view !== 'markets'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
         <KpiStrip />
       </div>
       <Transition name="view" mode="out-in">
         <TeamsView v-if="view === 'teams'" key="teams" class="flex-1 flex flex-col min-h-0" />
         <AgentsView v-else-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
         <InsightsView v-else-if="view === 'insights'" key="insights" class="flex-1 flex flex-col min-h-0" />
-        <NewsView v-else key="news" class="flex-1 flex flex-col min-h-0" />
+        <NewsView v-else-if="view === 'news'" key="news" class="flex-1 flex flex-col min-h-0" />
+        <MarketsView v-else key="markets" class="flex-1 flex flex-col min-h-0" />
       </Transition>
     </main>
 
     <CelebrationOverlay />
     <BreakingNewsOverlay />
+    <MarketAlertOverlay />
     <AnnouncementOverlay />
     <SoundUnlock />
   </div>

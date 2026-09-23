@@ -8,7 +8,9 @@
     "insightsTitle": "Insights",
     "insightsSub": "Trend this quarter and quarter-over-quarter",
     "newsTitle": "Real-estate market news",
-    "newsSub": "Latest from the Everest blog"
+    "newsSub": "Latest from the Everest blog",
+    "marketsTitle": "Markets & metals",
+    "marketsSub": "Gold, the dollar, the exchange and property"
   },
   "status": {
     "live": "LIVE",
@@ -22,7 +24,8 @@
     "agents": "Agents",
     "toggle": "Switch view",
     "insights": "Insights",
-    "news": "News"
+    "news": "News",
+    "markets": "Markets"
   },
   "quarter": {
     "label": "Quarter",
@@ -479,5 +482,49 @@
     "empty": "No news right now",
     "updated": "Updated {when}",
     "breaking": "Just in"
+  },
+  "markets": {
+    "label": "Markets",
+    "empty": "Prices are unavailable right now",
+    "note": "Prices from Yahoo Finance · today’s close against the previous one · the 21K gram is derived from the global ounce and the dollar rate, before local workmanship",
+    "sinceClose": "vs previous close",
+    "group": {
+      "metals": "Gold & metals",
+      "egypt": "Egypt: currency & property",
+      "global": "Global real estate"
+    },
+    "trend": {
+      "up": "Trending up",
+      "down": "Trending down",
+      "flat": "Flat"
+    },
+    "alert": {
+      "up": "Sharp rise",
+      "down": "Sharp fall"
+    },
+    "unit": {
+      "oz": "oz",
+      "lb": "lb",
+      "bbl": "bbl",
+      "g": "g"
+    },
+    "name": {
+      "gold21": "21K gold",
+      "gold": "Gold",
+      "silver": "Silver",
+      "copper": "Copper",
+      "oil": "Crude oil",
+      "usdegp": "US dollar",
+      "egx30": "EGX 30 index",
+      "tmgh": "Talaat Moustafa",
+      "phdc": "Palm Hills",
+      "ocdi": "SODIC",
+      "heli": "Heliopolis Housing",
+      "vnq": "US REIT fund",
+      "iyr": "US real estate",
+      "reet": "Global REITs",
+      "vnqi": "Real estate ex-US",
+      "xlre": "Real estate sector (S&P)"
+    }
   }
 }

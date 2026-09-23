@@ -18,6 +18,7 @@ const options: Array<{ value: BoardView; icon: string; compact?: boolean }> = [
   { value: 'agents', icon: 'mdi:account-tie' },
   { value: 'insights', icon: 'mdi:chart-timeline-variant' },
   { value: 'news', icon: 'mdi:newspaper-variant-outline', compact: true },
+  { value: 'markets', icon: 'mdi:chart-line', compact: true },
 ]
 
 const listEl = ref<HTMLElement | null>(null)
