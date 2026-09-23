@@ -180,3 +180,14 @@ export interface LegendItem {
   color: string
   kind?: 'line' | 'swatch'
 }
+
+/** خبر من مدونة إيفرست، بعد ما السيرفر ينضّفه في /api/news. */
+export interface NewsItem {
+  id: number
+  title: string
+  excerpt: string
+  image: string | null
+  date: string
+  slug: string
+  url: string
+}

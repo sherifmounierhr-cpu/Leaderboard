@@ -202,6 +202,19 @@
 .view-enter-from { opacity: 0; transform: translateY(10px); }
 .view-leave-to { opacity: 0; transform: translateY(-10px); }
 
+/* شريط الأخبار: نسختان من العناوين، والحركة بنصف عرض المسار فتلتف بلا قفزة.
+   العربية تقرأ يميناً→يساراً فالشريط يزحف ناحية اليمين، والعكس بالإنجليزية. */
+@keyframes news-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes news-marquee-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+.animate-news-marquee { animation: news-marquee linear infinite; }
+[dir="rtl"] .animate-news-marquee { animation-name: news-marquee-rtl; }
+
 @media (prefers-reduced-motion: reduce) {
   .rank-move,
   .rank-enter-active,
@@ -218,6 +231,9 @@
     animation: none !important;
   }
   [data-confetti] { display: none !important; }
+
+  /* الأخبار تظل مقروءة بلا زحف */
+  .animate-news-marquee { animation: none !important; }
 }
 
 html, body, #app { height: 100%; }

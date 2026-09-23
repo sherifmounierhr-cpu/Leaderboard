@@ -470,5 +470,9 @@
     "restored": "“{name}” can sign in again.",
     "empty": "No devices yet. Open the board on any screen and it appears here within a minute.",
     "demoHint": "The demo account is view-only — disconnecting is for admins."
+  },
+  "news": {
+    "label": "Market news",
+    "empty": "No news right now"
   }
 }
