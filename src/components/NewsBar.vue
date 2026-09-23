@@ -7,7 +7,8 @@ import { useNews } from '@/composables/useNews'
 /**
  * شريط أخبار السوق أسفل اللوحة: بطاقة بصورة الخبر تتبدّل كل 10 ثوانٍ، وجنبها
  * شريط متحرّك بكل العناوين. مستقل تماماً عن جدول المتصدّرين — بياخد ارتفاعه
- * من أسفل الشاشة ولا يمسّ تخطيط الجدول.
+ * من أسفل الشاشة ولا يمسّ تخطيط الجدول. اتجاهه RTL دائماً لأن الأخبار عربية،
+ * حتى لو اللوحة معروضة بالإنجليزية.
  */
 
 const ROTATE_MS = 10_000
@@ -70,6 +71,7 @@ const marqueeDuration = computed(() => `${Math.max(items.value.length, 1) * SECO
   <aside
     v-if="show && hasNews && current"
     data-export-hide
+    dir="rtl"
     class="shrink-0 border-t border-card-border bg-card"
     :aria-label="t('news.label')"
   >
