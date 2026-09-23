@@ -1,59 +1,78 @@
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import type { NewsItem } from '@/lib/types'
 import { useNews } from './useNews'
 
 /**
- * الخبر العاجل: أول ما ينزل خبر جديد على المدونة يتعرض بملء الشاشة مرة واحدة.
+ * الخبر العاجل: أول ما ينزل خبر جديد على المدونة يتعرض بملء الشاشة، ويتعاد
+ * مرتين كمان كل 5 دقايق — عشان اللي دخل المكتب متأخر يشوفه برضه.
  *
  * «جديد» يعني معرّف ما شفناهوش قبل كده على الشاشة دي. أول تشغيل بيسجّل
- * العشرة الموجودين على إنهم متشافوا من غير عرض، وإلا الشاشة هتفضل تعرض
- * أخبار قديمة عند كل فتح.
+ * الموجود على إنه اتعرض خلاص، وإلا الشاشة هتعيد أخبار قديمة عند كل فتح.
  */
 
-const SEEN_KEY = 'everest.news.seen'
-/** نحتفظ بآخر 80 معرّف — أكتر من كده ملوش لازمة والتخزين محدود. */
-const SEEN_MAX = 80
-export const BREAKING_MS = 20_000
+const PLAYS_KEY = 'everest.news.plays'
+/** نحتفظ بآخر 80 خبر — أكتر من كده ملوش لازمة والتخزين محدود. */
+const MAX_TRACKED = 80
 
-const queue = ref<NewsItem[]>([])
+export const BREAKING_MS = 20_000
+export const REPEATS = 3
+export const GAP_MS = 5 * 60_000
+const TICK_MS = 10_000
+
+interface Play {
+  /** كام مرة اتعرض. لما توصل REPEATS بيبطّل. */
+  count: number
+  /** أقرب وقت مسموح فيه بالعرض الجاي. */
+  nextAt: number
+}
+
 const current = ref<{ item: NewsItem; endsAt: number } | null>(null)
 
 let started = false
-let seen = new Set<number>()
+let plays = new Map<number, Play>()
 
-function readSeen(): number[] {
+function readPlays(): Map<number, Play> {
   try {
-    const raw = localStorage.getItem(SEEN_KEY)
-    const list = raw ? (JSON.parse(raw) as unknown) : null
-    return Array.isArray(list) ? list.filter((x): x is number => typeof x === 'number') : []
+    const raw = localStorage.getItem(PLAYS_KEY)
+    const rows = raw ? (JSON.parse(raw) as unknown) : null
+    if (!Array.isArray(rows)) return new Map()
+    const map = new Map<number, Play>()
+    for (const row of rows) {
+      if (!Array.isArray(row)) continue
+      const [id, count, nextAt] = row as [unknown, unknown, unknown]
+      if (typeof id === 'number') {
+        map.set(id, { count: Number(count) || 0, nextAt: Number(nextAt) || 0 })
+      }
+    }
+    return map
   } catch {
-    return []
+    return new Map()
   }
 }
 
-function writeSeen() {
+function writePlays() {
+  // Map بيحافظ على ترتيب الإضافة، فالقصّ بيشيل الأقدم
+  if (plays.size > MAX_TRACKED) plays = new Map([...plays].slice(-MAX_TRACKED))
   try {
-    localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].slice(-SEEN_MAX)))
+    localStorage.setItem(
+      PLAYS_KEY,
+      JSON.stringify([...plays].map(([id, play]) => [id, play.count, play.nextAt])),
+    )
   } catch {
     /* تخزين محظور */
   }
 }
 
-function markSeen(ids: number[]) {
-  for (const id of ids) seen.add(id)
-  // Set بيحافظ على ترتيب الإضافة، فالقصّ بيشيل الأقدم
-  if (seen.size > SEEN_MAX) seen = new Set([...seen].slice(-SEEN_MAX))
-  writeSeen()
-}
-
-function next() {
-  const item = queue.value.shift()
-  current.value = item ? { item, endsAt: Date.now() + BREAKING_MS } : null
-}
-
-/** يُنهي الخبر المعروض وينتقل للي بعده إن وُجد. */
+/** يُنهي الخبر المعروض ويحجز ميعاد إعادته. */
 export function dismissBreaking() {
-  next()
+  const shown = current.value
+  current.value = null
+  if (!shown) return
+  const play = plays.get(shown.item.id)
+  if (!play) return
+  play.count += 1
+  play.nextAt = Date.now() + GAP_MS
+  writePlays()
 }
 
 export function useBreakingNews() {
@@ -61,27 +80,45 @@ export function useBreakingNews() {
 
   if (!started) {
     started = true
-    const saved = readSeen()
-    seen = new Set(saved)
-    // شفنا قائمة قبل كده؟ لو لأ، أول دفعة بتتسجّل من غير عرض
-    let primed = saved.length > 0
+    plays = readPlays()
+    // شفنا قائمة قبل كده؟ لو لأ، أول دفعة بتتسجّل كأنها اتعرضت
+    let primed = plays.size > 0
+    try {
+      // مفتاح قديم من نسخة العرض مرة واحدة
+      localStorage.removeItem('everest.news.seen')
+    } catch {
+      /* تخزين محظور */
+    }
 
-    watch(
-      items,
-      (list) => {
-        const fresh = list.filter((item) => !seen.has(item.id))
-        if (!fresh.length) return
-        markSeen(fresh.map((item) => item.id))
-        if (!primed) {
-          primed = true
-          return
-        }
-        // الأقدم الأول، فالترتيب على الشاشة زمني
-        queue.value.push(...[...fresh].reverse())
-        if (!current.value) next()
-      },
-      { immediate: true },
-    )
+    const tick = () => {
+      const list = items.value
+      if (!list.length) return
+
+      // تسجيل أي خبر لسه ما نعرفوش
+      let added = false
+      for (const item of list) {
+        if (plays.has(item.id)) continue
+        plays.set(item.id, primed ? { count: 0, nextAt: Date.now() } : { count: REPEATS, nextAt: 0 })
+        added = true
+      }
+      if (added) {
+        primed = true
+        writePlays()
+      }
+
+      if (current.value) return
+
+      // الأقدم الأول، فالترتيب على الشاشة زمني
+      const now = Date.now()
+      const due = [...list].reverse().find((item) => {
+        const play = plays.get(item.id)
+        return play ? play.count < REPEATS && play.nextAt <= now : false
+      })
+      if (due) current.value = { item: due, endsAt: now + BREAKING_MS }
+    }
+
+    tick()
+    setInterval(tick, TICK_MS)
   }
 
   return { current, dismiss: dismissBreaking }
