@@ -14,7 +14,11 @@ const SOURCE = 'https://dashboard.everest-realestate.net/wp-json/wp/v2/posts?per
 /** الروابط الحيّة تحت /blog/<slug>/ — حقل link في ووردبريس قديم ويرجّع 404. */
 const BLOG_BASE = 'https://everest-realestate.net/blog/'
 
-const TTL_MS = 10 * 60_000
+/**
+ * دقيقة واحدة. الشاشة لازم تلحق الخبر أول ما ينزل، وطلب واحد في الدقيقة
+ * على ووردبريس مش حِمل.
+ */
+const TTL_MS = 60_000
 const TIMEOUT_MS = 8_000
 const EXCERPT_MAX = 180
 
@@ -208,8 +212,10 @@ export default async function handler(_req: IncomingMessage, res: ServerResponse
   res.setHeader('content-type', 'application/json; charset=utf-8')
   try {
     const payload = await loadNews()
-    // الـ CDN يخدم نفس النسخة 10 دقائق، ويقدّم القديمة ساعة لو المصدر وقع
-    res.setHeader('cache-control', 'public, s-maxage=600, stale-while-revalidate=3600')
+    // دقيقة على الـ CDN ودقيقتين سماح لو المصدر وقع — أطول من كده الخبر
+    // الجديد بيفضل مستنّي في الكاش والشاشة معروض عليها القديم
+    // max-age=0 عشان متصفح الشاشة ما يخزّنش نسخة خاصة بيه فوق كاش الـ CDN
+    res.setHeader('cache-control', 'public, max-age=0, must-revalidate, s-maxage=60, stale-while-revalidate=120')
     res.statusCode = 200
     res.end(JSON.stringify(payload))
   } catch (err) {

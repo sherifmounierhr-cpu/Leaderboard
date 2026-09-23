@@ -9,14 +9,14 @@ import { postsToNews } from '@/lib/news'
  * ولو الاستضافة ساكنة ومفيهاش دالة (GitHub Pages) بنرجع لجلب مباشر من
  * المتصفح، لأن المدونة بتسمح بالقراءة من أي نطاق.
  *
- * تحديث كل 10 دقائق، ومع أي فشل بنفضل على آخر نسخة ناجحة: الشاشة معلّقة في
+ * تحديث كل دقيقتين، ومع أي فشل بنفضل على آخر نسخة ناجحة: الشاشة معلّقة في
  * مكتب طول اليوم، فأسوأ من خبر قديم إن الشريط يفضى فجأة.
  */
 
 const ENDPOINT = '/api/news'
 /** المصدر المباشر، للاحتياطي وحده. */
 const SOURCE = 'https://dashboard.everest-realestate.net/wp-json/wp/v2/posts?per_page=10&_embed'
-const REFRESH_MS = 10 * 60_000
+const REFRESH_MS = 2 * 60_000
 const RETRY_MS = 60_000
 const CACHE_KEY = 'everest.news'
 
