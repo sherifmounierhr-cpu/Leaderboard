@@ -141,6 +141,12 @@ export interface MediaFile {
 
 /** صف من public.lb_board_settings */
 export interface BoardSettings {
+  /** سعر الإيداع لليلة واحدة في البنك المركزي المصري. */
+  cbe_deposit?: number | null
+  /** سعر الإقراض لليلة واحدة. */
+  cbe_lending?: number | null
+  /** تاريخ قرار لجنة السياسة النقدية. */
+  cbe_rates_at?: string | null
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number
@@ -200,6 +206,12 @@ export interface MarketQuote {
   key: string
   symbol: string
   group: string
+  /** rate = قرار يتعرض دايماً، وغيره سعر سوق يتعرض لما يتحرّك. */
+  kind?: 'rate'
+  /** نطاق القرار لو ليه حدّين، زي الفيدرالي الأمريكي. */
+  band?: [number, number]
+  /** تاريخ القرار، لأسعار الفائدة. */
+  at?: string
   currency: string
   unit?: string
   price: number

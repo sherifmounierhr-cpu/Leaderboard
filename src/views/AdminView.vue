@@ -8,6 +8,7 @@ import AgentsAdmin from '@/components/admin/AgentsAdmin.vue'
 import PeriodsAdmin from '@/components/admin/PeriodsAdmin.vue'
 import DealsAdmin from '@/components/admin/DealsAdmin.vue'
 import DevicesAdmin from '@/components/admin/DevicesAdmin.vue'
+import MarketRatesAdmin from '@/components/admin/MarketRatesAdmin.vue'
 import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
@@ -24,9 +25,9 @@ const { t } = useI18n()
 const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'deals' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'devices' | 'storage'
+type Tab = 'periods' | 'deals' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'rates' | 'devices' | 'storage'
 const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'deals', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'devices', 'storage']
+const tabs: Tab[] = ['periods', 'deals', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'rates', 'devices', 'storage']
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -207,7 +208,7 @@ const FIELD =
             class="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
             :class="tab === name ? 'bg-accent text-white' : 'text-mute hover:text-strong'"
             @click="tab = name"
-          >{{ t(name === 'storage' ? 'admin.storage.tab' : name === 'messages' ? 'messages.tab' : name === 'devices' ? 'devices.tab' : `admin.${name}`) }}</button>
+          >{{ t(name === 'storage' ? 'admin.storage.tab' : name === 'messages' ? 'messages.tab' : name === 'devices' ? 'devices.tab' : name === 'rates' ? 'rates.tab' : `admin.${name}`) }}</button>
         </div>
 
         <p v-if="loading" class="m-0 font-medium text-mute text-sm">{{ t('admin.loading') }}</p>
@@ -227,6 +228,7 @@ const FIELD =
         <AgentsAdmin v-else-if="tab === 'agents'" />
         <TeamsAdmin v-else-if="tab === 'teams'" />
         <ReportsAdmin v-else-if="tab === 'reports'" />
+        <MarketRatesAdmin v-else-if="tab === 'rates'" />
         <DevicesAdmin v-else-if="tab === 'devices'" />
         <StorageAdmin v-else-if="tab === 'storage'" @goto="tab = $event" />
         <DataTransfer v-else />

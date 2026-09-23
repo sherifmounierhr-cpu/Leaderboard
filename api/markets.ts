@@ -26,11 +26,11 @@ interface Spec {
 }
 
 const SPECS: Spec[] = [
+  { key: 'usdegp', symbol: 'EGP=X', group: 'egypt' },
   { key: 'gold', symbol: 'GC=F', group: 'metals', unit: 'oz' },
   { key: 'silver', symbol: 'SI=F', group: 'metals', unit: 'oz' },
   { key: 'copper', symbol: 'HG=F', group: 'metals', unit: 'lb' },
   { key: 'oil', symbol: 'CL=F', group: 'metals', unit: 'bbl' },
-  { key: 'usdegp', symbol: 'EGP=X', group: 'egypt' },
   { key: 'egx30', symbol: '^CASE30', group: 'egypt' },
   { key: 'tmgh', symbol: 'TMGH.CA', group: 'egypt' },
   { key: 'phdc', symbol: 'PHDC.CA', group: 'egypt' },
@@ -47,6 +47,10 @@ export interface Quote {
   key: string
   symbol: string
   group: string
+  /** rate = قرار يتعرض دايماً، price = سعر سوق يتعرض لما يتحرّك. */
+  kind?: 'rate'
+  /** نطاق القرار لو ليه حدّين، زي الفيدرالي الأمريكي. */
+  band?: [number, number]
   currency: string
   unit?: string
   price: number
@@ -126,17 +130,65 @@ function gold21(quotes: Quote[]): Quote | null {
   }
 }
 
+/**
+ * سعر الفائدة الفيدرالي الأمريكي من FRED (بنك سانت لويس الاحتياطي) — CSV
+ * عام بدون مفتاح. بنجيب حد النطاق الأعلى والأدنى، والقرار بيتغيّر ٨ مرات
+ * في السنة فالتغيّر اليومي بصفر في أغلب الأيام وده طبيعي.
+ */
+const FRED = 'https://fred.stlouisfed.org/graph/fredgraph.csv?id='
+
+/** آخر قيمة رقمية في ملف FRED: تاريخ,قيمة في كل سطر. */
+async function fredLast(series: string, signal: AbortSignal): Promise<number | null> {
+  const res = await fetch(FRED + series, { signal, headers: { accept: 'text/csv' } })
+  if (!res.ok) return null
+  const text = await res.text()
+  const lines = text.trim().split('\n')
+  for (let i = lines.length - 1; i > 0; i--) {
+    const value = Number(lines[i].split(',')[1])
+    if (Number.isFinite(value)) return value
+  }
+  return null
+}
+
+async function fedRate(): Promise<Quote | null> {
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), TIMEOUT_MS)
+  try {
+    const [upper, lower] = await Promise.all([
+      fredLast('DFEDTARU', abort.signal),
+      fredLast('DFEDTARL', abort.signal),
+    ])
+    if (upper === null) return null
+    return {
+      key: 'fedrate',
+      symbol: 'FEDFUNDS',
+      group: 'rates',
+      kind: 'rate',
+      currency: '%',
+      band: lower === null ? undefined : [lower, upper],
+      price: upper,
+      prev: upper,
+      changePct: 0,
+      spark: [],
+    }
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 let cache: { payload: MarketsPayload; at: number } | null = null
 let inFlight: Promise<MarketsPayload> | null = null
 
 async function fetchFresh(): Promise<MarketsPayload> {
-  const results = await Promise.all(SPECS.map(yahoo))
+  const [results, fed] = await Promise.all([Promise.all(SPECS.map(yahoo)), fedRate()])
   const quotes = results.filter((q): q is Quote => q !== null)
   if (!quotes.length) throw new Error('markets: no quotes')
   const derived = gold21(quotes)
-  // جرام الذهب أهم رقم للناس هنا، فيتحط الأول
+  // جرام الذهب أهم رقم للناس هنا، فيتحط الأول، وسعر الفائدة وراه
   return {
-    quotes: derived ? [derived, ...quotes] : quotes,
+    quotes: [...(derived ? [derived] : []), ...(fed ? [fed] : []), ...quotes],
     fetchedAt: new Date().toISOString(),
     stale: false,
   }

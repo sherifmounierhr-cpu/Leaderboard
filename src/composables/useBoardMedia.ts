@@ -30,6 +30,9 @@ async function load() {
       celebration_seconds: Number(row.celebration_seconds) || DEFAULT_SETTINGS.celebration_seconds,
       celebration_song_id: row.celebration_song_id,
       volume: Number(row.volume ?? DEFAULT_SETTINGS.volume),
+      cbe_deposit: row.cbe_deposit === null || row.cbe_deposit === undefined ? null : Number(row.cbe_deposit),
+      cbe_lending: row.cbe_lending === null || row.cbe_lending === undefined ? null : Number(row.cbe_lending),
+      cbe_rates_at: row.cbe_rates_at ?? null,
     }
   }
   if (!m.error) {

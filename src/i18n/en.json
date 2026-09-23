@@ -525,7 +525,23 @@
       "iyr": "US real estate",
       "reet": "Global REITs",
       "vnqi": "Real estate ex-US",
-      "xlre": "Real estate sector (S&P)"
-    }
+      "xlre": "Real estate sector (S&P)",
+      "cbe_deposit": "CBE deposit rate",
+      "cbe_lending": "CBE lending rate",
+      "fedrate": "US federal funds rate"
+    },
+    "rateLabel": "Interest rate",
+    "band": "Range",
+    "decidedOn": "Decision"
+  },
+  "rates": {
+    "tab": "Rates",
+    "title": "Central Bank of Egypt rates",
+    "hint": "The central bank blocks automated requests, so you enter these two after each monetary policy meeting. They appear on the markets screen with the decision date.",
+    "date": "Decision date",
+    "current": "Saved: decision of {when}",
+    "stale": "A while ago — check for a newer decision",
+    "saved": "Saved. Screens pick up the new numbers within minutes.",
+    "fed": "The US federal rate updates on its own."
   }
 }
