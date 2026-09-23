@@ -114,7 +114,8 @@ const marqueeDuration = computed(() => `${Math.max(items.value.length, 1) * SECO
               {{ current.title }}
             </span>
             <span class="truncate text-mute text-caption">
-              <template v-if="when">{{ when }}</template>
+              <!-- الشريط RTL دائماً، و«23 minutes ago» بتتقلب جواه بدون عزل -->
+              <bdi v-if="when">{{ when }}</bdi>
               <template v-if="when && current.excerpt"> · </template>{{ current.excerpt }}
             </span>
           </span>
