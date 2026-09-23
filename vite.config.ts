@@ -17,7 +17,7 @@ function newsDevApi(): Plugin {
           res.setHeader('content-type', 'application/json; charset=utf-8')
           res.setHeader('cache-control', 'no-store')
           try {
-            const { loadNews } = (await server.ssrLoadModule('/api/_news.ts')) as typeof import('./api/_news')
+            const { loadNews } = (await server.ssrLoadModule('/api/news.ts')) as typeof import('./api/news')
             res.end(JSON.stringify(await loadNews()))
           } catch (err) {
             res.statusCode = 502
