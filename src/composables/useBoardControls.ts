@@ -15,6 +15,27 @@ const view = ref<BoardView>(
 const settingsOpen = ref(false)
 const isFullscreen = ref(false)
 
+/**
+ * شاشات بتعرض عناصرها واحد ورا التاني وبتسلّم بنفسها لما تخلص. مدتها بعدد
+ * ما هتعرضه مش بثواني ثابتة، فمؤقّت التبديل بيتوقف وهي شغّالة.
+ */
+const SEQUENCE_VIEWS: BoardView[] = ['news', 'markets']
+
+const { hasNews } = useNews()
+const { hasQuotes } = useMarkets()
+
+/**
+ * التدوير: الفرق ← المستشارون ← الأخبار ← الأسواق. شاشة التحليلات تُفتح
+ * يدوياً كما كانت، وأي شاشة مصدرها واقع تُتخطّى فلا تظهر شاشة فاضية.
+ */
+export function advanceView() {
+  const cycle: BoardView[] = ['teams', 'agents']
+  if (hasNews.value) cycle.push('news')
+  if (hasQuotes.value) cycle.push('markets')
+  const at = cycle.indexOf(view.value)
+  view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
+}
+
 /** إعادة تحميل يومية تمنع تراكم الذاكرة على شاشة تعمل بلا انقطاع. */
 const DAILY_RELOAD_MS = 24 * 60 * 60 * 1000
 
@@ -23,27 +44,14 @@ let mounted = false
 export function useBoardControls() {
   const { toggleTheme, toggleLocale } = useSettings()
 
-  const { hasNews } = useNews()
-  const { hasQuotes } = useMarkets()
-
-  /**
-   * التدوير: الفرق ← المستشارون ← الأخبار ← الأسواق. شاشة التحليلات تُفتح
-   * يدوياً كما كانت، وأي شاشة مصدرها واقع تُتخطّى فلا تظهر شاشة فاضية.
-   */
-  function toggleView() {
-    const cycle: BoardView[] = ['teams', 'agents']
-    if (hasNews.value) cycle.push('news')
-    if (hasQuotes.value) cycle.push('markets')
-    const at = cycle.indexOf(view.value)
-    view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
-  }
+  const toggleView = advanceView
 
   let rotateTimer: ReturnType<typeof setInterval> | null = null
 
   function restartRotation() {
     if (rotateTimer) clearInterval(rotateTimer)
     rotateTimer = null
-    if (settings.rotate) {
+    if (settings.rotate && !SEQUENCE_VIEWS.includes(view.value)) {
       rotateTimer = setInterval(toggleView, settings.rotateSeconds * 1000)
     }
   }
@@ -103,7 +111,7 @@ export function useBoardControls() {
 
   watch(() => [settings.rotate, settings.rotateSeconds], restartRotation)
   // تبديل يدوي يبدأ العدّ من الأول، فمؤشر التقدم يفضل مطابق للتبديل الفعلي
-  watch(view, () => { if (settings.rotate) restartRotation() })
+  watch(view, restartRotation)
 
   return {
     view,

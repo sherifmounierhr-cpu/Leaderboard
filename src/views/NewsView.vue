@@ -1,154 +1,179 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { relativeTime } from '@/lib/format'
 import { useNews } from '@/composables/useNews'
+import { advanceView } from '@/composables/useBoardControls'
 
 /**
- * شاشة أخبار السوق: خبر رئيسي بصورة كبيرة وجنبه أربعة أخبار، وكل 10 ثوانٍ
- * تتبدّل الصفحة للخمسة التاليين فتمرّ العشرة كلهم. شاشة مستقلة في التبديل
- * التلقائي، فما بتزاحمش جدول المتصدّرين على أي ارتفاع.
+ * نوبة الأخبار في التبديل التلقائي: أخبار النهارده واحد ورا التاني بملء
+ * الشاشة، مش جدول. لما القائمة تخلص، الشاشة بتسلّم للنوبة اللي بعدها.
+ *
+ * مفيش عرض اتنين مع بعض عن قصد: خبر واحد كبير بيتقرا من آخر الغرفة.
  */
 
-const PAGE_MS = 10_000
-const PER_PAGE = 5
-const CLOCK_MS = 60_000
+/** مدة الخبر الواحد على الشاشة. */
+const SLIDE_MS = 9_000
+const TICK_MS = 100
+/** لو مفيش أخبار النهارده، بنعرض آخر تلاتة بدل ما النوبة تعدّي فاضية. */
+const FALLBACK = 3
+/** مهلة انتظار الأخبار لو النوبة جت قبل ما توصل. */
+const WAIT_MS = 6_000
 
 const { t, locale } = useI18n()
-const { items, fetchedAt, hasNews } = useNews()
+const { items } = useNews()
 
-const page = ref(0)
-const now = ref(new Date())
+const index = ref(0)
+const startedAt = ref(Date.now())
+const now = ref(Date.now())
 const broken = ref(new Set<number>())
-let pager: ReturnType<typeof setInterval> | null = null
 let clock: ReturnType<typeof setInterval> | null = null
 
-const pages = computed(() => Math.max(Math.ceil(items.value.length / PER_PAGE), 1))
+/** تاريخ النهارده بتوقيت القاهرة، فاليوم يبدأ وينتهي مع يوم العمل. */
+function cairoDay(at: Date): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(at)
+}
+
+const slides = computed(() => {
+  const today = cairoDay(new Date())
+  const fresh = items.value.filter((item) => {
+    const date = new Date(item.date)
+    return !Number.isNaN(date.getTime()) && cairoDay(date) === today
+  })
+  return fresh.length ? fresh : items.value.slice(0, FALLBACK)
+})
+
+const current = computed(() => slides.value[index.value] ?? null)
+const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / SLIDE_MS) * 100))
+
+function show(at: number) {
+  index.value = at
+  startedAt.value = Date.now()
+  now.value = startedAt.value
+  broken.value = new Set()
+}
+
+function step() {
+  now.value = Date.now()
+  // الأخبار ممكن تكون لسه في الطريق: نستنى شوية قبل ما نسلّم النوبة
+  if (!slides.value.length) {
+    if (now.value - mountedAt >= WAIT_MS) finish()
+    return
+  }
+  if (now.value - startedAt.value < SLIDE_MS) return
+  if (index.value + 1 < slides.value.length) show(index.value + 1)
+  else finish()
+}
+
+let done = false
+function finish() {
+  if (done) return
+  done = true
+  advanceView()
+}
+
+const mountedAt = Date.now()
 
 onMounted(() => {
-  pager = setInterval(() => { page.value = (page.value + 1) % pages.value }, PAGE_MS)
-  clock = setInterval(() => { now.value = new Date() }, CLOCK_MS)
+  show(0)
+  clock = setInterval(step, TICK_MS)
 })
 onBeforeUnmount(() => {
-  if (pager) clearInterval(pager)
   if (clock) clearInterval(clock)
 })
 
-function when(iso: string) {
-  void locale.value
-  const date = new Date(iso)
-  return Number.isNaN(date.getTime()) ? '' : relativeTime(date, now.value)
-}
-
-const current = computed(() => {
-  const start = (page.value % pages.value) * PER_PAGE
-  return items.value.slice(start, start + PER_PAGE)
+// القائمة ممكن توصل متأخرة شوية عن تركيب الشاشة
+watch(slides, (list, before) => {
+  if (index.value >= list.length || !before?.length) show(0)
 })
-const lead = computed(() => current.value[0] ?? null)
-const rest = computed(() => current.value.slice(1))
 
-const updated = computed(() => (fetchedAt.value ? when(fetchedAt.value.toISOString()) : ''))
+const when = computed(() => {
+  void locale.value
+  const iso = current.value?.date
+  if (!iso) return ''
+  const date = new Date(iso)
+  return Number.isNaN(date.getTime()) ? '' : relativeTime(date, new Date(now.value))
+})
 </script>
 
 <template>
   <!-- الأخبار عربية دائماً، فالشاشة RTL حتى لو اللوحة بالإنجليزية -->
-  <section dir="rtl" class="flex-1 flex flex-col min-h-0 gap-4 px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(14px,2.6vh,32px)]">
-    <header class="flex shrink-0 items-center justify-between gap-3">
-      <h2 class="m-0 flex items-center gap-2 font-semibold text-strong text-lg lg:text-[clamp(17px,2.4vh,26px)]">
-        <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold" />
-        {{ t('news.label') }}
-      </h2>
-      <p v-if="updated" class="m-0 text-mute text-caption lg:text-note">
-        {{ t('news.updated', { when: updated }) }}
-        <span v-if="pages > 1" class="text-dim"> · {{ page + 1 }}/{{ pages }}</span>
-      </p>
-    </header>
+  <section
+    dir="rtl"
+    data-export-hide
+    class="fixed inset-0 z-40 flex items-end overflow-hidden bg-header"
+    :aria-label="t('news.label')"
+  >
+    <p v-if="!current" class="m-0 w-full text-center text-white/60">{{ t('news.empty') }}</p>
 
-    <p
-      v-if="!hasNews"
-      class="m-0 flex flex-1 items-center justify-center rounded-xl border border-dashed border-card-border text-mute"
-    >{{ t('news.empty') }}</p>
+    <template v-else>
+      <Transition name="slide" mode="out-in">
+        <img
+          v-if="current.image && !broken.has(current.id)"
+          :key="current.id"
+          :src="current.image"
+          alt=""
+          referrerpolicy="no-referrer"
+          class="slide-zoom absolute inset-0 size-full object-cover"
+          @error="broken.add(current.id)"
+        />
+      </Transition>
+      <span
+        aria-hidden="true"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.96)_0%,rgba(10,14,18,0.82)_34%,rgba(10,14,18,0.22)_64%,rgba(10,14,18,0.5)_100%)]"
+      />
 
-    <Transition v-else name="news" mode="out-in">
-      <div :key="page" class="grid flex-1 min-h-0 gap-4 lg:gap-5 lg:grid-cols-[1.25fr_1fr]">
-        <!-- الخبر الرئيسي -->
-        <a
-          v-if="lead"
-          :href="lead.url"
-          target="_blank"
-          rel="noopener"
-          class="group flex min-h-0 flex-col overflow-hidden rounded-2xl border border-card-border bg-card no-underline shadow-[var(--shadow-panel)]"
+      <Transition name="slide" mode="out-in">
+        <div
+          :key="current.id"
+          class="relative flex w-full flex-col gap-[clamp(10px,2vh,24px)] px-[6vw] pb-[clamp(40px,9vh,120px)] pt-[6vh] text-white"
         >
-          <span class="relative block min-h-0 flex-1 bg-avatar">
-            <img
-              v-if="lead.image && !broken.has(lead.id)"
-              :src="lead.image"
-              alt=""
-              referrerpolicy="no-referrer"
-              class="absolute inset-0 size-full object-cover"
-              @error="broken.add(lead.id)"
-            />
-            <span v-else aria-hidden="true" class="absolute inset-0 flex items-center justify-center text-dim text-5xl">
-              <iconify-icon icon="mdi:image-outline" />
-            </span>
+          <span class="flex w-fit items-center gap-[0.5em] rounded-full bg-white/12 px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(13px,2vh,24px)]">
+            <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold text-[1.3em]" />
+            {{ t('news.label') }}
+            <span class="text-white/50">{{ index + 1 }}/{{ slides.length }}</span>
           </span>
-          <span class="flex shrink-0 flex-col gap-1.5 px-5 py-4">
-            <span class="line-clamp-2 font-semibold text-strong text-lg lg:text-[clamp(18px,2.7vh,30px)] leading-snug">
-              {{ lead.title }}
-            </span>
-            <span class="line-clamp-2 text-mute text-sm lg:text-[clamp(13px,1.8vh,18px)]">{{ lead.excerpt }}</span>
-            <span class="text-dim text-caption lg:text-note">{{ when(lead.date) }}</span>
-          </span>
-        </a>
 
-        <!-- بقية الصفحة -->
-        <ul class="m-0 grid min-h-0 list-none grid-rows-4 gap-3 lg:gap-4 p-0">
-          <li v-for="item in rest" :key="item.id" class="min-h-0">
-            <a
-              :href="item.url"
-              target="_blank"
-              rel="noopener"
-              class="flex h-full items-center gap-3 lg:gap-4 overflow-hidden rounded-xl border border-card-border bg-card px-3 py-2.5 no-underline shadow-[var(--shadow-card)]"
-            >
-              <img
-                v-if="(item.thumb || item.image) && !broken.has(item.id)"
-                :src="item.thumb || item.image || ''"
-                alt=""
-                referrerpolicy="no-referrer"
-                class="h-full w-[clamp(84px,9vw,150px)] shrink-0 rounded-lg object-cover bg-avatar"
-                @error="broken.add(item.id)"
-              />
-              <span
-                v-else
-                aria-hidden="true"
-                class="flex h-full w-[clamp(84px,9vw,150px)] shrink-0 items-center justify-center rounded-lg bg-avatar text-dim text-2xl"
-              >
-                <iconify-icon icon="mdi:image-outline" />
-              </span>
-              <span class="flex min-w-0 flex-1 flex-col gap-1">
-                <span class="line-clamp-2 font-semibold text-strong text-sm lg:text-[clamp(14px,1.9vh,20px)] leading-snug">
-                  {{ item.title }}
-                </span>
-                <span class="text-dim text-caption lg:text-note">{{ when(item.date) }}</span>
-              </span>
-            </a>
-          </li>
-        </ul>
+          <h2
+            class="m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+          >{{ current.title }}</h2>
+
+          <p
+            v-if="current.excerpt"
+            class="m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+          >{{ current.excerpt }}</p>
+
+          <p v-if="when" class="m-0 font-semibold text-white/55 text-[clamp(13px,1.9vh,22px)]">{{ when }}</p>
+        </div>
+      </Transition>
+
+      <!-- الوقت الباقي للخبر الحالي -->
+      <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
+        <div class="h-full bg-gold transition-[width] duration-100 ease-linear" :style="{ width: `${progress}%` }" />
       </div>
-    </Transition>
+    </template>
   </section>
 </template>
 
 <style scoped>
-.news-enter-active,
-.news-leave-active {
-  transition: opacity 0.4s ease, transform 0.4s ease;
+.slide-enter-active,
+.slide-leave-active {
+  transition: opacity 0.6s ease;
 }
-.news-enter-from { opacity: 0; transform: translateY(10px); }
-.news-leave-to { opacity: 0; transform: translateY(-10px); }
-
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+}
+.slide-zoom {
+  animation: slide-zoom 9s ease-out both;
+}
+@keyframes slide-zoom {
+  from { transform: scale(1.05); }
+  to { transform: scale(1.13); }
+}
 @media (prefers-reduced-motion: reduce) {
-  .news-enter-active,
-  .news-leave-active { transition: none; }
+  .slide-enter-active,
+  .slide-leave-active { transition: none; }
+  .slide-zoom { animation: none; }
 }
 </style>

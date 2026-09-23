@@ -10,18 +10,17 @@ const emit = defineEmits<{ 'update:view': [BoardView] }>()
 const { t } = useI18n()
 
 /**
- * `compact` يخفي اسم التبويب على الشاشات الأضيق. تبويب الأخبار رابعٌ زائد،
- * وبعرضه الكامل بيلفّ شريط الترويسة لسطرين على 1366 فيقصّ آخر صف في الجدول.
+ * شاشات الأرقام بس. الأخبار والأسواق بتيجي في نوبتها من التبديل التلقائي
+ * وبتاخد الشاشة كلها، فتبويب ليها كان هيزحم الترويسة بلا داعي.
  */
-const options: Array<{ value: BoardView; icon: string; compact?: boolean }> = [
+const options: Array<{ value: BoardView; icon: string }> = [
   { value: 'teams', icon: 'mdi:office-building-outline' },
   { value: 'agents', icon: 'mdi:account-tie' },
   { value: 'insights', icon: 'mdi:chart-timeline-variant' },
-  { value: 'news', icon: 'mdi:newspaper-variant-outline', compact: true },
-  { value: 'markets', icon: 'mdi:chart-line', compact: true },
 ]
 
 const listEl = ref<HTMLElement | null>(null)
+const known = computed(() => options.some((o) => o.value === props.view))
 const current = computed(() => props.view)
 const { indicatorStyle, ready } = useIndicator(listEl, current)
 </script>
@@ -36,7 +35,10 @@ const { indicatorStyle, ready } = useIndicator(listEl, current)
     <span
       aria-hidden="true"
       class="pointer-events-none absolute left-0 top-0 z-0 rounded-md bg-accent shadow-[0_1px_2px_rgba(0,0,0,0.25)]"
-      :class="ready ? 'transition-[transform,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none' : ''"
+      :class="[
+        ready ? 'transition-[transform,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none' : '',
+        known ? '' : 'opacity-0',
+      ]"
       :style="indicatorStyle"
     />
     <button
@@ -50,7 +52,7 @@ const { indicatorStyle, ready } = useIndicator(listEl, current)
       @click="emit('update:view', option.value)"
     >
       <iconify-icon :icon="option.icon" aria-hidden="true" class="text-base" />
-      <span :class="option.compact ? 'hidden 2xl:inline' : 'hidden sm:inline'">{{ t(`view.${option.value}`) }}</span>
+      <span class="hidden sm:inline">{{ t(`view.${option.value}`) }}</span>
     </button>
   </div>
 </template>

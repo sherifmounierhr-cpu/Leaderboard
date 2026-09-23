@@ -66,14 +66,19 @@ const board = ref<HTMLElement | null>(null)
       <div v-if="view !== 'news' && view !== 'markets'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
         <KpiStrip />
       </div>
+      <!--
+        شاشات الأرقام بتتبدّل جوه <main>. الأخبار والأسواق بتغطّي الشاشة كلها
+        فبتتركّب برّه الانتقال: جواه كان الانتقال أحياناً يسيب المكان فاضي.
+      -->
       <Transition name="view" mode="out-in">
-        <TeamsView v-if="view === 'teams'" key="teams" class="flex-1 flex flex-col min-h-0" />
-        <AgentsView v-else-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
+        <AgentsView v-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
         <InsightsView v-else-if="view === 'insights'" key="insights" class="flex-1 flex flex-col min-h-0" />
-        <NewsView v-else-if="view === 'news'" key="news" class="flex-1 flex flex-col min-h-0" />
-        <MarketsView v-else key="markets" class="flex-1 flex flex-col min-h-0" />
+        <TeamsView v-else key="teams" class="flex-1 flex flex-col min-h-0" />
       </Transition>
     </main>
+
+    <NewsView v-if="view === 'news'" />
+    <MarketsView v-if="view === 'markets'" />
 
     <CelebrationOverlay />
     <BreakingNewsOverlay />

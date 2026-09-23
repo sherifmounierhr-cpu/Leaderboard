@@ -1,123 +1,176 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { relativeTime } from '@/lib/format'
 import { useMarkets } from '@/composables/useMarkets'
+import { advanceView } from '@/composables/useBoardControls'
 import Sparkline from '@/components/Sparkline.vue'
-import type { MarketQuote } from '@/lib/types'
 
 /**
- * شاشة الأسواق: الذهب والمعادن، ومصر (الدولار والبورصة وأسهم التطوير
- * العقاري)، والعقارات عالمياً. كل مجموعة ليها سطر قراءة سريع للاتجاه.
+ * نوبة الأسواق في التبديل التلقائي: الأسعار اللي اتحرّكت بس، واحد ورا التاني
+ * بملء الشاشة. الأسعار الساكنة مش بتتعرض — محدش بيقف قدام رقم ما اتغيرش.
+ *
+ * مفيش جدول ومفيش عرض اتنين مع بعض: رقم واحد كبير بلون حركته.
  */
 
-const CLOCK_MS = 30_000
-/** فوق كده المجموعة تتقرا «صاعدة» أو «هابطة»، وتحتها «مستقرة». */
-const TREND_PCT = 0.3
+/** مدة السعر الواحد على الشاشة. */
+const SLIDE_MS = 6_000
+const TICK_MS = 100
+/** تحت كده الحركة مش حركة — ضوضاء تداول. */
+const MIN_PCT = 0.25
+/** سقف عدد الأسعار في النوبة الواحدة، عشان متطوّلش على الشاشة. */
+const MAX_SLIDES = 8
+/** مهلة انتظار الأسعار لو النوبة جت قبل ما توصل. */
+const WAIT_MS = 6_000
 
-const GROUPS = ['metals', 'egypt', 'global'] as const
+const { t, n, locale } = useI18n()
+const { quotes } = useMarkets()
 
-const { t, locale, n } = useI18n()
-const { quotes, fetchedAt, hasQuotes } = useMarkets()
-
-const now = ref(new Date())
+const index = ref(0)
+const startedAt = ref(Date.now())
+const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | null = null
-onMounted(() => { clock = setInterval(() => { now.value = new Date() }, CLOCK_MS) })
-onBeforeUnmount(() => { if (clock) clearInterval(clock) })
 
-/** خانتان للأسعار الصغيرة وصفر للأرقام الكبيرة — التفاصيل بتضيع من بعيد. */
-function price(quote: MarketQuote) {
-  void locale.value
-  const digits = quote.price >= 1000 ? 0 : quote.price >= 10 ? 2 : 3
-  return n(quote.price, { minimumFractionDigits: digits, maximumFractionDigits: digits })
-}
-
-const groups = computed(() =>
-  GROUPS.map((group) => {
-    const rows = quotes.value.filter((q) => q.group === group)
-    const avg = rows.length ? rows.reduce((sum, q) => sum + q.changePct, 0) / rows.length : 0
-    const trend = avg > TREND_PCT ? 'up' : avg < -TREND_PCT ? 'down' : 'flat'
-    return { group, rows, avg, trend }
-  }).filter((g) => g.rows.length),
+const slides = computed(() =>
+  [...quotes.value]
+    .filter((q) => Math.abs(q.changePct) >= MIN_PCT)
+    .sort((a, b) => Math.abs(b.changePct) - Math.abs(a.changePct))
+    .slice(0, MAX_SLIDES),
 )
 
-const updated = computed(() => {
+const current = computed(() => slides.value[index.value] ?? null)
+const up = computed(() => (current.value?.changePct ?? 0) > 0)
+const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / SLIDE_MS) * 100))
+
+const price = computed(() => {
   void locale.value
-  return fetchedAt.value ? relativeTime(fetchedAt.value, now.value) : ''
+  const quote = current.value
+  if (!quote) return ''
+  const digits = quote.price >= 1000 ? 0 : quote.price >= 10 ? 2 : 3
+  return n(quote.price, { minimumFractionDigits: digits, maximumFractionDigits: digits })
 })
 
-const tone = (pct: number) => (pct > 0 ? 'text-accent-text' : pct < 0 ? 'text-down' : 'text-mute')
-const arrow = (pct: number) => (pct > 0 ? 'mdi:trending-up' : pct < 0 ? 'mdi:trending-down' : 'mdi:trending-neutral')
-const signed = (pct: number) => `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`
+const move = computed(() => {
+  const pct = current.value?.changePct ?? 0
+  return `${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`
+})
+
+function show(at: number) {
+  index.value = at
+  startedAt.value = Date.now()
+  now.value = startedAt.value
+}
+
+let done = false
+function finish() {
+  if (done) return
+  done = true
+  advanceView()
+}
+
+function step() {
+  now.value = Date.now()
+  // الأسعار ممكن تكون لسه في الطريق: نستنى شوية قبل ما نسلّم النوبة
+  if (!slides.value.length) {
+    if (now.value - mountedAt >= WAIT_MS) finish()
+    return
+  }
+  if (now.value - startedAt.value < SLIDE_MS) return
+  if (index.value + 1 < slides.value.length) show(index.value + 1)
+  else finish()
+}
+
+const mountedAt = Date.now()
+
+onMounted(() => {
+  show(0)
+  clock = setInterval(step, TICK_MS)
+})
+onBeforeUnmount(() => {
+  if (clock) clearInterval(clock)
+})
+
+watch(slides, (list, before) => {
+  if (index.value >= list.length || !before?.length) show(0)
+})
 </script>
 
 <template>
-  <section class="flex-1 flex flex-col min-h-0 gap-3 px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(14px,2.6vh,32px)]">
-    <header class="flex shrink-0 items-center justify-between gap-3">
-      <h2 class="m-0 flex items-center gap-2 font-semibold text-strong text-lg lg:text-[clamp(17px,2.4vh,26px)]">
-        <iconify-icon icon="mdi:chart-line" aria-hidden="true" class="text-gold" />
-        {{ t('markets.label') }}
-      </h2>
-      <p v-if="updated" class="m-0 text-mute text-caption lg:text-note">{{ t('news.updated', { when: updated }) }}</p>
-    </header>
+  <section
+    dir="rtl"
+    data-export-hide
+    class="fixed inset-0 z-40 flex flex-col items-center justify-center gap-[clamp(10px,2.2vh,30px)] overflow-hidden px-[6vw] text-center text-white"
+    :class="!current
+      ? 'bg-header'
+      : up
+        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#18613f_0%,#0f2c1f_55%,#0a1712_100%)]'
+        : 'bg-[radial-gradient(120%_90%_at_50%_0%,#6b241f_0%,#361513_55%,#170b0a_100%)]'"
+    :aria-label="t('markets.label')"
+  >
+    <p v-if="!current" class="m-0 text-white/60">{{ t('markets.empty') }}</p>
 
-    <p
-      v-if="!hasQuotes"
-      class="m-0 flex flex-1 items-center justify-center rounded-xl border border-dashed border-card-border text-mute"
-    >{{ t('markets.empty') }}</p>
+    <Transition v-else name="quote" mode="out-in">
+      <div :key="current.key" class="flex flex-col items-center gap-[clamp(10px,2.2vh,30px)]">
+        <span class="flex items-center gap-[0.5em] rounded-full border border-white/20 bg-white/10 px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(13px,2vh,24px)]">
+          <iconify-icon
+            :icon="up ? 'mdi:trending-up' : 'mdi:trending-down'"
+            aria-hidden="true"
+            class="text-[1.3em]"
+            :class="up ? 'text-accent-live' : 'text-down'"
+          />
+          {{ t(up ? 'markets.alert.up' : 'markets.alert.down') }}
+          <span class="text-white/50">{{ index + 1 }}/{{ slides.length }}</span>
+        </span>
 
-    <div v-else class="grid flex-1 min-h-0 gap-3 lg:gap-4 xl:grid-cols-3">
-      <section
-        v-for="g in groups"
-        :key="g.group"
-        class="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-card-border bg-card shadow-[var(--shadow-panel)]"
-      >
-        <header class="flex shrink-0 items-baseline justify-between gap-2 border-b border-divider px-4 py-2.5">
-          <h3 class="m-0 font-semibold text-strong text-sm lg:text-[clamp(14px,1.9vh,19px)]">
-            {{ t(`markets.group.${g.group}`) }}
-          </h3>
-          <span class="flex items-center gap-1 font-semibold text-caption lg:text-note" :class="tone(g.avg)">
-            <iconify-icon :icon="arrow(g.avg)" aria-hidden="true" />
-            {{ t(`markets.trend.${g.trend}`) }}
+        <h2 class="m-0 font-extrabold leading-[1.1] text-balance break-words text-[clamp(30px,6.5vh,86px)]">
+          {{ t(`markets.name.${current.key}`) }}
+        </h2>
+
+        <p class="m-0 flex items-baseline justify-center gap-[0.4em] font-extrabold tabular-nums text-[clamp(40px,9vh,120px)] leading-none">
+          {{ price }}
+          <span class="font-semibold text-white/60 text-[0.3em]">
+            {{ current.currency }}<template v-if="current.unit"> / {{ t(`markets.unit.${current.unit}`) }}</template>
           </span>
-        </header>
+        </p>
 
-        <ul class="m-0 flex min-h-0 flex-1 list-none flex-col p-0">
-          <li
-            v-for="q in g.rows"
-            :key="q.key"
-            class="flex flex-1 items-center gap-3 border-b border-divider px-4 py-1.5 last:border-b-0 [@media(max-height:820px)]:py-1"
-          >
-            <span class="flex min-w-0 flex-1 flex-col">
-              <span class="truncate font-semibold text-strong text-sm lg:text-[clamp(13px,1.75vh,18px)]">
-                {{ t(`markets.name.${q.key}`) }}
-              </span>
-              <span class="truncate text-dim text-caption">
-                {{ q.currency }}<template v-if="q.unit"> / {{ t(`markets.unit.${q.unit}`) }}</template>
-              </span>
-            </span>
+        <p
+          class="m-0 font-extrabold tabular-nums text-[clamp(26px,5.5vh,70px)]"
+          :class="up ? 'text-accent-live' : 'text-down'"
+        >
+          <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
+          <bdi dir="ltr">{{ move }}</bdi>
+          <span class="ms-[0.4em] font-semibold text-white/50 text-[0.42em]">{{ t('markets.sinceClose') }}</span>
+        </p>
 
-            <Sparkline
-              v-if="q.spark.length > 2"
-              :points="q.spark"
-              :up="q.changePct >= 0"
-              class="hidden shrink-0 sm:block h-[clamp(20px,2.8vh,34px)] w-[clamp(52px,5vw,86px)]"
-            />
+        <Sparkline
+          v-if="current.spark.length > 2"
+          :points="current.spark"
+          :up="up"
+          class="h-[clamp(40px,8vh,110px)] w-[min(70vw,40rem)] opacity-80"
+        />
+      </div>
+    </Transition>
 
-            <span class="flex shrink-0 flex-col items-end">
-              <span dir="ltr" class="font-bold tabular-nums text-strong text-sm lg:text-[clamp(15px,2.1vh,22px)]">
-                {{ price(q) }}
-              </span>
-              <span dir="ltr" class="flex items-center gap-0.5 font-semibold tabular-nums text-caption lg:text-note" :class="tone(q.changePct)">
-                <iconify-icon :icon="arrow(q.changePct)" aria-hidden="true" />
-                {{ signed(q.changePct) }}
-              </span>
-            </span>
-          </li>
-        </ul>
-      </section>
+    <!-- الوقت الباقي للسعر الحالي -->
+    <div v-if="current" class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
+      <div
+        class="h-full transition-[width] duration-100 ease-linear"
+        :class="up ? 'bg-accent-live' : 'bg-down'"
+        :style="{ width: `${progress}%` }"
+      />
     </div>
-
-    <p class="m-0 shrink-0 text-dim text-caption">{{ t('markets.note') }}</p>
   </section>
 </template>
+
+<style scoped>
+.quote-enter-active,
+.quote-leave-active {
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.quote-enter-from { opacity: 0; transform: translateY(14px); }
+.quote-leave-to { opacity: 0; transform: translateY(-14px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .quote-enter-active,
+  .quote-leave-active { transition: none; }
+}
+</style>

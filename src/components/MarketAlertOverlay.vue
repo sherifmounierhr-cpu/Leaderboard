@@ -100,7 +100,7 @@ const move = computed(() => {
       >
         <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
         <bdi dir="ltr">{{ move }}</bdi>
-        <span class="font-semibold text-white/50 text-[0.42em]">{{ t('markets.sinceClose') }}</span>
+        <span class="ms-[0.4em] font-semibold text-white/50 text-[0.42em]">{{ t('markets.sinceClose') }}</span>
       </p>
 
       <Sparkline
