@@ -482,7 +482,8 @@
     "label": "Market news",
     "empty": "No news right now",
     "updated": "Updated {when}",
-    "breaking": "Just in"
+    "breaking": "Just in",
+    "cast": "From the office"
   },
   "markets": {
     "label": "Markets",
@@ -543,5 +544,40 @@
     "stale": "A while ago — check for a newer decision",
     "saved": "Saved. Screens pick up the new numbers within minutes.",
     "fed": "The US federal rate updates on its own."
+  },
+  "newsAdmin": {
+    "tab": "News feed",
+    "title": "News screen",
+    "hint": "This is the same list the screens read, so what you see here is what is on them.",
+    "source": "Source",
+    "sourceOk": "Live",
+    "sourceStale": "Last good copy",
+    "fetched": "Articles fetched",
+    "airing": "Airing on screen",
+    "slot": "Slot length",
+    "seconds": "{n}s",
+    "controls": "Controls",
+    "enabled": "News screen on",
+    "chime": "Alert chime on all screens",
+    "slide": "Seconds per article",
+    "repeats": "Replays of a new article",
+    "gap": "Gap between replays",
+    "s": "s",
+    "min": "m",
+    "sound": "Alert sound",
+    "builtIn": "Built-in chime",
+    "volume": "Volume",
+    "test": "Test sound",
+    "soundHint": "Sounds are uploaded in the Celebration tab media library. The test plays on this device only.",
+    "list": "Current articles",
+    "today": "Today",
+    "hidden": "Hidden",
+    "hide": "Hide",
+    "show": "Show",
+    "castNow": "Show now",
+    "saved": "Saved. Screens pick this up within seconds.",
+    "hiddenOk": "Hidden from every screen.",
+    "shownOk": "Visible again.",
+    "casted": "Sent to every screen."
   }
 }

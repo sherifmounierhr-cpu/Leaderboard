@@ -15,6 +15,7 @@ import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import NewsView from '@/views/NewsView.vue'
 import BreakingNewsOverlay from '@/components/BreakingNewsOverlay.vue'
+import NewsCastOverlay from '@/components/NewsCastOverlay.vue'
 import MarketsView from '@/views/MarketsView.vue'
 import MarketAlertOverlay from '@/components/MarketAlertOverlay.vue'
 import { settings } from '@/composables/useSettings'
@@ -82,6 +83,7 @@ const board = ref<HTMLElement | null>(null)
 
     <CelebrationOverlay />
     <BreakingNewsOverlay />
+    <NewsCastOverlay />
     <MarketAlertOverlay />
     <AnnouncementOverlay />
     <SoundUnlock />

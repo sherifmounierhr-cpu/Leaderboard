@@ -18,6 +18,25 @@ const BLOG_BASE = 'https://everest-realestate.net/blog/'
  * دقيقة واحدة. الشاشة لازم تلحق الخبر أول ما ينزل، وطلب واحد في الدقيقة
  * على ووردبريس مش حِمل.
  */
+/**
+ * المدونة بقت ورا Cloudflare، وبيتحدّى أي طلب شكله آلي ويرجّع 403. ترويسات
+ * متصفح كاملة بتعدّي التحدّي البسيط. لو رجع 403 برضه، الحل عند صاحب الموقع:
+ * قاعدة في Cloudflare تسمح بـ /wp-json/ من غير تحدّي.
+ */
+const BROWSER_HEADERS: Record<string, string> = {
+  accept: 'application/json, text/plain, */*',
+  'accept-language': 'ar,en-US;q=0.9,en;q=0.8',
+  'user-agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+  'sec-ch-ua': '"Chromium";v="141", "Not?A_Brand";v="24", "Google Chrome";v="141"',
+  'sec-ch-ua-mobile': '?0',
+  'sec-ch-ua-platform': '"Windows"',
+  'sec-fetch-dest': 'empty',
+  'sec-fetch-mode': 'cors',
+  'sec-fetch-site': 'same-origin',
+  referer: 'https://dashboard.everest-realestate.net/',
+}
+
 const TTL_MS = 60_000
 const TIMEOUT_MS = 8_000
 const EXCERPT_MAX = 180
@@ -169,7 +188,7 @@ async function fetchFresh(): Promise<NewsPayload> {
   try {
     const res = await fetch(SOURCE, {
       signal: abort.signal,
-      headers: { accept: 'application/json', 'user-agent': 'EverestLeaderboard/1.0' },
+      headers: BROWSER_HEADERS,
     })
     if (!res.ok) throw new Error(`wp ${res.status}`)
     const posts = await res.json()

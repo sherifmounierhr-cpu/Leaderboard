@@ -1,6 +1,8 @@
 import { ref } from 'vue'
 import type { NewsItem } from '@/lib/types'
 import { useNews } from './useNews'
+import { useBoardMedia } from './useBoardMedia'
+import { useNewsControls } from './useNewsControls'
 
 /**
  * الخبر العاجل: أول ما ينزل خبر جديد على المدونة يتعرض بملء الشاشة، ويتعاد
@@ -15,8 +17,9 @@ const PLAYS_KEY = 'everest.news.plays'
 const MAX_TRACKED = 80
 
 export const BREAKING_MS = 20_000
-export const REPEATS = 3
-export const GAP_MS = 5 * 60_000
+/** الافتراضي لو الإعدادات لسه ما وصلتش. */
+const DEFAULT_REPEATS = 3
+const DEFAULT_GAP_MIN = 5
 const TICK_MS = 10_000
 
 interface Play {
@@ -63,6 +66,9 @@ function writePlays() {
   }
 }
 
+/** الفاصل الحالي بين الإعادات، بتحدّثه الشاشة من الإعدادات. */
+let gapMsNow = DEFAULT_GAP_MIN * 60_000
+
 /** يُنهي الخبر المعروض ويحجز ميعاد إعادته. */
 export function dismissBreaking() {
   const shown = current.value
@@ -71,12 +77,17 @@ export function dismissBreaking() {
   const play = plays.get(shown.item.id)
   if (!play) return
   play.count += 1
-  play.nextAt = Date.now() + GAP_MS
+  play.nextAt = Date.now() + gapMsNow
   writePlays()
 }
 
 export function useBreakingNews() {
   const { items } = useNews()
+  const { settings } = useBoardMedia()
+  const { hiddenIds } = useNewsControls()
+
+  const repeats = () => settings.value.news_repeats ?? DEFAULT_REPEATS
+  const gapMs = () => (settings.value.news_gap_min ?? DEFAULT_GAP_MIN) * 60_000
 
   if (!started) {
     started = true
@@ -91,14 +102,16 @@ export function useBreakingNews() {
     }
 
     const tick = () => {
-      const list = items.value
+      // خبر مخفي من الإدارة ما يتعرضش ولا يتسجّل
+      const list = items.value.filter((item) => !hiddenIds.value.has(item.id))
       if (!list.length) return
+      if (settings.value.news_enabled === false) return
 
       // تسجيل أي خبر لسه ما نعرفوش
       let added = false
       for (const item of list) {
         if (plays.has(item.id)) continue
-        plays.set(item.id, primed ? { count: 0, nextAt: Date.now() } : { count: REPEATS, nextAt: 0 })
+        plays.set(item.id, primed ? { count: 0, nextAt: Date.now() } : { count: repeats(), nextAt: 0 })
         added = true
       }
       if (added) {
@@ -106,13 +119,14 @@ export function useBreakingNews() {
         writePlays()
       }
 
+      gapMsNow = gapMs()
       if (current.value) return
 
       // الأقدم الأول، فالترتيب على الشاشة زمني
       const now = Date.now()
       const due = [...list].reverse().find((item) => {
         const play = plays.get(item.id)
-        return play ? play.count < REPEATS && play.nextAt <= now : false
+        return play ? play.count < repeats() && play.nextAt <= now : false
       })
       if (due) current.value = { item: due, endsAt: now + BREAKING_MS }
     }

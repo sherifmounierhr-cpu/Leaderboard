@@ -141,6 +141,20 @@ export interface MediaFile {
 
 /** صف من public.lb_board_settings */
 export interface BoardSettings {
+  /** نوبة الأخبار شغّالة في التبديل التلقائي. */
+  news_enabled?: boolean
+  /** مدة الخبر الواحد على الشاشة بالثواني. */
+  news_slide_s?: number
+  /** كام مرة يتعاد الخبر الجديد. */
+  news_repeats?: number
+  /** الفاصل بين الإعادات بالدقايق. */
+  news_gap_min?: number
+  /** نغمة التنبيه شغّالة على كل الشاشات. */
+  news_chime?: boolean
+  /** مستوى نغمة التنبيه 0..100. */
+  news_volume?: number
+  /** ملف صوت التنبيه، أو null للنغمة المدمجة. */
+  news_sound_id?: string | null
   /** سعر الإيداع لليلة واحدة في البنك المركزي المصري. */
   cbe_deposit?: number | null
   /** سعر الإقراض لليلة واحدة. */
@@ -219,4 +233,22 @@ export interface MarketQuote {
   changePct: number
   /** إغلاقات آخر شهر، لخط الاتجاه الصغير. */
   spark: number[]
+}
+
+/** صف من public.lb_news_hidden — خبر ممنوع من الشاشات. */
+export interface HiddenNews {
+  post_id: number
+  title: string | null
+  hidden_at: string
+}
+
+/** صف من public.lb_news_casts — خبر اتبعت لكل الشاشات فوراً. */
+export interface NewsCast {
+  id: string
+  post_id: number
+  title: string
+  excerpt: string | null
+  image: string | null
+  url: string | null
+  created_at: string
 }

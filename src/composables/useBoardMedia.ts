@@ -8,7 +8,11 @@ import type { BoardSettings, MediaFile } from '@/lib/types'
  * من الإدارة يوصل الشاشات لحظياً عبر Realtime.
  */
 
-export const DEFAULT_SETTINGS: BoardSettings = { celebration_seconds: 8, celebration_song_id: null, volume: 80 }
+export const DEFAULT_SETTINGS: BoardSettings = {
+  celebration_seconds: 8, celebration_song_id: null, volume: 80,
+  news_enabled: true, news_slide_s: 9, news_repeats: 3, news_gap_min: 5,
+  news_chime: true, news_volume: 70, news_sound_id: null,
+}
 export const MEDIA_BUCKET = 'media'
 const FALLBACK_POLL_MS = 5 * 60_000
 
@@ -33,6 +37,13 @@ async function load() {
       cbe_deposit: row.cbe_deposit === null || row.cbe_deposit === undefined ? null : Number(row.cbe_deposit),
       cbe_lending: row.cbe_lending === null || row.cbe_lending === undefined ? null : Number(row.cbe_lending),
       cbe_rates_at: row.cbe_rates_at ?? null,
+      news_enabled: row.news_enabled ?? true,
+      news_slide_s: Number(row.news_slide_s) || 9,
+      news_repeats: Number(row.news_repeats) || 3,
+      news_gap_min: Number(row.news_gap_min) || 5,
+      news_chime: row.news_chime ?? true,
+      news_volume: Number(row.news_volume ?? 70),
+      news_sound_id: row.news_sound_id ?? null,
     }
   }
   if (!m.error) {

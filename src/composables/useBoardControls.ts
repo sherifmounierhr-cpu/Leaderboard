@@ -3,6 +3,7 @@ import type { BoardView } from '@/lib/types'
 import { settings, useSettings } from './useSettings'
 import { useNews } from './useNews'
 import { useMarkets } from './useMarkets'
+import { useBoardMedia } from './useBoardMedia'
 
 const query = new URLSearchParams(location.search)
 const initialView = query.get('view')
@@ -23,6 +24,7 @@ const SEQUENCE_VIEWS: BoardView[] = ['news', 'markets']
 
 const { hasNews } = useNews()
 const { hasQuotes } = useMarkets()
+const { settings: boardSettings } = useBoardMedia()
 
 /**
  * التدوير: الفرق ← المستشارون ← الأخبار ← الأسواق. شاشة التحليلات تُفتح
@@ -30,7 +32,7 @@ const { hasQuotes } = useMarkets()
  */
 export function advanceView() {
   const cycle: BoardView[] = ['teams', 'agents']
-  if (hasNews.value) cycle.push('news')
+  if (hasNews.value && boardSettings.value.news_enabled !== false) cycle.push('news')
   if (hasQuotes.value) cycle.push('markets')
   const at = cycle.indexOf(view.value)
   view.value = cycle[(at + 1) % cycle.length] ?? 'teams'

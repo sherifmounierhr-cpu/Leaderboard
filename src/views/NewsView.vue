@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { relativeTime } from '@/lib/format'
 import { useNews } from '@/composables/useNews'
 import { advanceView } from '@/composables/useBoardControls'
+import { useBoardMedia } from '@/composables/useBoardMedia'
+import { useNewsControls } from '@/composables/useNewsControls'
 
 /**
  * نوبة الأخبار في التبديل التلقائي: أخبار النهارده واحد ورا التاني بملء
@@ -12,8 +14,6 @@ import { advanceView } from '@/composables/useBoardControls'
  * مفيش عرض اتنين مع بعض عن قصد: خبر واحد كبير بيتقرا من آخر الغرفة.
  */
 
-/** مدة الخبر الواحد على الشاشة. */
-const SLIDE_MS = 9_000
 const TICK_MS = 100
 /** لو مفيش أخبار النهارده، بنعرض آخر تلاتة بدل ما النوبة تعدّي فاضية. */
 const FALLBACK = 3
@@ -22,6 +22,11 @@ const WAIT_MS = 6_000
 
 const { t, locale } = useI18n()
 const { items } = useNews()
+const { settings } = useBoardMedia()
+const { hiddenIds } = useNewsControls()
+
+/** مدة الخبر الواحد — بتتظبط من صفحة الإدارة. */
+const slideMs = computed(() => (settings.value.news_slide_s ?? 9) * 1000)
 
 const index = ref(0)
 const startedAt = ref(Date.now())
@@ -36,15 +41,17 @@ function cairoDay(at: Date): string {
 
 const slides = computed(() => {
   const today = cairoDay(new Date())
-  const fresh = items.value.filter((item) => {
+  // الأخبار المخفيّة من الإدارة ما بتوصلش الشاشة أصلاً
+  const visible = items.value.filter((item) => !hiddenIds.value.has(item.id))
+  const fresh = visible.filter((item) => {
     const date = new Date(item.date)
     return !Number.isNaN(date.getTime()) && cairoDay(date) === today
   })
-  return fresh.length ? fresh : items.value.slice(0, FALLBACK)
+  return fresh.length ? fresh : visible.slice(0, FALLBACK)
 })
 
 const current = computed(() => slides.value[index.value] ?? null)
-const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / SLIDE_MS) * 100))
+const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / slideMs.value) * 100))
 
 function show(at: number) {
   index.value = at
@@ -60,7 +67,7 @@ function step() {
     if (now.value - mountedAt >= WAIT_MS) finish()
     return
   }
-  if (now.value - startedAt.value < SLIDE_MS) return
+  if (now.value - startedAt.value < slideMs.value) return
   if (index.value + 1 < slides.value.length) show(index.value + 1)
   else finish()
 }
