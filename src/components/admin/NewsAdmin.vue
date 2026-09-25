@@ -22,7 +22,7 @@ const CLOCK_MS = 30_000
 
 const { t, locale } = useI18n()
 const { isDemo } = useAuth()
-const { items, fetchedAt, stale, refresh } = useNews()
+const { items, fetchedAt, stale, lastError, refresh } = useNews()
 const { hiddenIds, hide, show, cast, loaded: controlsLoaded } = useNewsControls()
 const { settings, songs, clips, urlOf, reload: reloadMedia } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
@@ -165,6 +165,7 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
           {{ stale ? t('newsAdmin.sourceStale') : t('newsAdmin.sourceOk') }}
         </p>
         <p v-if="updated" class="m-0 text-caption text-dim">{{ t('news.updated', { when: updated }) }}</p>
+        <p v-if="lastError" dir="ltr" class="m-0 truncate text-caption text-down" :title="lastError">{{ lastError }}</p>
       </div>
       <div class="rounded-xl border border-card-border bg-card px-4 py-3">
         <p class="m-0 text-caption text-mute">{{ t('newsAdmin.fetched') }}</p>

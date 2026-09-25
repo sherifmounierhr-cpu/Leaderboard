@@ -28,6 +28,8 @@ interface CachedPayload {
 const items = ref<NewsItem[]>([])
 const fetchedAt = ref<Date | null>(null)
 const stale = ref(false)
+/** آخر سبب فشل، للعرض في صفحة الإدارة. */
+const lastError = ref<string | null>(null)
 
 let started = false
 let timer: ReturnType<typeof setTimeout> | null = null
@@ -60,10 +62,19 @@ function writeCache(payload: CachedPayload) {
 async function fromServer(): Promise<NewsItem[] | null> {
   try {
     const res = await fetch(ENDPOINT, { headers: { accept: 'application/json' } })
-    if (!res.ok) return null
-    const payload = (await res.json()) as { items?: NewsItem[] }
-    return Array.isArray(payload.items) && payload.items.length ? payload.items : null
-  } catch {
+    const payload = (await res.json().catch(() => null)) as { items?: NewsItem[]; error?: string } | null
+    if (!res.ok || !payload) {
+      lastError.value = payload?.error ?? `HTTP ${res.status}`
+      return null
+    }
+    if (!Array.isArray(payload.items) || !payload.items.length) {
+      lastError.value = payload.error ?? 'empty'
+      return null
+    }
+    lastError.value = null
+    return payload.items
+  } catch (err) {
+    lastError.value = err instanceof Error ? err.message : 'network'
     return null
   }
 }
@@ -123,6 +134,7 @@ export function useNews() {
     items: computed(() => items.value),
     fetchedAt: computed(() => fetchedAt.value),
     stale: computed(() => stale.value),
+    lastError: computed(() => lastError.value),
     hasNews: computed(() => items.value.length > 0),
     refresh: () => void tick(),
   }
