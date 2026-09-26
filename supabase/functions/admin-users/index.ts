@@ -52,13 +52,15 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const authHeader = req.headers.get('authorization') ?? ''
+  const token = authHeader.replace(/^Bearer\s+/i, '')
 
   // المستدعي بصلاحياته هو — كل فحص صلاحية يمر من هنا
   const caller = createClient(url, anonKey, {
-    global: { headers: { authorization: authHeader } },
-    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false },
   })
-  const { data: me } = await caller.auth.getUser()
+  // التوكن صراحةً: getUser() بلا وسيط يقرأ جلسة مخزّنة، ولا توجد هنا
+  const { data: me } = await caller.auth.getUser(token)
   if (!me.user) return fail('unauthorized', 401)
 
   const { data: access, error: accessErr } = await caller.rpc('lb_my_access')
