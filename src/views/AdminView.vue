@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useAdminData } from '@/composables/useAdminData'
@@ -18,17 +18,29 @@ import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
 import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
+import UsersAdmin from '@/components/admin/UsersAdmin.vue'
+import { ADMIN_TABS, tabLabelKey, type AdminTab } from '@/lib/adminTabs'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import { useStorageHealth } from '@/composables/useStorageHealth'
 
 const { t } = useI18n()
-const { ready, busy, authError, isSignedIn, canViewAdmin, isDemo, email, signIn, signOut } = useAuth()
+const {
+  ready, busy, authError, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
+  email, signIn, signOut,
+} = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
-type Tab = 'periods' | 'deals' | 'celebrate' | 'messages' | 'agents' | 'teams' | 'reports' | 'data' | 'newsfeed' | 'rates' | 'devices' | 'storage'
-const tab = ref<Tab>('periods')
-const tabs: Tab[] = ['periods', 'deals', 'celebrate', 'messages', 'agents', 'teams', 'reports', 'data', 'newsfeed', 'rates', 'devices', 'storage']
+/** التبويبات حسب الصلاحية — الإخفاء للواجهة فقط، والقاعدة ترفض أي كتابة خارجها. */
+const tabs = computed<AdminTab[]>(() => {
+  void permissions.value
+  const visible: AdminTab[] = ADMIN_TABS.filter((name) => canSee(name))
+  if (permissions.value.includes('users')) visible.push('users')
+  return visible
+})
+const tab = ref<AdminTab>('periods')
+watch(tabs, (list) => { if (list.length && !list.includes(tab.value)) tab.value = list[0] }, { immediate: true })
+function goto(name: AdminTab) { if (tabs.value.includes(name)) tab.value = name }
 
 const form = ref({ email: '', password: '' })
 const showChangePassword = ref(false)
@@ -85,7 +97,7 @@ const FIELD =
         </a>
         <!-- حساب العرض مشترك بين المقيّمين: تغيير كلمته يقفله على الباقين -->
         <button
-          v-if="isSignedIn && !isDemo"
+          v-if="isSignedIn && !isSharedDemo"
           type="button"
           class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
           @click="showChangePassword = !showChangePassword"
@@ -102,7 +114,7 @@ const FIELD =
     <main class="flex-1 px-4 py-6 sm:px-8 lg:px-12 lg:py-10">
       <p v-if="!ready" class="text-center font-medium text-mute py-20">{{ t('admin.checking') }}</p>
 
-      <div v-if="isSignedIn && showChangePassword && !isDemo" class="mx-auto mb-6 max-w-sm">
+      <div v-if="isSignedIn && showChangePassword && !isSharedDemo" class="mx-auto mb-6 max-w-sm">
         <ChangePasswordCard />
       </div>
 
@@ -115,11 +127,13 @@ const FIELD =
         <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.signIn') }}</h2>
 
         <label class="flex flex-col gap-1.5">
-          <span class="font-semibold text-caption text-mute">{{ t('admin.email') }}</span>
+          <span class="font-semibold text-caption text-mute">{{ t('admin.identifier') }}</span>
           <input
             v-model="form.email"
-            type="email"
+            type="text"
             autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
             required
             dir="ltr"
             :class="FIELD"
@@ -167,7 +181,7 @@ const FIELD =
         >
           <iconify-icon icon="mdi:eye-outline" aria-hidden="true" class="mt-0.5 shrink-0 text-gold text-xl" />
           <div class="flex flex-col gap-0.5">
-            <p class="m-0 font-semibold text-sm">{{ t('admin.demoTitle') }}</p>
+            <p class="m-0 font-semibold text-sm">{{ t(role === 'readonly' ? 'users.readonlyTitle' : 'admin.demoTitle') }}</p>
             <p class="m-0 text-mute text-caption leading-relaxed">{{ t('admin.demoHint') }}</p>
           </div>
         </div>
@@ -190,7 +204,7 @@ const FIELD =
           <button
             type="button"
             class="rounded-lg bg-accent px-3 py-1.5 text-caption font-semibold text-white transition-colors hover:bg-accent-strong"
-            @click="tab = 'storage'"
+            @click="goto('storage')"
           >{{ t('admin.storage.open') }}</button>
         </div>
 
@@ -209,7 +223,7 @@ const FIELD =
             class="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
             :class="tab === name ? 'bg-accent text-white' : 'text-mute hover:text-strong'"
             @click="tab = name"
-          >{{ t(name === 'storage' ? 'admin.storage.tab' : name === 'messages' ? 'messages.tab' : name === 'devices' ? 'devices.tab' : name === 'rates' ? 'rates.tab' : name === 'newsfeed' ? 'newsAdmin.tab' : `admin.${name}`) }}</button>
+          >{{ t(tabLabelKey(name)) }}</button>
         </div>
 
         <p v-if="loading" class="m-0 font-medium text-mute text-sm">{{ t('admin.loading') }}</p>
@@ -232,8 +246,9 @@ const FIELD =
         <NewsAdmin v-else-if="tab === 'newsfeed'" />
         <MarketRatesAdmin v-else-if="tab === 'rates'" />
         <DevicesAdmin v-else-if="tab === 'devices'" />
-        <StorageAdmin v-else-if="tab === 'storage'" @goto="tab = $event" />
-        <DataTransfer v-else />
+        <StorageAdmin v-else-if="tab === 'storage'" @goto="goto($event)" />
+        <UsersAdmin v-else-if="tab === 'users'" />
+        <DataTransfer v-else-if="tab === 'data'" />
       </div>
     </main>
 

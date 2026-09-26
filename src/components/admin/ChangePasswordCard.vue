@@ -19,7 +19,7 @@ async function submit() {
   error.value = null
   success.value = false
 
-  if (newPassword.value.length < 6) {
+  if (newPassword.value.length < 10) {
     error.value = t('admin.passwordTooShort')
     return
   }

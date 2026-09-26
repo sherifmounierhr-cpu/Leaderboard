@@ -42,6 +42,49 @@ function apiDevRoutes(): Plugin {
   }
 }
 
+/**
+ * سياسة أمان المحتوى في نسخة البناء فقط (خادم التطوير يحتاج سكربتات HMR).
+ * GitHub Pages لا يسمح بترويسات، فتُضاف كـ <meta>. السكربتات من نفس الموقع
+ * فقط: أي سكربت محقون من بيانات (اسم، خبر، رسالة) لا يعمل.
+ * الصور والصوت من أي https لأن الأخبار وصور Drive من مصادر خارجية.
+ */
+function contentSecurityPolicy(): Plugin {
+  let supabase = ''
+  return {
+    name: 'everest-csp',
+    apply: 'build',
+    // من .env.local محلياً أو أسرار GitHub Actions — كلاهما يصل عبر config.env
+    configResolved(config) {
+      supabase = String(config.env.VITE_SUPABASE_URL ?? '').replace(/\/+$/, '')
+    },
+    transformIndexHtml() {
+      const realtime = supabase.replace(/^https:/, 'wss:')
+      const policy = [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "img-src 'self' data: blob: https:",
+        "media-src 'self' blob: https:",
+        [
+          "connect-src 'self'", supabase, realtime,
+          'https://api.pwnedpasswords.com', 'https://api.github.com',
+          'https://dashboard.everest-realestate.net',
+          'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
+          'https://api.iconify.design', 'https://api.simplesvg.com', 'https://api.unisvg.com',
+        ].filter(Boolean).join(' '),
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join('; ')
+      return [
+        { tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: policy }, injectTo: 'head-prepend' },
+        { tag: 'meta', attrs: { name: 'referrer', content: 'strict-origin-when-cross-origin' }, injectTo: 'head-prepend' },
+      ]
+    },
+  }
+}
+
 export default defineConfig({
   // مساره على GitHub Pages فرعي (github.io/Leaderboard)، فيحتاج base صريح عند البناء هناك فقط
   base: process.env.GITHUB_ACTIONS ? '/Leaderboard/' : '/',
@@ -56,6 +99,7 @@ export default defineConfig({
     }),
     tailwindcss(),
     apiDevRoutes(),
+    contentSecurityPolicy(),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },

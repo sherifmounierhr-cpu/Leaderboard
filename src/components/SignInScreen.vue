@@ -33,11 +33,13 @@ const FIELD =
       </div>
 
       <label class="flex flex-col gap-1.5">
-        <span class="font-semibold text-caption text-mute">{{ t('admin.email') }}</span>
+        <span class="font-semibold text-caption text-mute">{{ t('admin.identifier') }}</span>
         <input
           v-model="email"
-          type="email"
+          type="text"
           autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
           required
           dir="ltr"
           :class="FIELD"
