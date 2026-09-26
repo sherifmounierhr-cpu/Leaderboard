@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { supabase } from '@/lib/supabase'
 import { currentQuarter } from '@/lib/format'
 import { exportWorkbook, parseWorkbook, type ImportSummary } from '@/lib/workbook'
+import type { DealRow } from '@/lib/types'
 
 export interface AdminTeam {
   id: string
@@ -188,21 +189,50 @@ export function useAdminData() {
     return supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
   }
 
-  /** التصدير يشمل السنة كاملة لا الربع المعروض فقط. */
+  /** صفقات السنة كلها — PostgREST يرجّع 1000 صف كحد أقصى، فعلى صفحات. */
+  async function loadYearDeals() {
+    const PAGE = 1000
+    const rows: DealRow[] = []
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from('lb_deals')
+        .select('*')
+        .eq('year', year.value)
+        .order('deal_date')
+        .order('created_at')
+        .range(from, from + PAGE - 1)
+      if (error) fail(error)
+      rows.push(...((data ?? []) as DealRow[]))
+      if (!data || data.length < PAGE) return rows
+    }
+  }
+
+  /**
+   * التصدير يشمل السنة كاملة لا الربع المعروض فقط. q*_deals في الملف =
+   * الإجمالي ناقص صفقات الربع (نفس معنى الاستيراد)، فرفع الملف تاني — حتى
+   * بعد المسح — يرجّع نفس الأرقام بالظبط.
+   */
   async function exportYear() {
-    const { data, error } = await supabase
-      .from('lb_periods')
-      .select('*')
-      .eq('year', year.value)
+    const [{ data, error }, yearDeals] = await Promise.all([
+      supabase.from('lb_periods').select('*').eq('year', year.value),
+      loadYearDeals(),
+    ])
     if (error) fail(error)
+
+    const dealSum = new Map<string, number>()
+    for (const d of yearDeals) {
+      const key = `${d.agent_id}:${d.quarter}`
+      dealSum.set(key, (dealSum.get(key) ?? 0) + (Number(d.amount_egp) || 0))
+    }
 
     const byAgent = new Map<string, { quarter: number; target: number; deals: number }[]>()
     for (const row of (data ?? []) as AdminPeriod[]) {
       const list = byAgent.get(row.agent_id) ?? []
+      const total = Number(row.amount_egp) || 0
       list.push({
         quarter: Number(row.quarter),
         target: Number(row.target_egp) || 0,
-        deals: Number(row.amount_egp) || 0,
+        deals: Math.max(total - (dealSum.get(`${row.agent_id}:${row.quarter}`) ?? 0), 0),
       })
       byAgent.set(row.agent_id, list)
     }
@@ -221,6 +251,14 @@ export function useAdminData() {
           photo_url: a.photo_url,
           periods: byAgent.get(a.id) ?? [],
         })),
+        deals: yearDeals.map((d) => ({
+          agent: d.name,
+          date: d.deal_date,
+          amount: Number(d.amount_egp) || 0,
+          developer: d.developer ?? null,
+          project: d.project ?? null,
+          team: d.team ?? null,
+        })),
       },
       year.value,
     )
@@ -234,14 +272,29 @@ export function useAdminData() {
     saveError.value = null
     const { payload, summary } = await parseWorkbook(file)
 
-    const { error } = await supabase.rpc('lb_admin_import', {
+    const { data, error } = await supabase.rpc('lb_admin_import', {
       p_year: year.value,
       p_payload: payload,
     })
     if (error) fail(error)
 
     await reload()
-    return summary
+    // الخادم هو اللي يعرف أنهي صفقة جديدة وأنهي كانت موجودة
+    const result = (data ?? {}) as { deals?: number; deals_skipped?: number }
+    return { ...summary, deals: Number(result.deals) || 0, dealsSkipped: Number(result.deals_skipped) || 0 }
+  }
+
+  /**
+   * مسح البيانات قبل إدخال بيانات جديدة. scope 'sales': الأهداف والمبيعات
+   * والصفقات والإشعارات وسجل الترتيب؛ 'all': كمان الفرق والمستشارين.
+   * كلمة التأكيد تتحقق على الخادم.
+   */
+  async function wipeData(scope: 'sales' | 'all', confirmWord: string) {
+    saveError.value = null
+    const { data, error } = await supabase.rpc('lb_admin_wipe', { p_scope: scope, p_confirm: confirmWord })
+    if (error) fail(error)
+    await reload()
+    return data as Record<string, number>
   }
 
   return {
@@ -255,6 +308,7 @@ export function useAdminData() {
     reload,
     exportYear,
     importFile,
+    wipeData,
     loadPeriods,
     setQuarter,
     saveTeam,

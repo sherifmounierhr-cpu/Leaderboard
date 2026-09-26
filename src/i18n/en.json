@@ -232,10 +232,10 @@
     "dataHint": "Covers all four quarters of {year}.",
     "exportExcel": "Download Excel",
     "exporting": "Preparing…",
-    "exportHint": "A file with Teams and Agents sheets covering the whole year. Same columns as the Google Sheet, so it can be uploaded there as-is.",
+    "exportHint": "A file with an instructions sheet plus Teams, Agents and Deals (the year’s deals). Teams and Agents match the Google Sheet. Use it as the template for entering the original data.",
     "importExcel": "Upload Excel",
     "importing": "Importing…",
-    "importHint": "Updates existing rows and adds new ones, matched by name — nothing is ever deleted. A file missing someone will not remove them.",
+    "importHint": "Updates existing rows and adds new ones by name — nothing is deleted. New deals are added to their quarter’s total; existing ones aren’t duplicated. Uploading doesn’t trigger celebrations.",
     "importDone": "Done: {teams} teams, {agents} agents, {periods} periods.",
     "importSkipped": "({n} rows skipped with no name)",
     "photoType": "Unsupported format — use JPG, PNG or WebP",
@@ -331,7 +331,29 @@
       "year": "1 year"
     },
     "deals": "Deals",
-    "identifier": "Email or username"
+    "identifier": "Email or username",
+    "importDeals": "{n} new deals.",
+    "importDealsSkipped": "({n} deals already existed and were skipped)",
+    "wipe": {
+      "title": "Clear data",
+      "hint": "Before entering fresh data from scratch. A backup downloads to your device automatically first — if it fails, nothing is deleted.",
+      "scope": {
+        "sales": "Sales only",
+        "all": "Everything"
+      },
+      "scopeHint": {
+        "sales": "Targets, sales, deals, notifications and rank history. Teams, agents and their photos stay.",
+        "all": "All of that plus teams, agents and team leads. You’ll need to upload a file with Teams and Agents again."
+      },
+      "keeps": "Never touched: users and permissions, devices, audio and messages, settings, news.",
+      "word": "DELETE",
+      "typeWord": "Type “{word}” to confirm",
+      "button": "Download backup and clear",
+      "working": "Backing up and clearing…",
+      "confirmSales": "Permanently delete all targets, sales and deals? A backup downloads first.",
+      "confirmAll": "Permanently delete everything, including teams and agents? A backup downloads first.",
+      "done": "Cleared: {deals} deals, {sales} sales rows, {targets} targets, {agents} agents, {teams} teams. Upload the new data file now."
+    }
   },
   "kpi": {
     "label": "Company quarter summary",
