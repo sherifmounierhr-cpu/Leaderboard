@@ -3,11 +3,12 @@ import type { NewsItem } from '@/lib/types'
 import { postsToNews } from '@/lib/news'
 
 /**
- * أخبار المدونة لشريط الشاشة. الجلب من `/api/news` — دالة على السيرفر تعمل
- * الطلب نيابة عن المتصفح، فتتجنّب CORS وتبعت للشاشة نسخة منظّفة صغيرة.
+ * أخبار المدونة لشريط الشاشة. الجلب المباشر من ووردبريس أولاً: المدونة
+ * بتسمح بالقراءة من أي نطاق (CORS *)، وCloudflare قدّامها بيقبل طلب الشاشة.
  *
- * ولو الاستضافة ساكنة ومفيهاش دالة (GitHub Pages) بنرجع لجلب مباشر من
- * المتصفح، لأن المدونة بتسمح بالقراءة من أي نطاق.
+ * `/api/news` (دالة على Vercel) احتياطي بس: Cloudflare بيرفض طلبات سيرفرات
+ * Vercel بـ 403 لأنها من داتا سنتر، حتى بترويسات متصفح كاملة. لو صاحب المدونة
+ * سمح لـ /wp-json/ في Cloudflare، الدالة ترجع تشتغل من غير أي تعديل هنا.
  *
  * تحديث كل دقيقتين، ومع أي فشل بنفضل على آخر نسخة ناجحة: الشاشة معلّقة في
  * مكتب طول اليوم، فأسوأ من خبر قديم إن الشريط يفضى فجأة.
@@ -58,49 +59,44 @@ function writeCache(payload: CachedPayload) {
   }
 }
 
-/** المسار الطبيعي: دالة السيرفر. بترجّع null لو مش موجودة (استضافة ساكنة). */
-async function fromServer(): Promise<NewsItem[] | null> {
+type Fetched = { items: NewsItem[] } | { error: string }
+
+/** المسار الأساسي: ووردبريس مباشرةً من المتصفح. */
+async function fromWordPress(): Promise<Fetched> {
   try {
-    const res = await fetch(ENDPOINT, { headers: { accept: 'application/json' } })
-    const payload = (await res.json().catch(() => null)) as { items?: NewsItem[]; error?: string } | null
-    if (!res.ok || !payload) {
-      lastError.value = payload?.error ?? `HTTP ${res.status}`
-      return null
-    }
-    if (!Array.isArray(payload.items) || !payload.items.length) {
-      lastError.value = payload.error ?? 'empty'
-      return null
-    }
-    lastError.value = null
-    return payload.items
+    const res = await fetch(SOURCE, { headers: { accept: 'application/json' } })
+    if (!res.ok) return { error: `wp ${res.status}` }
+    const list = postsToNews(await res.json())
+    return list.length ? { items: list } : { error: 'wp: no posts' }
   } catch (err) {
-    lastError.value = err instanceof Error ? err.message : 'network'
-    return null
+    return { error: `wp: ${err instanceof Error ? err.message : 'network'}` }
   }
 }
 
-/**
- * احتياطي لاستضافة من غير سيرفر (GitHub Pages): نجيب من ووردبريس مباشرةً.
- * ممكن لأن المدونة بترجّع `Access-Control-Allow-Origin: *` للقراءة العامة.
- */
-async function fromWordPress(): Promise<NewsItem[] | null> {
+/** احتياطي: دالة السيرفر (مش موجودة على GitHub Pages، ومحجوبة حالياً على Vercel). */
+async function fromServer(): Promise<Fetched> {
   try {
-    const res = await fetch(SOURCE, { headers: { accept: 'application/json' } })
-    if (!res.ok) return null
-    const list = postsToNews(await res.json())
-    return list.length ? list : null
-  } catch {
-    return null
+    const res = await fetch(ENDPOINT, { headers: { accept: 'application/json' } })
+    const payload = (await res.json().catch(() => null)) as { items?: NewsItem[]; error?: string } | null
+    if (!res.ok || !payload) return { error: `api: ${payload?.error ?? `HTTP ${res.status}`}` }
+    if (!Array.isArray(payload.items) || !payload.items.length) return { error: `api: ${payload.error ?? 'empty'}` }
+    return { items: payload.items }
+  } catch (err) {
+    return { error: `api: ${err instanceof Error ? err.message : 'network'}` }
   }
 }
 
 async function load(): Promise<boolean> {
-  const fresh = (await fromServer()) ?? (await fromWordPress())
-  if (!fresh) {
-    // الطلب فشل: بنسيب المعروض زي ما هو ونعلّمه قديم
+  const direct = await fromWordPress()
+  const result = 'items' in direct ? direct : await fromServer()
+  if (!('items' in result)) {
+    // الطريقتين فشلوا: بنسيب المعروض زي ما هو ونعلّمه قديم، والسببين للإدارة
+    lastError.value = 'error' in direct ? `${direct.error} · ${result.error}` : result.error
     stale.value = true
     return false
   }
+  lastError.value = null
+  const fresh = result.items
   items.value = fresh
   fetchedAt.value = new Date()
   stale.value = false
