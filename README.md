@@ -137,6 +137,15 @@ insert into leaderboard.demo_accounts (email) values (lower('<البريد>'));
 
 مثال لشاشة المكتب: `?kiosk=1&rotate=on&interval=20&theme=midnight`
 
+### بدون شريط العنوان
+
+- **شاشة المكتب:** `docs/office-screen.bat` يفتح Chrome في وضع kiosk — لا شريط
+  عنوان ولا تبويبات. الخروج بـ Alt+F4.
+- **أي جهاز آخر:** اللوحة قابلة للتثبيت كتطبيق (`public/manifest.webmanifest`).
+  في Chrome أو Edge: أيقونة التثبيت في آخر شريط العنوان، أو القائمة ⋮ ←
+  «Cast, save, and share» ← «Install page as app». بعدها تفتح من أيقونتها في نافذة
+  بلا شريط عنوان. على الموبايل: «Add to Home screen».
+
 ## اختصارات لوحة المفاتيح
 
 `T` تبديل الشاشة · `R` التدوير · `F` ملء الشاشة · `S` الإعدادات · `L` اللغة · `D` المظهر
