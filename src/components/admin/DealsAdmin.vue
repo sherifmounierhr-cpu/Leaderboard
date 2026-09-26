@@ -14,7 +14,7 @@ import type { DealRow } from '@/lib/types'
 const { t, locale } = useI18n()
 const localName = useLocalName()
 const { agents } = useAdminData()
-const { deals, loading, load, addDeal, deleteDeal } = useDeals()
+const { deals, loading, load, addDeal, deleteDeal, developers, projects } = useDeals()
 
 /** تاريخ النهاردة بتوقيت القاهرة — نفس اليوم اللي الخادم بيقارن بيه. */
 function cairoToday() {
@@ -22,7 +22,7 @@ function cairoToday() {
     .format(new Date())
 }
 
-const form = ref({ agentId: '', date: cairoToday(), amount: '' })
+const form = ref({ agentId: '', date: cairoToday(), amount: '', developer: '', project: '' })
 const saving = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const search = ref('')
@@ -49,7 +49,9 @@ async function submit() {
   saving.value = true
   message.value = null
   try {
-    const result = await addDeal(form.value.agentId, form.value.date, amountValue.value)
+    const result = await addDeal(
+      form.value.agentId, form.value.date, amountValue.value, form.value.developer, form.value.project,
+    )
     const name = options.value.find((o) => o.id === form.value.agentId)?.label ?? ''
     message.value = {
       ok: true,
@@ -60,6 +62,7 @@ async function submit() {
         quarter: `Q${result.quarter} ${result.year}`,
       }),
     }
+    // المبلغ بس اللي بيتفضّى: الإدخال عادةً بيكمّل على نفس المشروع
     form.value.amount = ''
   } catch (err) {
     message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
@@ -84,7 +87,8 @@ const rows = computed(() => {
   const q = search.value.trim().toLowerCase()
   return deals.value
     .filter((d) => !q || d.name.toLowerCase().includes(q) || (d.name_ar ?? '').includes(q) ||
-      (d.team ?? '').toLowerCase().includes(q) || (d.team_ar ?? '').includes(q))
+      (d.team ?? '').toLowerCase().includes(q) || (d.team_ar ?? '').includes(q) ||
+      (d.developer ?? '').toLowerCase().includes(q) || (d.project ?? '').toLowerCase().includes(q))
     .map((d) => ({
       deal: d,
       name: localName(d.name, d.name_ar),
@@ -110,7 +114,7 @@ const FIELD =
 
     <!-- إضافة صفقة -->
     <form class="flex flex-col gap-4 rounded-xl border border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]" @submit.prevent="submit">
-      <div class="grid gap-4 lg:grid-cols-[2fr_1fr_1.2fr_auto] lg:items-end">
+      <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.6fr_.9fr_1.1fr_1.1fr_1fr_auto] xl:items-end">
         <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('table.agent') }} *</span>
           <select v-model="form.agentId" required :class="FIELD">
@@ -124,6 +128,36 @@ const FIELD =
         <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('deals.date') }} *</span>
           <input v-model="form.date" type="date" required :max="cairoToday()" :class="FIELD" />
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.developer') }}</span>
+          <input
+            v-model="form.developer"
+            type="text"
+            list="deal-developers"
+            maxlength="80"
+            :placeholder="t('deals.developerPlaceholder')"
+            :class="FIELD"
+          />
+          <datalist id="deal-developers">
+            <option v-for="name in developers" :key="name" :value="name" />
+          </datalist>
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.project') }}</span>
+          <input
+            v-model="form.project"
+            type="text"
+            list="deal-projects"
+            maxlength="80"
+            :placeholder="t('deals.projectPlaceholder')"
+            :class="FIELD"
+          />
+          <datalist id="deal-projects">
+            <option v-for="name in projects" :key="name" :value="name" />
+          </datalist>
         </label>
 
         <label class="flex flex-col gap-1.5">
@@ -174,8 +208,8 @@ const FIELD =
       <input
         v-model="search"
         type="search"
-        :placeholder="t('search.placeholder')"
-        :aria-label="t('search.placeholder')"
+        :placeholder="t('deals.search')"
+        :aria-label="t('deals.search')"
         :class="[FIELD, 'w-48 sm:w-64']"
       />
     </header>
@@ -197,6 +231,10 @@ const FIELD =
         <div class="flex min-w-0 flex-1 flex-col">
           <p class="m-0 truncate font-semibold text-strong">{{ r.name }}</p>
           <p class="m-0 truncate text-caption text-mute">
+            <template v-if="r.deal.project">
+              <b class="font-semibold text-strong">{{ r.deal.project }}</b><template v-if="r.deal.developer"> — {{ r.deal.developer }}</template> ·
+            </template>
+            <template v-else-if="r.deal.developer">{{ r.deal.developer }} · </template>
             <template v-if="r.team">{{ r.team }} · </template>{{ r.date }} · {{ r.period }}
           </p>
         </div>

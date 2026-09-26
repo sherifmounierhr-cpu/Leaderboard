@@ -124,11 +124,13 @@ export function renderBackupHtml(d: BackupData): string {
   )
 
   const deals = table(
-    ['تاريخ الصفقة', 'المستشار', 'الفريق', 'المبلغ (ج.م)', 'الربع'],
+    ['تاريخ الصفقة', 'المستشار', 'الفريق', 'المطوّر', 'المشروع', 'المبلغ (ج.م)', 'الربع'],
     [...d.deals].map((x) => [
       esc(x.deal_date),
       nameOf(x.name, x.name_ar),
       nameOf(x.team, x.team_ar),
+      esc(x.developer ?? '—'),
+      esc(x.project ?? '—'),
       num(x.amount_egp),
       `Q${x.quarter} ${x.year}`,
     ]),

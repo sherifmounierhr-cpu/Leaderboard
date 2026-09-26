@@ -109,6 +109,13 @@ export interface DeviceRow {
   revoked_at: string | null
 }
 
+/** اسم مطوّر أو مشروع اتسجّل قبل كده، للاقتراح عند الإدخال. */
+export interface DealName {
+  kind: 'developer' | 'project'
+  value: string
+  uses: number
+}
+
 /** صف من public.lb_deals — صفقة واحدة بتاريخها ومبلغها */
 export interface DealRow {
   id: string
@@ -125,6 +132,10 @@ export interface DealRow {
   photo_url: string | null
   team: string | null
   team_ar: string | null
+  /** اسم المطوّر العقاري — اختياري. */
+  developer: string | null
+  /** اسم المشروع — اختياري. */
+  project: string | null
 }
 
 /** صف من public.lb_media_files */

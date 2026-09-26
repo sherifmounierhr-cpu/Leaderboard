@@ -453,7 +453,12 @@
     "deleted": "Deleted the {amount} deal for {name} and removed it from the total.",
     "recent": "Recent deals",
     "empty": "No deals logged yet.",
-    "tab": "Deals"
+    "tab": "Deals",
+    "developer": "Developer",
+    "project": "Project",
+    "developerPlaceholder": "e.g. SODIC",
+    "projectPlaceholder": "e.g. Ogami",
+    "search": "Search by consultant, team, developer or project"
   },
   "devices": {
     "tab": "Devices",
