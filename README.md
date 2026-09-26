@@ -70,7 +70,12 @@ npm run dev
 
 الملف المصدَّر فيه 4 أوراق: **Instructions** (إرشادات الإدخال بالعربي، وتتجاهل عند
 الرفع)، و **Teams**، و **Agents**، و **Deals** (صفقات السنة: agent, date,
-amount_egp, developer, project، و team للعرض فقط).
+amount_egp, developer, project, team).
+
+- قوائم منسدلة: `team` في Agents و Deals من أسماء Teams، و `agent` في Deals من
+  أسماء Agents (المدى بيكبر مع الأسماء). write-excel-file ما بيدعمهاش، فبتتضاف
+  في XML الأوراق بعد البناء (`addDropdowns` في `src/lib/workbook.ts`).
+- `team` في Deals = فريق المستشار وقت الصفقة؛ فاضي = فريقه الحالي.
 
 - `q*_deals` في ورقة Agents = مبيعات الربع **غير المسجّلة كصفقات**. إجمالي الربع
   = `q*_deals` + كل صفقات الربع. التصدير يكتبها بنفس المعنى، فرفع الملف تاني —

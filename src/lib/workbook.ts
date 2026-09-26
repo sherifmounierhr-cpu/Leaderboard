@@ -36,7 +36,7 @@ export interface WorkbookDeal {
   project: string | null
   /** رقم الصف في Excel — لرسائل الخطأ. */
   row?: number
-  /** للعرض في التصدير فقط؛ الاستيراد يأخذ الفريق من المستشار. */
+  /** الفريق وقت الصفقة؛ فاضي = فريق المستشار الحالي. */
   team?: string | null
 }
 
@@ -94,6 +94,7 @@ function instructionRows(year: number) {
     L(`• الأهداف وأرقام ورقة Agents تخص سنة ${year} (السنة المختارة في صفحة الإدارة وقت الرفع). الصفقات بتتحسب في سنة وربع تاريخها.`),
     L('• الرفع يضيف ويحدّث بالاسم ولا يحذف أحداً. لبدء بيانات جديدة من الصفر: «مسح البيانات» في نفس التبويب أولاً، ثم ارفع الملف.'),
     L('• الرفع لا يطلق احتفالات على الشاشات.'),
+    L('• أعمدة الأسماء فيها قائمة منسدلة: team في Agents و Deals من ورقة Teams، و agent في Deals من ورقة Agents. أضف الاسم في ورقته الأول وهيظهر في القائمة.'),
     blank,
     H('ورقة Teams — الفرق'),
     L('• name: اسم الفريق بالإنجليزي — إلزامي، ومفتاح الربط مع باقي الأوراق. لا يتكرر.'),
@@ -103,18 +104,18 @@ function instructionRows(year: number) {
     H('ورقة Agents — المستشارون والأهداف'),
     L('• name: اسم المستشار بالإنجليزي — إلزامي ولا يتكرر.'),
     L('• name_ar: الاسم بالعربي (اختياري).'),
-    L('• team: اسم الفريق بالإنجليزي بالظبط زي ورقة Teams.'),
+    L('• team: اختر الفريق من القائمة (أسماء ورقة Teams).'),
     L('• photo: رابط صورة (اختياري).'),
     L('• q1_target … q4_target: مستهدف كل ربع بالجنيه.'),
     L('• q1_deals … q4_deals: مبيعات الربع «غير المسجّلة» كصفقات في ورقة Deals. لو هتسجّل كل الصفقات بالتفصيل، اكتب 0.'),
     L('• إجمالي الربع على اللوحة = q_deals + مجموع صفقات الربع في ورقة Deals.'),
     blank,
     H('ورقة Deals — الصفقات'),
-    L('• agent: اسم المستشار زي ورقة Agents (بالإنجليزي أو بالعربي) — إلزامي.'),
+    L('• agent: اختر المستشار من القائمة (أسماء ورقة Agents) — إلزامي. الاسم العربي مقبول كمان لو كتبته.'),
     L('• date: تاريخ الصفقة — إلزامي. خلية تاريخ في Excel أو نص بالشكل 2026-09-23 أو 23/09/2026. لا يكون في المستقبل.'),
     L('• amount_egp: مبلغ الصفقة بالجنيه — إلزامي وأكبر من صفر.'),
     L('• developer / project: المطوّر والمشروع (اختياري).'),
-    L('• team: للعرض فقط وبيتجاهل عند الرفع — الفريق بيتاخد من المستشار.'),
+    L('• team: فريق المستشار وقت الصفقة (من القائمة) — اختياري. لو فاضي بيتاخد فريقه الحالي. مفيد للصفقات القديمة لو المستشار اتنقل بعدها.'),
     L('• صفقة موجودة بالفعل (نفس المستشار والتاريخ والمبلغ والمطوّر والمشروع) لا تتكرر لو رفعت نفس الملف مرة تانية.'),
     blank,
     H('لو ظهر خطأ عند الرفع'),
@@ -123,11 +124,71 @@ function instructionRows(year: number) {
 }
 
 export async function exportWorkbook(payload: WorkbookPayload, year: number) {
-  await (await buildWorkbook(payload, year)).toFile(`Everest-Leaderboard-${year}.xlsx`)
+  const blob = await buildWorkbook(payload, year)
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `Everest-Leaderboard-${year}.xlsx`
+  link.click()
+  setTimeout(() => URL.revokeObjectURL(url), 10_000)
 }
 
-/** الملف نفسه بدون تنزيل — toBlob() منه يتقري بـ parseWorkbook للتجربة. */
-export async function buildWorkbook(payload: WorkbookPayload, year: number) {
+/** آخر صف تنطبق عليه القوائم المنسدلة. */
+const LIST_ROWS = 2000
+
+/**
+ * قائمة منسدلة من عمود أسماء في ورقة تانية. المدى بيكبر مع الأسماء
+ * (OFFSET + COUNTA) فالقائمة ما فيهاش صفوف فاضية، وأي اسم يتضاف للورقة يظهر فيها.
+ * التحذير (warning) مش منع: الاسم العربي للمستشار مقبول عند الرفع كمان.
+ */
+function listValidation(sqref: string, sourceSheet: string, title: string, message: string) {
+  const source = `OFFSET(${sourceSheet}!$A$2,0,0,MAX(COUNTA(${sourceSheet}!$A:$A)-1,1),1)`
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
+  return (
+    `<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" errorStyle="warning"` +
+    ` errorTitle="${esc(title)}" error="${esc(message)}" sqref="${sqref}">` +
+    `<formula1>${esc(source)}</formula1></dataValidation>`
+  )
+}
+
+/**
+ * write-excel-file ما بيدعمش data validation، فبنضيفها في XML الأوراق بعد
+ * البناء. مكانها في <worksheet> لازم يكون قبل العناصر دي (ترتيب مواصفة OOXML).
+ */
+async function addDropdowns(blob: Blob, rules: Record<string, string[]>): Promise<Blob> {
+  const { unzipSync, zipSync, strFromU8, strToU8 } = await import('fflate')
+  const files = unzipSync(new Uint8Array(await blob.arrayBuffer()))
+
+  const workbook = strFromU8(files['xl/workbook.xml'])
+  const rels = strFromU8(files['xl/_rels/workbook.xml.rels'])
+  const AFTER = /<(hyperlinks|printOptions|pageMargins|pageSetup|headerFooter|drawing|legacyDrawing|tableParts|extLst)[\s>/]/
+
+  // ترتيب الخصائص داخل الوسم مش ثابت (المكتبة بتكتب r:id قبل name)، فكل خاصية لوحدها
+  const attr = (tag: string, name: string) => tag.match(new RegExp(`\\s${name}="([^"]*)"`))?.[1]
+  const sheetTags = workbook.match(/<sheet\s[^>]*>/g) ?? []
+  const relTags = rels.match(/<Relationship\s[^>]*>/g) ?? []
+
+  for (const [sheet, validations] of Object.entries(rules)) {
+    const rid = attr(sheetTags.find((tag) => attr(tag, 'name') === sheet) ?? '', 'r:id')
+    const target = rid && attr(relTags.find((tag) => attr(tag, 'Id') === rid) ?? '', 'Target')
+    // ورقة ناقصة = خطأ في الكود، مش حاجة نعدّيها بهدوء والملف يطلع من غير قوائم
+    if (!target || !files[`xl/${target.replace(/^\/?xl\//, '')}`]) {
+      throw new Error(`لم أجد ورقة ${sheet} داخل الملف لإضافة القوائم المنسدلة`)
+    }
+    const path = `xl/${target.replace(/^\/?xl\//, '')}`
+    const xml = strFromU8(files[path])
+    const block = `<dataValidations count="${validations.length}">${validations.join('')}</dataValidations>`
+    const at = xml.search(AFTER)
+    files[path] = strToU8(at >= 0 ? xml.slice(0, at) + block + xml.slice(at) : xml.replace('</worksheet>', `${block}</worksheet>`))
+  }
+
+  return new Blob([zipSync(files)], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+}
+
+/** الملف نفسه بدون تنزيل — يتقري بـ parseWorkbook للتجربة. */
+export async function buildWorkbook(payload: WorkbookPayload, year: number): Promise<Blob> {
   // المسار /browser صراحةً: الحزمة لا تصدّر جذراً، ونسخة node تستورد fs
   const { default: writeXlsxFile } = await import('write-excel-file/browser')
 
@@ -159,7 +220,7 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number) {
   ]
 
   // الترويسات إنجليزية لأنها عقد أعمدة sheets-sync، فتُترك الورقة يسار-يمين
-  return writeXlsxFile([
+  const writer = writeXlsxFile([
     {
       sheet: 'Instructions',
       data: instructionRows(year),
@@ -188,6 +249,17 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number) {
       columns: [{ width: 24 }, { width: 14 }, { width: 16 }, { width: 22 }, { width: 22 }, { width: 20 }],
     },
   ])
+
+  // الأعمدة: Agents ← C = team · Deals ← A = agent، F = team
+  const teamMsg = 'اختر فريقاً من ورقة Teams — أو أضفه هناك أولاً'
+  return addDropdowns(await writer.toBlob(), {
+    Agents: [listValidation(`C2:C${LIST_ROWS}`, 'Teams', 'فريق غير موجود', teamMsg)],
+    Deals: [
+      listValidation(`A2:A${LIST_ROWS}`, 'Agents', 'مستشار غير موجود',
+        'اختر المستشار من القائمة (من ورقة Agents) — أو أضفه هناك أولاً'),
+      listValidation(`F2:F${LIST_ROWS}`, 'Teams', 'فريق غير موجود', teamMsg),
+    ],
+  })
 }
 
 /** تصدير جدول تقرير واحد — الترويسة ثم الصفوف كما هي معروضة. */
@@ -378,6 +450,7 @@ export async function parseWorkbook(
           amount,
           developer: toText(pick(row, index, 'developer')) || null,
           project: toText(pick(row, index, 'project')) || null,
+          team: toText(pick(row, index, 'team')) || null,
           row: rowNo,
         })
       }
