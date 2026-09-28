@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { defineAsyncComponent, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useBoardControls } from '@/composables/useBoardControls'
@@ -8,7 +8,6 @@ import SignInScreen from '@/components/SignInScreen.vue'
 import BoardHeader from '@/components/BoardHeader.vue'
 import TeamsView from '@/views/TeamsView.vue'
 import AgentsView from '@/views/AgentsView.vue'
-import InsightsView from '@/views/InsightsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 import KpiStrip from '@/components/KpiStrip.vue'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
@@ -20,6 +19,13 @@ import MarketsView from '@/views/MarketsView.vue'
 import MarketAlertOverlay from '@/components/MarketAlertOverlay.vue'
 import { settings } from '@/composables/useSettings'
 import { useDevice } from '@/composables/useDevice'
+
+/*
+ * شاشة التحليلات بتتحمّل عند أول فتح بس: هي مش في التدوير التلقائي،
+ * بتتفتح بإيد حد، ومعاها كل رياضة الرسوم. شاشة المكتب ممكن تفضل
+ * شغّالة شهور من غير ما حد يفتحها.
+ */
+const InsightsView = defineAsyncComponent(() => import('@/views/InsightsView.vue'))
 
 const { t } = useI18n()
 const { ready, isSignedIn } = useAuth()

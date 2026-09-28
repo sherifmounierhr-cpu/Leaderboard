@@ -104,4 +104,24 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        /**
+         * المكتبات الخارجية في حزم باسمها، منفصلة عن كود اللوحة.
+         *
+         * السبب مش الحجم — هو التخبئة. الشاشة بتعيد التحميل كل يوم، وكل نشر
+         * بيغيّر بصمة الحزمة اللي فيها كود اللوحة. لو Supabase ووVue جوّاها،
+         * الشاشة بتنزّل 300 كيلو تاني عشان تعديل في سطر واحد. منفصلين، بيفضلوا
+         * في تخبئة المتصفح لحد ما نرقّيهم فعلاً.
+         */
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('@supabase')) return 'supabase'
+          if (id.includes('vue-i18n') || id.includes('@intlify')) return 'i18n'
+          if (id.includes('node_modules/vue/') || id.includes('@vue/')) return 'vue'
+        },
+      },
+    },
+  },
 })
