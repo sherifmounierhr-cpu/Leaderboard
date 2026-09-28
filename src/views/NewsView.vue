@@ -6,6 +6,7 @@ import { useNews } from '@/composables/useNews'
 import { advanceView } from '@/composables/useBoardControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useNewsControls } from '@/composables/useNewsControls'
+import { dayKey } from '@/lib/region'
 
 /**
  * نوبة الأخبار في التبديل التلقائي: أخبار النهارده واحد ورا التاني بملء
@@ -34,18 +35,13 @@ const now = ref(Date.now())
 const broken = ref(new Set<number>())
 let clock: ReturnType<typeof setInterval> | null = null
 
-/** تاريخ النهارده بتوقيت القاهرة، فاليوم يبدأ وينتهي مع يوم العمل. */
-function cairoDay(at: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(at)
-}
-
 const slides = computed(() => {
-  const today = cairoDay(new Date())
+  const today = dayKey()
   // الأخبار المخفيّة من الإدارة ما بتوصلش الشاشة أصلاً
   const visible = items.value.filter((item) => !hiddenIds.value.has(item.id))
   const fresh = visible.filter((item) => {
     const date = new Date(item.date)
-    return !Number.isNaN(date.getTime()) && cairoDay(date) === today
+    return !Number.isNaN(date.getTime()) && dayKey(date) === today
   })
   return fresh.length ? fresh : visible.slice(0, FALLBACK)
 })

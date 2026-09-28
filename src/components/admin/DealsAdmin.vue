@@ -6,6 +6,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import { useDeals } from '@/composables/useDeals'
 import { useLocalName } from '@/composables/useLocalName'
 import type { DealRow } from '@/lib/types'
+import { dayKey, NUMBER_LOCALE } from '@/lib/region'
 
 /**
  * إدخال المبيعات صفقة صفقة: المستشار والتاريخ والمبلغ. الصفقة بتزوّد إجمالي
@@ -16,13 +17,7 @@ const localName = useLocalName()
 const { agents } = useAdminData()
 const { deals, loading, load, addDeal, deleteDeal, developers, projects } = useDeals()
 
-/** تاريخ النهاردة بتوقيت القاهرة — نفس اليوم اللي الخادم بيقارن بيه. */
-function cairoToday() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit' })
-    .format(new Date())
-}
-
-const form = ref({ agentId: '', date: cairoToday(), amount: '', developer: '', project: '' })
+const form = ref({ agentId: '', date: dayKey(), amount: '', developer: '', project: '' })
 const saving = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const search = ref('')
@@ -42,7 +37,7 @@ const options = computed(() => {
 })
 
 const amountValue = computed(() => Number(String(form.value.amount).replace(/[,\s]/g, '')) || 0)
-const valid = computed(() => Boolean(form.value.agentId) && amountValue.value > 0 && form.value.date <= cairoToday())
+const valid = computed(() => Boolean(form.value.agentId) && amountValue.value > 0 && form.value.date <= dayKey())
 
 async function submit() {
   if (!valid.value || saving.value) return
@@ -93,7 +88,7 @@ const rows = computed(() => {
       deal: d,
       name: localName(d.name, d.name_ar),
       team: d.team ? localName(d.team, d.team_ar) : '',
-      date: new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      date: new Intl.DateTimeFormat(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
         .format(new Date(`${d.deal_date}T12:00:00`)),
       period: `Q${d.quarter} ${d.year}`,
     }))
@@ -127,7 +122,7 @@ const FIELD =
 
         <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('deals.date') }} *</span>
-          <input v-model="form.date" type="date" required :max="cairoToday()" :class="FIELD" />
+          <input v-model="form.date" type="date" required :max="dayKey()" :class="FIELD" />
         </label>
 
         <label class="flex flex-col gap-1.5">

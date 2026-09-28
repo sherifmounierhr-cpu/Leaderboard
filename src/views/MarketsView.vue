@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { NUMBER_LOCALE } from '@/lib/region'
 import { useI18n } from 'vue-i18n'
 import { useMarkets } from '@/composables/useMarkets'
 import { useBoardMedia } from '@/composables/useBoardMedia'
@@ -101,7 +102,7 @@ const note = computed(() => {
     const date = new Date(quote.at)
     if (Number.isNaN(date.getTime())) return ''
     // nu-latn: باقي أرقام الشاشة لاتينية، والخلط بيبان غلط من بعيد
-    const when = new Intl.DateTimeFormat('ar-EG-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
+    const when = new Intl.DateTimeFormat(NUMBER_LOCALE.ar, { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
     return `${ar('markets.decidedOn')} ${when}`
   }
   return ''

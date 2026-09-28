@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { NUMBER_LOCALE } from '@/lib/region'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import { linePath, makeXScale, makeYScale, nearestIndex, niceScale } from '@/lib/chart'
@@ -113,7 +114,7 @@ const dateTicks = computed(() => {
 
 const dateFormatter = computed(
   () =>
-    new Intl.DateTimeFormat(rtl.value ? 'ar-EG-u-nu-latn' : 'en-US', {
+    new Intl.DateTimeFormat(rtl.value ? NUMBER_LOCALE.ar : 'en-US', {
       day: 'numeric',
       month: 'short',
     }),

@@ -1,6 +1,7 @@
 import { computed, ref } from 'vue'
 import { hasSupabaseConfig, supabase } from '@/lib/supabase'
 import type { Announcement } from '@/lib/types'
+import { TIME_ZONE } from '@/lib/region'
 
 /**
  * رسائل الترحيب والتحفيز. الجدولة بتتحسب هنا على كل شاشة بتوقيت القاهرة:
@@ -13,7 +14,6 @@ const TICK_MS = 5_000
 const FALLBACK_POLL_MS = 5 * 60_000
 const SEEN_KEY = 'everest.announcements.seen'
 const SEEN_MAX = 200
-const TZ = 'Africa/Cairo'
 
 export interface ShownAnnouncement {
   key: string
@@ -47,7 +47,7 @@ function markSeen(key: string) {
 // ------------------------------------------------------------ توقيت القاهرة
 function cairoParts(date: Date) {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit', weekday: 'short', hourCycle: 'h23',
   }).formatToParts(date)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''

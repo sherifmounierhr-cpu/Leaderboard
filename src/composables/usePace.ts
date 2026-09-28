@@ -1,5 +1,6 @@
 import { computed, ref } from 'vue'
 import { useBoardData } from '@/composables/useBoardData'
+import { dayParts } from '@/lib/region'
 
 /**
  * الإيقاع: «المفروض نكون وصلنا لكام في المئة من المستهدف النهاردة؟»
@@ -20,18 +21,6 @@ const TICK_MS = 10 * 60_000
 const now = ref(new Date())
 let timer: ReturnType<typeof setInterval> | null = null
 
-/** تاريخ اليوم في القاهرة كـ [سنة، شهر 0..11، يوم] بغض النظر عن توقيت الجهاز. */
-function cairoParts(date: Date): [number, number, number] {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(date)
-  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value)
-  return [get('year'), get('month') - 1, get('day')]
-}
-
 export interface QuarterProgress {
   /** 0..1 — نسبة الربع المنقضية (اليوم الحالي محسوب كامل). */
   elapsed: number
@@ -42,7 +31,7 @@ export interface QuarterProgress {
 }
 
 export function quarterProgress(year: number, quarter: number, date = new Date()): QuarterProgress {
-  const [y, m, d] = cairoParts(date)
+  const [y, m, d] = dayParts(date)
   const start = Date.UTC(year, (quarter - 1) * 3, 1)
   const end = Date.UTC(year, quarter * 3, 1)
   const today = Date.UTC(y, m, d)

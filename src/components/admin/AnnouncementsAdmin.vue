@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { Announcement } from '@/lib/types'
 import { useScreenAdmin, type AnnouncementDraft } from '@/composables/useScreenAdmin'
 import { activeOccurrence, cairoWallTime, nextOccurrence } from '@/composables/useAnnouncements'
+import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
 
 /**
  * رسائل الترحيب والتحفيز: إنشاء وتعديل وجدولة ومعاينة. الجدولة بتوقيت
@@ -38,7 +39,7 @@ const notice = ref<string | null>(null)
 function cairoLocalInput(offsetMs = 10 * 60_000) {
   const d = new Date(Date.now() + offsetMs)
   const p = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(d)
   const g = (k: string) => p.find((x) => x.type === k)?.value ?? '00'
   return `${g('year')}-${g('month')}-${g('day')}T${g('hour')}:${g('minute')}`
@@ -182,14 +183,14 @@ const dayNames = computed(() => {
 })
 
 function fmt(ms: number) {
-  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {
-    timeZone: 'Africa/Cairo', weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
+  return new Intl.DateTimeFormat(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-GB', {
+    timeZone: TIME_ZONE, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
   }).format(new Date(ms))
 }
 
 function clockOf(hhmm: string) {
   const [h, m] = hhmm.split(':').map(Number)
-  return new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-EG-u-nu-latn' : 'en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
+  return new Intl.DateTimeFormat(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'UTC' })
     .format(new Date(Date.UTC(2026, 0, 1, h, m)))
 }
 

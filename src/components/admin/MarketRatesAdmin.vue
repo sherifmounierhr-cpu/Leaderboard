@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { NUMBER_LOCALE } from '@/lib/region'
 import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
@@ -53,7 +54,7 @@ const savedAt = computed(() => {
   const days = Math.floor((Date.now() - date.getTime()) / 86_400_000)
   return {
     // nu-latn: باقي أرقام الصفحة لاتينية
-    text: new Intl.DateTimeFormat(locale.value === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {
+    text: new Intl.DateTimeFormat(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-GB', {
       day: 'numeric', month: 'long', year: 'numeric',
     }).format(date),
     stale: days > STALE_DAYS,

@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import type { MarketQuote } from '@/lib/types'
+import { dayKey } from '@/lib/region'
 import { useMarkets } from './useMarkets'
 
 /**
@@ -21,13 +22,8 @@ const current = ref<{ quote: MarketQuote; endsAt: number } | null>(null)
 let started = false
 let seen = new Set<string>()
 
-/** مفتاح اليوم بتوقيت القاهرة، فالتنبيه يتجدّد مع بداية يوم العمل. */
-function cairoDay(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date())
-}
-
 function keyOf(quote: MarketQuote): string {
-  return `${cairoDay()}:${quote.key}:${quote.changePct > 0 ? 'up' : 'down'}`
+  return `${dayKey()}:${quote.key}:${quote.changePct > 0 ? 'up' : 'down'}`
 }
 
 function readSeen(): Set<string> {
@@ -35,7 +31,7 @@ function readSeen(): Set<string> {
     const raw = localStorage.getItem(SEEN_KEY)
     const rows = raw ? (JSON.parse(raw) as unknown) : null
     // مفاتيح الأيام القديمة بتتشال لوحدها: بنحتفظ بتنبيهات النهارده بس
-    const today = cairoDay()
+    const today = dayKey()
     return new Set(
       Array.isArray(rows)
         ? rows.filter((x): x is string => typeof x === 'string' && x.startsWith(today))

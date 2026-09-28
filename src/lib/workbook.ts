@@ -6,6 +6,8 @@
  * المكتبتان تُحمّلان عند الطلب فقط — صفحة اللوحة لا تحتاجهما.
  */
 
+import { dayKey } from './region'
+
 export interface WorkbookPeriod {
   quarter: number
   target: number
@@ -350,10 +352,6 @@ function toIsoDate(value: unknown): string | null {
   return `${y}-${pad(m)}-${pad(d)}`
 }
 
-function cairoToday() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date())
-}
-
 export async function parseWorkbook(
   file: File,
 ): Promise<{ payload: WorkbookPayload; summary: ImportSummary }> {
@@ -425,7 +423,7 @@ export async function parseWorkbook(
   if (dealsSheet) {
     const rows = dealsSheet.data as unknown[][]
     const index = headerIndex(rows[0] ?? [])
-    const today = cairoToday()
+    const today = dayKey()
 
     rows.slice(1, MAX_ROWS + 1).forEach((row, i) => {
       const rowNo = i + 2

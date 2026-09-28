@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { NUMBER_LOCALE } from '@/lib/region'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useStorageHealth, type Level, type MeterKey } from '@/composables/useStorageHealth'
@@ -26,7 +27,7 @@ function bytes(n: number) {
 const count = (n: number) => new Intl.NumberFormat('en-US').format(n)
 const ago = (iso: string | null) => (iso ? relativeTime(new Date(iso)) : t('admin.storage.never'))
 const dateOf = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleDateString(locale.value === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB') : '—'
+  iso ? new Date(iso).toLocaleDateString(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-GB') : '—'
 
 const ICON: Record<MeterKey, string> = {
   db: 'mdi:database-outline',

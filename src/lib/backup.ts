@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { NUMBER_LOCALE } from './region'
 import type { AgentStanding, DealRow, RankHistoryPoint, SaleEventRow, TeamStanding } from '@/lib/types'
 
 /**
@@ -65,7 +66,7 @@ function table(head: string[], rows: string[][]) {
 
 export function renderBackupHtml(d: BackupData): string {
   const created = new Date(d.created_at)
-  const stamp = created.toLocaleString('ar-EG-u-nu-latn', { dateStyle: 'full', timeStyle: 'short' })
+  const stamp = created.toLocaleString(NUMBER_LOCALE.ar, { dateStyle: 'full', timeStyle: 'short' })
 
   // الأرباع من الأحدث للأقدم
   const periods = [...new Set(d.team_standings.map((r) => `${r.year}-${r.quarter}`))]
@@ -113,7 +114,7 @@ export function renderBackupHtml(d: BackupData): string {
   const events = table(
     ['التاريخ', 'النوع', 'المستشار', 'الفريق', 'قيمة الصفقة', 'الإجمالي', 'ملاحظة'],
     [...d.sale_events].reverse().map((e) => [
-      esc(new Date(e.created_at).toLocaleString('ar-EG-u-nu-latn')),
+      esc(new Date(e.created_at).toLocaleString(NUMBER_LOCALE.ar)),
       e.kind === 'manual' ? 'تهنئة' : 'صفقة',
       nameOf(e.name, e.name_ar),
       nameOf(e.team, e.team_ar),

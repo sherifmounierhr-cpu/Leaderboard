@@ -1,4 +1,5 @@
 import type { LocaleName } from './types'
+import { CURRENCY, NUMBER_LOCALE } from './region'
 
 /**
  * لغة التنسيق الحالية. تُضبط من i18n عند تبديل اللغة حتى تتبع كل الأرقام
@@ -6,11 +7,8 @@ import type { LocaleName } from './types'
  */
 let activeLocale: LocaleName = 'ar'
 
-/** ar-EG بأرقام لاتينية: أوضح على شاشات العرض من الأرقام الهندية. */
-const LOCALE_TAG: Record<LocaleName, string> = {
-  ar: 'ar-EG-u-nu-latn',
-  en: 'en-US',
-}
+/** وسم الأرقام من إعدادات المنطقة — مكان واحد للحقيقة دي. */
+const LOCALE_TAG = NUMBER_LOCALE
 
 export function setNumberLocale(locale: LocaleName) {
   activeLocale = locale
@@ -65,7 +63,7 @@ export function millions(value: unknown): string {
 /** المبلغ كاملاً مع العملة — يُستخدم في الـ tooltip وقارئ الشاشة. */
 export function egp(value: unknown): string {
   const n = fullFormatter().format(Number(value) || 0)
-  return activeLocale === 'ar' ? `${n} ج.م` : `${n} EGP`
+  return `${n} ${CURRENCY[activeLocale]}`
 }
 
 /** نسبة مئوية بصيغة المحلية الحالية. */

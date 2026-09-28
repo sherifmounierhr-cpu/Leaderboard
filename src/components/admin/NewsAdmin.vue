@@ -9,6 +9,7 @@ import { useNewsControls } from '@/composables/useNewsControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import { chime } from '@/composables/useChime'
+import { dayKey } from '@/lib/region'
 
 /**
  * شاشة الأخبار من ناحية الإدارة: حالة المصدر، الأخبار اللي الشاشات شايفاها
@@ -36,19 +37,15 @@ const busy = ref<string | null>(null)
 const notice = ref<{ ok: boolean; text: string } | null>(null)
 
 // ------------------------------------------------------------------ الحالة
-function cairoDay(at: Date) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(at)
-}
-
 const rows = computed(() => {
   void locale.value
-  const today = cairoDay(new Date())
+  const today = dayKey()
   return items.value.map((item) => {
     const date = new Date(item.date)
     const valid = !Number.isNaN(date.getTime())
     return {
       item,
-      isToday: valid && cairoDay(date) === today,
+      isToday: valid && dayKey(date) === today,
       when: valid ? relativeTime(date, new Date(now.value)) : '',
       hidden: hiddenIds.value.has(item.id),
     }
