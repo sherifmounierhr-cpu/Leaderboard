@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { relativeTime } from '@/lib/format'
 import { useAuth } from '@/composables/useAuth'
+import { useBoardMedia } from '@/composables/useBoardMedia'
 import type { DeviceRow } from '@/lib/types'
 
 /**
@@ -15,6 +16,7 @@ const REFRESH_MS = 30_000
 
 const { t, locale } = useI18n()
 const { isDemo } = useAuth()
+const { settings } = useBoardMedia()
 
 const devices = ref<DeviceRow[]>([])
 const loading = ref(false)
@@ -86,6 +88,57 @@ async function remove(device: DeviceRow) {
   await call('lb_admin_delete_device', device.id)
 }
 
+/*
+ * المتابعة على الشاشات اللي تستاهل بس. لو التنبيه على كل جهاز، هيوصل إيميل
+ * مع كل تبويب بيتقفل، والإيميل ده بيتجاهل من تاني يوم.
+ */
+async function toggleWatch(device: DeviceRow) {
+  const next = !device.watch
+  if (await call('lb_admin_set_device_watch', device.id, { p_watch: next })) {
+    notice.value = {
+      ok: true,
+      text: t(next ? 'devices.watchOn' : 'devices.watchOff', { name: label(device) }),
+    }
+  }
+}
+
+// ------------------------------------------------------- إعدادات التنبيه
+const alertForm = ref({ enabled: true, email: '', afterMin: 15 })
+const savingAlerts = ref(false)
+
+/*
+ * immediate: الإعدادات بتتحمّل مرة واحدة وممكن تكون جاهزة قبل ما المكوّن
+ * يركّب، فالمراقبة العادية بتفوتها والنموذج يفضل فاضي.
+ */
+watch(settings, (s) => {
+  alertForm.value = {
+    enabled: s.alerts_enabled !== false,
+    email: s.alert_email ?? '',
+    afterMin: s.alert_after_min ?? 15,
+  }
+}, { immediate: true, deep: true })
+
+const watchedCount = computed(() => devices.value.filter((d) => d.watch && !d.revoked_at).length)
+
+async function saveAlerts() {
+  savingAlerts.value = true
+  notice.value = null
+  try {
+    const { error } = await supabase.rpc('lb_admin_save_alert_settings', {
+      p_enabled: alertForm.value.enabled,
+      p_email: alertForm.value.email.trim() || null,
+      p_after_min: alertForm.value.afterMin,
+    })
+    if (error) throw new Error(error.message)
+    notice.value = { ok: true, text: t('devices.alertsSaved') }
+    await load()
+  } catch (err) {
+    notice.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
+  } finally {
+    savingAlerts.value = false
+  }
+}
+
 const label = (d: DeviceRow) => d.label || t('devices.unknown')
 
 /** «Chrome · Windows» من الـ user agent، للعرض تحت الاسم. */
@@ -119,6 +172,9 @@ const rows = computed(() => {
           : { tone: 'text-mute', text: t('devices.lastSeen', { when: relativeTime(new Date(seen), new Date(now.value)) }) },
       view: d.view && VIEW_LABEL[d.view] ? t(VIEW_LABEL[d.view]) : '',
       isMe: d.id === myId,
+      watched: d.watch && !d.revoked_at,
+      // اتبعت عنها إيميل ولسه ساكتة
+      alerted: Boolean(d.alerted_at) && !d.revoked_at,
     }
   })
 })
@@ -156,6 +212,61 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
 
     <p v-if="isDemo" class="m-0 text-caption text-dim">{{ t('devices.demoHint') }}</p>
 
+    <!-- إيميل لما شاشة متابَعة تسكت -->
+    <form
+      class="flex flex-col gap-3 rounded-xl border border-card-border bg-card px-4 py-4"
+      @submit.prevent="saveAlerts"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <h3 class="m-0 flex items-center gap-2 font-semibold text-strong">
+          <iconify-icon icon="mdi:email-alert-outline" aria-hidden="true" class="text-accent-text" />
+          {{ t('devices.alertsTitle') }}
+        </h3>
+        <span class="text-caption text-mute">{{ t('devices.watchedCount', { n: watchedCount }) }}</span>
+      </div>
+
+      <p class="m-0 text-caption text-mute">{{ t('devices.alertsHint') }}</p>
+
+      <label class="flex w-fit items-center gap-2 text-sm font-medium text-strong">
+        <input v-model="alertForm.enabled" type="checkbox" :disabled="isDemo" class="size-4 accent-[var(--color-accent)]" />
+        {{ t('devices.alertsEnabled') }}
+      </label>
+
+      <div class="grid gap-3 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
+        <label class="flex flex-col gap-1.5 text-caption font-semibold text-mute">
+          {{ t('devices.alertEmail') }}
+          <input
+            v-model="alertForm.email"
+            type="email"
+            dir="ltr"
+            inputmode="email"
+            :placeholder="t('devices.alertEmailPlaceholder')"
+            :disabled="isDemo"
+            class="rounded-lg border border-card-border bg-page px-3 py-2 text-sm font-medium text-strong"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1.5 text-caption font-semibold text-mute">
+          {{ t('devices.alertAfter') }}
+          <input
+            v-model.number="alertForm.afterMin"
+            type="number"
+            min="5"
+            max="240"
+            step="5"
+            :disabled="isDemo"
+            class="rounded-lg border border-card-border bg-page px-3 py-2 text-sm font-medium text-strong"
+          />
+        </label>
+
+        <button
+          type="submit"
+          class="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          :disabled="isDemo || savingAlerts"
+        >{{ savingAlerts ? t('admin.saving') : t('admin.save') }}</button>
+      </div>
+    </form>
+
     <p v-if="!rows.length && !loading" class="m-0 rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-mute">
       {{ t('devices.empty') }}
     </p>
@@ -184,6 +295,14 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
             <span v-if="r.device.kiosk" class="rounded-full bg-gold/15 px-2 py-0.5 text-caption font-semibold text-gold">
               {{ t('devices.kiosk') }}
             </span>
+            <span
+              v-if="r.watched"
+              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold"
+              :class="r.alerted ? 'bg-down/12 text-down' : 'bg-accent/12 text-accent-text'"
+            >
+              <iconify-icon :icon="r.alerted ? 'mdi:bell-alert' : 'mdi:bell-ring-outline'" aria-hidden="true" />
+              {{ r.alerted ? t('devices.alertSent') : t('devices.watched') }}
+            </span>
           </p>
           <p class="m-0 truncate text-caption text-mute">
             <template v-if="r.browser">{{ r.browser }} · </template>
@@ -198,6 +317,19 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
         </div>
 
         <div class="flex items-center gap-1.5">
+          <button
+            type="button"
+            class="rounded-lg border px-2.5 py-1.5 text-caption font-semibold transition-colors disabled:opacity-50"
+            :class="r.watched
+              ? 'border-accent/50 bg-accent/10 text-accent-text'
+              : 'border-card-border text-mute hover:text-strong'"
+            :title="t(r.watched ? 'devices.watchOffAction' : 'devices.watchOnAction')"
+            :aria-pressed="r.watched"
+            :disabled="isDemo || Boolean(r.device.revoked_at)"
+            @click="toggleWatch(r.device)"
+          >
+            <iconify-icon :icon="r.watched ? 'mdi:bell-ring' : 'mdi:bell-outline'" aria-hidden="true" />
+          </button>
           <button
             type="button"
             class="rounded-lg border border-card-border px-2.5 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong"

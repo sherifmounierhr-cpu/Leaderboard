@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config'
+import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 /**
@@ -10,6 +11,13 @@ import { fileURLToPath, URL } from 'node:url'
  * الشاشة، مش خطأ في الـ console.
  */
 export default defineConfig({
+  // اختبارات المكوّنات محتاجة تترجم ملفات .vue — نفس إعداد `<iconify-icon>`
+  // اللي في `vite.config.ts` عشان الوسم ما يتحسبش مكوّن Vue ناقص
+  plugins: [
+    vue({
+      template: { compilerOptions: { isCustomElement: (tag) => tag === 'iconify-icon' } },
+    }),
+  ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

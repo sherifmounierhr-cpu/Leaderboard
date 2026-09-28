@@ -504,7 +504,21 @@
     "revoked": "“{name}” has been disconnected.",
     "restored": "“{name}” can sign in again.",
     "empty": "No devices yet. Open the board on any screen and it appears here within a minute.",
-    "demoHint": "The demo account is view-only — disconnecting is for admins."
+    "demoHint": "The demo account is view-only — disconnecting is for admins.",
+    "watched": "Watched",
+    "alertSent": "Alert sent",
+    "watchOnAction": "Watch this screen",
+    "watchOffAction": "Stop watching",
+    "watchOn": "“{name}” is now watched",
+    "watchOff": "Stopped watching “{name}”",
+    "watchedCount": "Watched: {n}",
+    "alertsTitle": "Email me when a screen goes quiet",
+    "alertsHint": "Watched screens only. If one stops reporting for longer than this, you get an email — and another when it comes back. One email per outage, not every five minutes.",
+    "alertsEnabled": "Alerts on",
+    "alertEmail": "Email",
+    "alertEmailPlaceholder": "you{'@'}example.com",
+    "alertAfter": "Quiet for (minutes)",
+    "alertsSaved": "Alert settings saved"
   },
   "news": {
     "label": "Market news",

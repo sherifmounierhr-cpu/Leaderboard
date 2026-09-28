@@ -107,6 +107,10 @@ export interface DeviceRow {
   first_seen: string
   last_seen: string
   revoked_at: string | null
+  /** تحت المتابعة: سكوتها بيبعت إيميل. */
+  watch: boolean
+  /** وقت بعت تنبيه السكوت — مش null يعني التنبيه اتبعت وما اتكرّرش. */
+  alerted_at: string | null
 }
 
 /** اسم مطوّر أو مشروع اتسجّل قبل كده، للاقتراح عند الإدخال. */
@@ -172,6 +176,12 @@ export interface BoardSettings {
   cbe_lending?: number | null
   /** تاريخ قرار لجنة السياسة النقدية. */
   cbe_rates_at?: string | null
+  /** إيميل تنبيه الشاشات شغّال. */
+  alerts_enabled?: boolean
+  /** البريد اللي التنبيه بيروحه. */
+  alert_email?: string | null
+  /** الشاشة تسكت كام دقيقة قبل الإيميل. */
+  alert_after_min?: number
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number
