@@ -66,6 +66,20 @@ const json = (body: unknown, status = 200) =>
     headers: { 'content-type': 'application/json' },
   })
 
+// مقارنة زمنها ثابت: نقارن بصمتي SHA-256 (نفس الطول دائماً) بدل النص نفسه
+async function safeEqual(a: string, b: string): Promise<boolean> {
+  const enc = new TextEncoder()
+  const [ha, hb] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(a)),
+    crypto.subtle.digest('SHA-256', enc.encode(b)),
+  ])
+  const x = new Uint8Array(ha)
+  const y = new Uint8Array(hb)
+  let diff = 0
+  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i]
+  return diff === 0
+}
+
 Deno.serve(async (req) => {
   const started = Date.now()
   const supabase = createClient(
@@ -82,7 +96,7 @@ Deno.serve(async (req) => {
       console.error('[sheets-sync] SYNC_SECRET غير مضبوط — رفض')
       return json({ error: 'not configured' }, 503)
     }
-    if (req.headers.get('x-sync-secret') !== secret) {
+    if (!(await safeEqual(req.headers.get('x-sync-secret') ?? '', secret))) {
       return json({ error: 'unauthorized' }, 401)
     }
 
