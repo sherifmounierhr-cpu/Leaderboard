@@ -24,6 +24,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # الاختبارات قبل البناء: فشل واحد بيوقف النشر، فالشاشة ما بتاخدش نسخة مكسورة
+      - run: npm test
       - run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}

@@ -179,6 +179,18 @@ function toItem(post: Record<string, any>): NewsItem | null {
   }
 }
 
+/**
+ * يحوّل رد `wp/v2/posts?_embed` لعناصر جاهزة للعرض.
+ *
+ * نفس دالة `postsToNews` في `src/lib/news.ts` بالحرف — النسختان موجودتان لأن
+ * دالة Vercel ما بتقدرش تستورد من `src/`. اختبار `news-parity.test.ts` بيقارن
+ * ناتج الاتنين على نفس المدخل، فأي تعديل في واحدة من غير التانية بيوقع الاختبار.
+ */
+export function postsToNews(raw: unknown): NewsItem[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((post) => toItem(post as Record<string, unknown>)).filter((x): x is NewsItem => x !== null)
+}
+
 let cache: { payload: NewsPayload; at: number } | null = null
 let inFlight: Promise<NewsPayload> | null = null
 
