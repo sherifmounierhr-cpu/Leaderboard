@@ -2,14 +2,13 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ALERT_MS, useMarketAlerts } from '@/composables/useMarketAlerts'
-import { useBreakingNews } from '@/composables/useBreakingNews'
-import { useSaleEvents } from '@/composables/useSaleEvents'
+import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import Sparkline from './Sparkline.vue'
 import { chime } from '@/composables/useChime'
 
 /**
- * تنبيه حركة سعر بملء الشاشة. آخر واحد في الأولوية: الاحتفال بصفقة أولاً،
- * وبعده الخبر العاجل، وبعدهم التنبيه — فما يزاحمش حاجة أهم منه.
+ * تنبيه حركة سعر بملء الشاشة — آخر واحد في الأولوية، فما يزاحمش حاجة
+ * أهم منه. الترتيب نفسه مكتوب في `useOverlayQueue`، مش هنا.
  */
 
 const { t, n } = useI18n()
@@ -17,8 +16,6 @@ const { t, n } = useI18n()
 /** نصوص التنبيه بالعربية دايماً، زي شاشة الأسواق. */
 const ar = (key: string) => t(key, {}, { locale: 'ar' })
 const { current, dismiss } = useMarketAlerts()
-const { current: breaking } = useBreakingNews()
-const { celebrations } = useSaleEvents()
 
 const now = ref(Date.now())
 let clock: ReturnType<typeof setInterval> | null = null
@@ -32,11 +29,16 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
 })
 
-const shown = computed(() => (celebrations.value.length || breaking.value ? null : current.value))
+const active = useOverlayLayer('market', computed(() => current.value !== null))
+const shown = computed(() => (active.value ? current.value : null))
 const remaining = computed(() => (shown.value ? Math.max(0, shown.value.endsAt - now.value) : 0))
 const progress = computed(() => Math.min(100, Math.max(0, 100 - (remaining.value / ALERT_MS) * 100)))
 
-watch(remaining, (ms) => { if (shown.value && ms <= 0) dismiss() })
+// شرط مركّب: تنبيه خلص وقته وهو مستنّي بيرجع والباقي صفر من غير ما يتغيّر
+watch(
+  () => Boolean(shown.value) && remaining.value <= 0,
+  (expired) => { if (expired) dismiss() },
+)
 // immediate: نفس سبب الخبر العاجل — التنبيه ممكن يسبق تركيب المكوّن
 watch(() => shown.value?.quote.key, (key) => { if (key) chime() }, { immediate: true })
 

@@ -2,20 +2,19 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAnnouncements } from '@/composables/useAnnouncements'
-import { useSaleEvents, type Celebration } from '@/composables/useSaleEvents'
+import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 
 /**
- * رسالة ترحيب أو تحفيز بملء الشاشة. الاحتفال له الأولوية: لو فيه احتفال
- * معروض، الرسالة تستنى وراه (وقتها بيعدّي، فلو خلص الاحتفال بعد نهايتها ما تظهرش).
+ * رسالة ترحيب أو تحفيز بملء الشاشة. ترتيبها بين الشاشات التانية مكتوب
+ * في `useOverlayQueue`، مش هنا. وقت الرسالة بيعدّي وهي مستنّية، فلو خلصت
+ * اللي قبلها بعد نهايتها ما تظهرش متأخرة.
  */
 const props = withDefaults(defineProps<{ previewOnly?: boolean }>(), { previewOnly: false })
 
 const { t } = useI18n()
 const { current, dismiss } = useAnnouncements({ schedule: !props.previewOnly })
-// في الإدارة مفيش احتفالات: ما نشتركش في الأحداث هناك
-const celebrations = props.previewOnly ? ref<Celebration[]>([]) : useSaleEvents().celebrations
 const { settings, urlOf } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
 
@@ -24,12 +23,22 @@ let clock: ReturnType<typeof setInterval> | null = null
 onMounted(() => { clock = setInterval(() => { now.value = Date.now() }, 250) })
 onBeforeUnmount(() => { if (clock) clearInterval(clock); stop() })
 
-const shown = computed(() => {
+const candidate = computed(() => {
   const c = current.value
-  if (!c || celebrations.value.length) return null
+  if (!c) return null
   if (props.previewOnly && !c.preview) return null
   return c
 })
+
+/*
+ * معاينة الإدارة ما بتدخلش الطابور: هي معروضة في صفحة الإدارة لوحدها،
+ * وما يصحّش تزاحم شاشة حقيقية ولا تتأجّل بسببها.
+ */
+const active = props.previewOnly
+  ? computed(() => true)
+  : useOverlayLayer('announcement', computed(() => candidate.value !== null))
+
+const shown = computed(() => (active.value ? candidate.value : null))
 
 const remaining = computed(() => (shown.value ? Math.max(0, shown.value.endsAt - now.value) : 0))
 const progress = computed(() => {
@@ -38,7 +47,11 @@ const progress = computed(() => {
   return Math.min(100, Math.max(0, 100 - (remaining.value / (s.announcement.duration_s * 1000)) * 100))
 })
 
-watch(remaining, (ms) => { if (shown.value && ms <= 0) dismiss() })
+// شرط مركّب: رسالة خلص وقتها وهي مستنّية بترجع والباقي صفر من غير ما يتغيّر
+watch(
+  () => Boolean(shown.value) && remaining.value <= 0,
+  (expired) => { if (expired) dismiss() },
+)
 
 // المقطع يبدأ مع ظهور الرسالة، ولمدة عرضها الباقية بس
 watch(

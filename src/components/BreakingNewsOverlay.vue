@@ -3,17 +3,18 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { relativeTime } from '@/lib/format'
 import { BREAKING_MS, useBreakingNews } from '@/composables/useBreakingNews'
-import { useSaleEvents } from '@/composables/useSaleEvents'
+import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { chime } from '@/composables/useChime'
 
 /**
  * خبر جديد نزل على المدونة — يتعرض بملء الشاشة مرة واحدة لمدة 20 ثانية.
- * الاحتفال له الأولوية: لو فيه احتفال شغّال، الخبر يستنى وراه.
+ *
+ * ترتيبه بين الشاشات التانية اللي بتغطّي اللوحة مكتوب في `useOverlayQueue`،
+ * مش هنا: لو واحدة أعلى منه شغّالة، بيفضل «طالب» من غير ما يظهر لحد ما تخلص.
  */
 
 const { t, locale } = useI18n()
 const { current, dismiss } = useBreakingNews()
-const { celebrations } = useSaleEvents()
 
 const now = ref(Date.now())
 const broken = ref(false)
@@ -28,12 +29,18 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKeydown)
 })
 
-const shown = computed(() => (celebrations.value.length ? null : current.value))
+const active = useOverlayLayer('breaking', computed(() => current.value !== null))
+const shown = computed(() => (active.value ? current.value : null))
 
 const remaining = computed(() => (shown.value ? Math.max(0, shown.value.endsAt - now.value) : 0))
 const progress = computed(() => Math.min(100, Math.max(0, 100 - (remaining.value / BREAKING_MS) * 100)))
 
-watch(remaining, (ms) => { if (shown.value && ms <= 0) dismiss() })
+// شرط مركّب لا مراقبة `remaining` لوحدها: خبر خلص وقته وهو مستنّي ورا احتفال
+// بيرجع والباقي صفر من غير ما يتغيّر، فالمراقبة ما كانتش بتقلع ويفضل معلّق على الشاشة.
+watch(
+  () => Boolean(shown.value) && remaining.value <= 0,
+  (expired) => { if (expired) dismiss() },
+)
 // immediate: الخبر ممكن يكون جاهز قبل ما المكوّن يركّب، فالـ watch العادي يفوته
 watch(() => shown.value?.item.id, (id) => {
   broken.value = false

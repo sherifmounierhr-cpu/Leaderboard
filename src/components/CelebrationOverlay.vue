@@ -7,6 +7,7 @@ import { useSaleEvents } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import Avatar from './Avatar.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
@@ -39,6 +40,12 @@ const agent = computed<BoardEntity | null>(() => {
     pct: 0,
   }
 })
+
+/*
+ * الاحتفال أعلى الأولويات، فما بيستناش حد — بس بيسجّل دوره عشان الشاشات
+ * التانية تعرف إنها تستنى وراه.
+ */
+useOverlayLayer('celebration', computed(() => Boolean(current.value && agent.value)))
 
 /** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. */
 const rank = computed(() => {

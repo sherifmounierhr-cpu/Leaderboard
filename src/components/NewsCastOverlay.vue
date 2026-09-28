@@ -3,14 +3,15 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNewsControls } from '@/composables/useNewsControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
-import { useSaleEvents } from '@/composables/useSaleEvents'
+import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { chime } from '@/composables/useChime'
 
 /**
  * خبر بعته الإدارة لكل الشاشات فوراً. بيتعرض مرة واحدة لمدة عرض الخبر
  * المضبوطة × 2 — لأنه مقصود، مش دوره في اللفّة.
  *
- * الاحتفال بصفقة له الأولوية: لو فيه احتفال شغّال، البثّ يستنى وراه.
+ * ترتيبه بين الشاشات التانية اللي بتغطّي اللوحة مكتوب في `useOverlayQueue`،
+ * مش هنا: لو واحدة أعلى منه شغّالة، بيفضل «طالب» من غير ما يظهر لحد ما تخلص.
  */
 
 const SEEN_KEY = 'everest.news.cast'
@@ -18,7 +19,6 @@ const SEEN_KEY = 'everest.news.cast'
 const { t } = useI18n()
 const { latestCast } = useNewsControls()
 const { settings } = useBoardMedia()
-const { celebrations } = useSaleEvents()
 
 const dismissed = ref<string | null>(null)
 const now = ref(Date.now())
@@ -43,7 +43,8 @@ const pending = computed(() => {
   return cast
 })
 
-const shown = computed(() => (celebrations.value.length ? null : pending.value))
+const active = useOverlayLayer('cast', computed(() => pending.value !== null))
+const shown = computed(() => (active.value ? pending.value : null))
 
 const remaining = computed(() => (startedAt.value ? Math.max(0, startedAt.value + holdMs.value - now.value) : 0))
 const progress = computed(() =>
