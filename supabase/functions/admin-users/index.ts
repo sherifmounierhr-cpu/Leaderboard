@@ -36,11 +36,64 @@ const json = (body: unknown, status = 200) =>
 
 const fail = (message: string, status = 400) => json({ ok: false, error: message }, status)
 
-function passwordError(password: unknown): string | null {
+/**
+ * فحص كلمة المرور مقابل تسريبات Have I Been Pwned.
+ *
+ * نفس منطق `src/lib/pwnedPassword.ts` في المتصفح، بس هنا على الخادم: الفحص
+ * في المتصفح نصيحة يقدر المستخدم يتخطّاها بنداء مباشر للدالة، وده المكان
+ * الوحيد اللي بتتحط فيه كلمة مرور **لحساب حد تاني**، فالإنفاذ لازم يكون هنا.
+ *
+ * (ميزة Supabase المدمجة لنفس الغرض على باقات Pro وفوق. ده بديلها المجاني.)
+ *
+ * k-anonymity: أول 5 حروف من بصمة SHA-1 بس هي اللي بتخرج على الشبكة —
+ * لا كلمة المرور ولا بصمتها الكاملة بتتبعت لأي حد.
+ */
+const PWNED_TIMEOUT_MS = 4_000
+
+async function sha1Hex(text: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text))
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+    .toUpperCase()
+}
+
+/** عدد مرات ظهورها في التسريبات، أو null لو الفحص نفسه ما تمّش. */
+async function pwnedCount(password: string): Promise<number | null> {
+  const abort = new AbortController()
+  const timer = setTimeout(() => abort.abort(), PWNED_TIMEOUT_MS)
+  try {
+    const hash = await sha1Hex(password)
+    const res = await fetch(`https://api.pwnedpasswords.com/range/${hash.slice(0, 5)}`, {
+      headers: { 'Add-Padding': 'true' },
+      signal: abort.signal,
+    })
+    if (!res.ok) return null
+    const suffix = hash.slice(5)
+    for (const line of (await res.text()).split('\n')) {
+      const [lineSuffix, countText] = line.trim().split(':')
+      if (lineSuffix === suffix) return Number(countText) || 0
+    }
+    return 0
+  } catch {
+    // HIBP واقع أو الشبكة قطعت: ما نقفلش الباب على المسؤول. الطول والحد
+    // الأدنى لسه مفروضين، والفحص في المتصفح لسه شغّال.
+    return null
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+async function passwordError(password: unknown): Promise<string | null> {
   if (typeof password !== 'string' || password.length < MIN_PASSWORD) {
     return `كلمة المرور قصيرة — ${MIN_PASSWORD} أحرف على الأقل`
   }
   if (password.length > 72) return 'كلمة المرور أطول من 72 حرفاً'
+
+  const count = await pwnedCount(password)
+  if (count !== null && count > 0) {
+    return `كلمة المرور هذه ظهرت في تسريبات بيانات سابقة ${count} مرة — اختر كلمة مرور أخرى`
+  }
   return null
 }
 
@@ -100,7 +153,7 @@ Deno.serve(async (req) => {
           return fail('البريد الإلكتروني غير صالح')
         }
         if (!email) email = `${username}@${NO_EMAIL_DOMAIN}`
-        const pwErr = passwordError(body.password)
+        const pwErr = await passwordError(body.password)
         if (pwErr) return fail(pwErr)
 
         const { data, error } = await service.auth.admin.createUser({
@@ -133,7 +186,7 @@ Deno.serve(async (req) => {
       }
 
       case 'password': {
-        const pwErr = passwordError(body.password)
+        const pwErr = await passwordError(body.password)
         if (pwErr) return fail(pwErr)
         const { error } = await service.auth.admin.updateUserById(userId, { password: body.password as string })
         if (error) return fail(error.message)
