@@ -10,7 +10,7 @@ import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
 
 type ReportKind = 'exec' | 'branch' | 'agent' | 'hr'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { year, quarter, setQuarter } = useAdminData()
 const local = useLocalName()
 
@@ -147,7 +147,13 @@ async function onExport() {
       rows = atRisk.value.map((r) => [local(r.name, r.name_ar), r.team ? local(r.team, r.team_ar) : '', Number(r.deals) || 0, Number(r.target) || 0, r.pct])
     }
 
-    await exportRows(title.value, header, rows, `Everest-${kind.value}-Q${quarter.value}-${year.value}.xlsx`)
+    // بدون هذا: عمود الترتيب يطلع أول عمود من اليسار حتى والتقرير عربي —
+    // عكس ترتيب الأعمدة على الشاشة والمطبوع، وكلاهما يتبع اتجاه اللغة
+    await exportRows(
+      title.value, header, rows,
+      `Everest-${kind.value}-Q${quarter.value}-${year.value}.xlsx`,
+      locale.value === 'ar',
+    )
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
@@ -174,7 +180,14 @@ const CARD = 'rounded-xl border border-card-border bg-card px-5 py-4'
 </script>
 
 <template>
-  <section class="flex flex-col gap-5">
+  <!--
+    div لا section: قاعدة الطباعة العامة تمنع أي <section> من الانقطاع بين
+    صفحتين (مفيدة لبطاقة صغيرة كاملة، مثل KpiStrip). التقرير هنا طوله يتبع
+    البيانات ولا حد لعدد صفوفه، فنفس القاعدة على غلاف بهذا الحجم كانت تدفع
+    الطباعة كلها لصفحة تانية تاركة الأولى شبه فاضية (الشعار فقط) كل مرة
+    يتجاوز فيها التقرير صفحة واحدة.
+  -->
+  <div class="flex flex-col gap-5">
     <!-- عناصر التحكم تختفي من الطباعة، فالورقة تحمل التقرير وحده -->
     <header class="flex flex-wrap items-end justify-between gap-3" data-export-hide>
       <div>
@@ -479,5 +492,5 @@ const CARD = 'rounded-xl border border-card-border bg-card px-5 py-4'
         </div>
       </template>
     </div>
-  </section>
+  </div>
 </template>
