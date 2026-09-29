@@ -86,6 +86,40 @@
   --chart-surface: #ffffff;
 }
 
+/* ------------------------------------------------------------------
+   شاشة الرسائل (ترحيب / تحفيز) تغطّي الشاشة كاملة بلونها هي، فألوانها
+   مش مشتقّة من ألوان البطاقات. بتتبع المظهر زي باقي اللوحة: نهاري
+   بسطح فاتح ونص غامق، وليلي بالعكس.
+------------------------------------------------------------------ */
+:root {
+  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #a3dbbd 0%, #d8efe2 55%, #f4f8f5 100%);
+  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #efd9a2 0%, #e4ece6 50%, #f5f7f4 100%);
+  --announce-accent-welcome: #0f6438;
+  --announce-accent-motivation: #8a6a1e;
+  --announce-ink: #12241b;
+  --announce-ink-soft: #12241bd9;
+  --announce-chip: #12241b12;
+  --announce-chip-line: #12241b2e;
+  --announce-track: #12241b1a;
+  --announce-halo: #ffffff8c;
+  /* ظل العنوان بيتبع الخلفية مش النص: أبيض على فاتح بيختفي, وعلى غامق بيوهّج */
+  --announce-title-shadow: #12241b38;
+}
+
+:root[data-theme="midnight"] {
+  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #2f7a55 0%, #123b2a 55%, #0b1f17 100%);
+  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #6b4f16 0%, #1d3a2b 50%, #0c1a14 100%);
+  --announce-accent-welcome: #4bbd80;
+  --announce-accent-motivation: #d8b768;
+  --announce-ink: #ffffff;
+  --announce-ink-soft: #ffffffd9;
+  --announce-chip: #ffffff1a;
+  --announce-chip-line: #ffffff33;
+  --announce-track: #ffffff1a;
+  --announce-halo: #ffffff1a;
+  --announce-title-shadow: #00000059;
+}
+
 /* نفس التدرّج مُعاد اختياره للسطح الداكن #232a33 (الطرف الفاتح 2.20:1) */
 :root[data-theme="midnight"] {
   --chart-q1: #1f5a41;

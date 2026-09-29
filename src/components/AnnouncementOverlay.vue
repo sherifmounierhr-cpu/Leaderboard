@@ -83,49 +83,45 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
     <div
       v-if="shown"
       data-export-hide
-      class="fixed inset-0 z-[58] flex cursor-pointer flex-col items-center justify-center overflow-hidden px-[6vw] text-center text-white"
-      :class="isWelcome
-        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#2f7a55_0%,#123b2a_55%,#0b1f17_100%)]'
-        : 'bg-[radial-gradient(120%_90%_at_50%_100%,#6b4f16_0%,#1d3a2b_50%,#0c1a14_100%)]'"
+      class="announce-root fixed inset-0 z-[58] flex cursor-pointer flex-col items-center justify-center overflow-hidden px-[6vw] text-center"
+      :class="isWelcome ? 'is-welcome' : 'is-motivation'"
       role="dialog"
       aria-modal="true"
       :aria-label="shown.announcement.title"
       @click="close"
     >
       <!-- زخرفة خفيفة: دوائر ضوء بطيئة، بدون كونفيتي حتى لا تُخلط بالاحتفال -->
-      <span aria-hidden="true" class="announce-glow pointer-events-none absolute -top-[20vh] -start-[10vw] size-[60vh] rounded-full bg-white/10 blur-3xl" />
-      <span aria-hidden="true" class="announce-glow pointer-events-none absolute -bottom-[25vh] -end-[10vw] size-[70vh] rounded-full blur-3xl" :class="isWelcome ? 'bg-accent-live/25' : 'bg-gold/25'" />
+      <span aria-hidden="true" class="announce-glow announce-halo pointer-events-none absolute -top-[20vh] -start-[10vw] size-[60vh] rounded-full blur-3xl" />
+      <span aria-hidden="true" class="announce-glow announce-tint pointer-events-none absolute -bottom-[25vh] -end-[10vw] size-[70vh] rounded-full blur-3xl" />
 
       <div class="announce-in relative flex max-w-[min(90vw,80rem)] flex-col items-center gap-[clamp(16px,3.5vh,44px)]">
         <div
-          class="flex items-center gap-[0.5em] rounded-full border border-white/20 bg-white/10 px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.3vh,28px)]"
+          class="announce-chip flex items-center gap-[0.5em] rounded-full border px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.3vh,28px)]"
         >
           <iconify-icon
             :icon="isWelcome ? 'mdi:hand-wave' : 'mdi:rocket-launch'"
             aria-hidden="true"
-            class="text-[1.3em]"
-            :class="isWelcome ? 'text-accent-live' : 'text-gold'"
+            class="announce-accent text-[1.3em]"
           />
           {{ t(`announce.${shown.announcement.style}`) }}
         </div>
 
         <h2
           dir="auto"
-          class="m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,10vh,128px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+          class="announce-title m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,10vh,128px)]"
         >{{ shown.announcement.title }}</h2>
 
         <p
           v-if="shown.announcement.body"
           dir="auto"
-          class="m-0 max-w-[60ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(20px,4.2vh,52px)]"
+          class="announce-body m-0 max-w-[60ch] font-medium leading-snug text-balance break-words text-[clamp(20px,4.2vh,52px)]"
         >{{ shown.announcement.body }}</p>
       </div>
 
       <!-- الوقت الباقي -->
-      <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
+      <div class="announce-track absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)]" aria-hidden="true">
         <div
-          class="h-full transition-[width] duration-300 ease-linear"
-          :class="isWelcome ? 'bg-accent-live' : 'bg-gold'"
+          class="announce-fill h-full transition-[width] duration-300 ease-linear"
           :style="{ width: `${progress}%` }"
         />
       </div>
@@ -134,6 +130,38 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
 </template>
 
 <style scoped>
+/*
+ * الألوان هنا مش في أدوات Tailwind: كل واحدة متغيّر بيتبدّل مع المظهر,
+ * وكتابتها كقيم عشوائية جوّه class كانت هتطلع سلاسل مش بتتقرا.
+ */
+.announce-root {
+  background-image: var(--an-bg);
+  color: var(--announce-ink);
+}
+.announce-root.is-welcome {
+  --an-bg: var(--announce-welcome);
+  --an-accent: var(--announce-accent-welcome);
+}
+.announce-root.is-motivation {
+  --an-bg: var(--announce-motivation);
+  --an-accent: var(--announce-accent-motivation);
+}
+
+.announce-halo { background: var(--announce-halo); }
+.announce-tint { background: color-mix(in srgb, var(--an-accent) 25%, transparent); }
+
+.announce-chip {
+  background: var(--announce-chip);
+  border-color: var(--announce-chip-line);
+}
+.announce-accent { color: var(--an-accent); }
+
+.announce-title { text-shadow: 0 4px 24px var(--announce-title-shadow); }
+.announce-body { color: var(--announce-ink-soft); }
+
+.announce-track { background: var(--announce-track); }
+.announce-fill { background: var(--an-accent); }
+
 .announce-enter-active,
 .announce-leave-active {
   transition: opacity 0.5s ease;
