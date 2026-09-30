@@ -5,7 +5,7 @@ import type { TeamLead } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
 
 /**
- * مديرو الفريق ومشرفوه تحت اسم الفريق، مجمّعين بالدور: صور متراكبة + الأسماء.
+ * مديرو الفريق ومشرفوه تحت اسم الفريق، مجمّعين بالدور: صور منفصلة + الأسماء.
  * العدد مفتوح، فالصور تُقصر على أول ثلاثة و«+N» — البطاقة لا تطول مع كل اسم.
  */
 const props = withDefaults(defineProps<{ leads?: TeamLead[]; size?: 'hero' | 'compact' }>(), {
@@ -43,8 +43,7 @@ const hero = computed(() => props.size === 'hero')
     :class="hero ? 'gap-x-[clamp(12px,1.8vw,28px)] gap-y-1' : 'gap-x-[clamp(10px,1.3vw,20px)] gap-y-1'"
   >
     <li v-for="group in groups" :key="group.role" class="flex items-center gap-2 min-w-0 max-w-full">
-      <!-- space-x في Tailwind 4 منطقي (margin-inline) فيتراكب صحيحاً في RTL بلا عكس -->
-      <div class="flex shrink-0 -space-x-2.5">
+      <div class="flex shrink-0 gap-1">
         <Avatar
           v-for="person in group.faces"
           :key="person.id"
