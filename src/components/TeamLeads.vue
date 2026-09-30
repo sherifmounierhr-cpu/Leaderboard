@@ -69,11 +69,10 @@ const hero = computed(() => props.size === 'hero')
           :class="hero ? 'text-[11px] lg:text-[clamp(11px,1.2vh,14px)]' : 'text-[10px] lg:text-[clamp(10px,1.05vh,12px)]'"
         >{{ group.label }}</span>
         <span
-          class="font-semibold text-strong truncate"
+          class="font-semibold text-strong"
           :class="hero
-            ? 'max-w-[22ch] text-caption lg:text-[clamp(13px,1.5vh,17px)]'
-            : 'max-w-[16ch] text-[11px] lg:text-[clamp(11px,1.3vh,14px)]'"
-          :title="group.names"
+            ? 'text-caption lg:text-[clamp(13px,1.5vh,17px)]'
+            : 'text-[11px] lg:text-[clamp(11px,1.3vh,14px)]'"
         >{{ group.names }}</span>
       </div>
     </li>
