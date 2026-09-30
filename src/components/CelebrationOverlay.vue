@@ -15,7 +15,7 @@ const PIECES = 64
 
 const { t } = useI18n()
 const localName = useLocalName()
-const { agents, year, quarter } = useBoardData()
+const { agents, teams, year, quarter } = useBoardData()
 const { celebrations, dismissCelebration } = useSaleEvents()
 const { settings, urlOf } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
@@ -85,11 +85,14 @@ useOverlayLayer('celebration', computed(() => Boolean(current.value && (agent.va
 /** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. */
 const rank = computed(() => {
   const c = current.value
-  if (!c || c.scope !== 'agent') return 0
-  const e = c.event
-  if (e.year !== year.value || e.quarter !== quarter.value) return 0
-  return agents.value.findIndex((a) => a.id === e.agent_id) + 1
+  if (!c || c.event.year !== year.value || c.event.quarter !== quarter.value) return 0
+  if (c.scope === 'agent') return agents.value.findIndex((a) => a.id === c.event.agent_id) + 1
+  return teams.value.find((t) => t.id === c.event.team_id)?.rank ?? 0
 })
+
+/** صورة البطاقة بملء الشاشة: صورة الفريق أو المستشار، وإلا خلفية متدرّجة. */
+const photoUrl = computed(() => team.value?.photo || agent.value?.photo || '')
+const imgBroken = ref(false)
 
 /** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع. */
 const headline = computed(() => {
@@ -171,6 +174,7 @@ watch(
   (key) => {
     clear()
     stop()
+    imgBroken.value = false
     if (!key) return
     startedAt.value = Date.now()
     timer = setTimeout(close, holdSeconds.value * 1000)
@@ -200,10 +204,32 @@ onBeforeUnmount(() => {
     <div
       v-if="current && (agent || team)"
       data-export-hide
-      class="fixed inset-0 z-[60] flex cursor-pointer items-center justify-center overflow-hidden bg-header/80 px-5 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      :aria-label="announceText"
+      class="fixed inset-0 z-[60] flex cursor-pointer items-end overflow-hidden bg-header"
       @click="close"
     >
       <p class="sr-only" role="status" aria-live="polite">{{ announceText }}</p>
+
+      <!-- الصورة بملء الشاشة، زي الخبر العاجل — لا بطاقة صغيرة وسط الشاشة -->
+      <img
+        v-if="photoUrl && !imgBroken"
+        :src="photoUrl"
+        alt=""
+        referrerpolicy="no-referrer"
+        class="celebrate-zoom absolute inset-0 size-full object-cover"
+        @error="imgBroken = true"
+      />
+      <div
+        v-else
+        aria-hidden="true"
+        class="absolute inset-0 bg-[linear-gradient(135deg,var(--color-accent-strong),var(--color-accent))]"
+      />
+      <span
+        aria-hidden="true"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.96)_0%,rgba(10,14,18,0.84)_30%,rgba(10,14,18,0.2)_60%,rgba(10,14,18,0.4)_100%)]"
+      />
 
       <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0">
         <span
@@ -223,15 +249,25 @@ onBeforeUnmount(() => {
         />
       </div>
 
+      <!-- الترتيب واضح وأعلى الشاشة، لا سطر صغير تحت -->
+      <div v-if="rank > 0" class="absolute inset-x-0 top-[6vh] flex justify-center">
+        <span
+          class="flex items-center gap-[0.45em] rounded-full bg-gold px-[1.3em] py-[0.55em] font-extrabold text-header text-[clamp(18px,3.6vh,50px)] shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
+        >
+          <iconify-icon icon="mdi:medal" aria-hidden="true" />
+          {{ t('celebrate.rank', { n: rank }) }}
+        </span>
+      </div>
+
       <!--
         المقاسات بـ vh: الاحتفال يُقرأ من آخر المكتب على التلفزيون، فيكبر مع
         ارتفاع الشاشة بدل أن يبقى بطاقة صغيرة وسط 1920 بكسل.
       -->
       <div
-        class="animate-celebrate-in relative flex w-full max-w-[min(92vw,44rem)] lg:max-w-[clamp(34rem,50vw,58rem)] flex-col items-center gap-[clamp(14px,2.4vh,30px)] rounded-[clamp(20px,3vh,40px)] border border-accent/60 bg-card px-[clamp(24px,4vh,64px)] py-[clamp(28px,4.8vh,64px)] text-center shadow-[0_30px_80px_-30px_rgba(21,122,74,0.75)] ring-1 ring-accent/20"
+        class="animate-celebrate-in relative flex w-full flex-col items-center gap-[clamp(12px,2.2vh,26px)] px-[6vw] pb-[clamp(40px,8vh,110px)] pt-[6vh] text-center text-white"
       >
         <div
-          class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-white text-[clamp(14px,2.2vh,26px)]"
+          class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
         >
           <iconify-icon
             :icon="isSale ? 'mdi:party-popper' : 'mdi:trophy'"
@@ -241,32 +277,13 @@ onBeforeUnmount(() => {
           {{ isTeam ? t('celebrate.teamTitle') : isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
         </div>
 
-        <div class="relative">
-          <span
-            aria-hidden="true"
-            class="animate-celebrate-halo absolute -inset-[8%] rounded-full bg-accent/25 blur-xl"
-          />
-          <Avatar
-            v-if="team"
-            :entity="team"
-            kind="team"
-            class="relative size-[clamp(7rem,20vh,14rem)] rounded-[22%] text-[clamp(2.25rem,6vh,4.5rem)] ring-[clamp(3px,0.5vh,6px)] ring-accent/70"
-          />
-          <Avatar
-            v-else-if="agent"
-            :entity="agent"
-            kind="agent"
-            class="relative size-[clamp(7rem,20vh,14rem)] rounded-[22%] text-[clamp(2.25rem,6vh,4.5rem)] ring-[clamp(3px,0.5vh,6px)] ring-accent/70"
-          />
+        <div
+          class="max-w-[24ch] font-extrabold leading-[1.05] tracking-[-0.01em] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(34px,8vh,108px)]"
+        >
+          {{ team?.name ?? agent?.name }}
         </div>
-
-        <div class="flex flex-col gap-[0.25em] max-w-full">
-          <div class="font-bold leading-tight text-strong text-[clamp(26px,5.2vh,62px)] break-words">
-            {{ team?.name ?? agent?.name }}
-          </div>
-          <div v-if="agent?.team" class="font-medium text-mute text-[clamp(15px,2.6vh,30px)]">
-            {{ t('spotlight.ofTeam', { team: agent.team }) }}
-          </div>
+        <div v-if="agent?.team" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
+          {{ t('spotlight.ofTeam', { team: agent.team }) }}
         </div>
 
         <!-- مديرو الفريق مجتمعين بصورهم، لبطاقة احتفال الفريق فقط -->
@@ -275,9 +292,9 @@ onBeforeUnmount(() => {
             <Avatar
               :entity="m"
               kind="agent"
-              class="size-[clamp(2.5rem,7vh,4.5rem)] rounded-full text-[clamp(0.9rem,2vh,1.4rem)] ring-2 ring-accent/50"
+              class="size-[clamp(2.6rem,7vh,4.6rem)] rounded-full text-[clamp(0.9rem,2vh,1.4rem)] ring-2 ring-white/60"
             />
-            <span class="font-semibold text-mute text-[clamp(11px,1.6vh,16px)] max-w-[10ch] truncate">{{ m.name }}</span>
+            <span class="font-semibold text-white/85 text-[clamp(11px,1.6vh,16px)] max-w-[10ch] truncate">{{ m.name }}</span>
           </div>
         </div>
 
@@ -288,32 +305,26 @@ onBeforeUnmount(() => {
         <p
           v-if="current.event.note"
           dir="auto"
-          class="m-0 flex max-w-full items-start gap-[0.4em] rounded-2xl bg-accent/10 px-[0.9em] py-[0.5em] break-words font-semibold leading-snug text-strong text-[clamp(18px,3.4vh,40px)]"
+          class="m-0 flex max-w-[60ch] items-start gap-[0.4em] rounded-2xl bg-black/35 px-[1em] py-[0.6em] break-words font-semibold leading-snug text-[clamp(18px,3.2vh,38px)]"
         >
-          <iconify-icon icon="mdi:format-quote-open" aria-hidden="true" class="shrink-0 text-accent-text text-[1.1em]" />
+          <iconify-icon icon="mdi:format-quote-open" aria-hidden="true" class="shrink-0 text-gold text-[1.1em]" />
           <span>{{ current.event.note }}</span>
         </p>
 
-        <div v-if="headline" class="flex flex-col items-center gap-[0.4em]" :title="egp(headline.value)">
-          <span class="font-semibold tracking-[0.06em] text-mute text-[clamp(14px,2.3vh,28px)]">
+        <div v-if="headline" class="flex flex-col items-center gap-[0.3em]" :title="egp(headline.value)">
+          <span class="font-semibold tracking-[0.06em] text-white/70 text-[clamp(14px,2.3vh,26px)]">
             {{ headline.label }}
           </span>
           <span
-            class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-accent-text text-[clamp(3rem,12vh,9rem)]"
+            class="font-extrabold leading-[0.9] tracking-[-0.02em] tabular-nums text-gold text-[clamp(3rem,13vh,10rem)]"
           >
             {{ compact(headline.value) }}
           </span>
         </div>
 
-        <div
-          v-if="isSale || rank > 0"
-          class="flex flex-wrap items-center justify-center gap-x-[1.5em] gap-y-1 border-t border-divider pt-[0.8em] w-full font-medium text-mute text-[clamp(15px,2.6vh,30px)]"
-        >
-          <span v-if="isSale" :title="egp(current!.event.total_egp)">
-            {{ t('celebrate.newTotal') }}
-            <b class="font-bold tabular-nums text-strong">{{ compact(current!.event.total_egp) }}</b>
-          </span>
-          <span v-if="rank > 0" class="font-bold tabular-nums text-strong">{{ t('celebrate.rank', { n: rank }) }}</span>
+        <div v-if="isSale" class="font-medium text-white/70 text-[clamp(15px,2.4vh,28px)]" :title="egp(current!.event.total_egp)">
+          {{ t('celebrate.newTotal') }}
+          <b class="font-bold tabular-nums text-white">{{ compact(current!.event.total_egp) }}</b>
         </div>
       </div>
 
@@ -332,5 +343,16 @@ onBeforeUnmount(() => {
 .celebrate-enter-from,
 .celebrate-leave-to {
   opacity: 0;
+}
+/* زوم بطيء جداً يدّي الصورة الساكنة إحساس بالحياة على الشاشة — زي الخبر العاجل */
+.celebrate-zoom {
+  animation: celebrate-zoom 20s ease-out both;
+}
+@keyframes celebrate-zoom {
+  from { transform: scale(1.06); }
+  to { transform: scale(1.14); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-zoom { animation: none; }
 }
 </style>

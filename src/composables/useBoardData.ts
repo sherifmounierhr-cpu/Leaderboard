@@ -23,6 +23,8 @@ export interface BoardEntity {
   members?: number
   /** مديرو الفريق ثم مشرفوه، للفرق فقط. */
   leads?: TeamLead[]
+  /** ترتيب الفريق بين الفرق — للفرق فقط. */
+  rank?: number
 }
 
 export interface TeamLead {
@@ -106,6 +108,7 @@ const teams = computed<BoardEntity[]>(() => {
       pct: t.pct,
       members: t.members,
       leads: teamLeads(t),
+      rank: t.rank,
     }))
 })
 
