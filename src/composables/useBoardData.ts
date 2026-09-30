@@ -95,16 +95,18 @@ const showDemo = computed(() => !hasSupabaseConfig || (Boolean(error.value) && !
 
 const teams = computed<BoardEntity[]>(() => {
   if (!rawTeams.value) return showDemo.value ? DEMO_TEAMS : []
-  return rawTeams.value.map((t) => ({
-    id: t.team_id,
-    name: localName(t.name, t.name_ar),
-    photo: drivePhotoUrl(t.photo_url),
-    deals: Number(t.deals) || 0,
-    target: Number(t.target) || 0,
-    pct: t.pct,
-    members: t.members,
-    leads: teamLeads(t),
-  }))
+  return rawTeams.value
+    .filter((t) => Number(t.deals) > 0)
+    .map((t) => ({
+      id: t.team_id,
+      name: localName(t.name, t.name_ar),
+      photo: drivePhotoUrl(t.photo_url),
+      deals: Number(t.deals) || 0,
+      target: Number(t.target) || 0,
+      pct: t.pct,
+      members: t.members,
+      leads: teamLeads(t),
+    }))
 })
 
 function teamLeads(t: TeamStanding): TeamLead[] {
