@@ -77,8 +77,8 @@ export interface SaleEventRow {
   agent_id: string
   year: number
   quarter: number
-  /** sale: زيادة مكتشفة تلقائياً · manual: تهنئة أطلقها مسؤول */
-  kind: 'sale' | 'manual'
+  /** sale: زيادة مكتشفة تلقائياً · manual: تهنئة أطلقها مسؤول · quarter: احتفال نهاية الربع */
+  kind: 'sale' | 'manual' | 'quarter'
   amount_egp: number
   total_egp: number
   note: string | null
@@ -93,6 +93,33 @@ export interface SaleEventRow {
   mute: boolean
   /** مدة خاصة بالثواني؛ null = مدة الإعدادات. */
   duration_s: number | null
+}
+
+/** مدير فريق داخل صف public.lb_team_events. */
+export interface TeamEventLead {
+  id: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+}
+
+/** صف من public.lb_team_events — احتفال فريق بنهاية الربع. */
+export interface TeamEventRow {
+  id: number
+  team_id: string
+  year: number
+  quarter: number
+  kind: 'quarter'
+  total_egp: number
+  note: string | null
+  song_id: string | null
+  mute: boolean
+  duration_s: number | null
+  created_at: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+  managers: TeamEventLead[]
 }
 
 /** صف من public.lb_devices — شاشة أو متصفح فاتح البرنامج */

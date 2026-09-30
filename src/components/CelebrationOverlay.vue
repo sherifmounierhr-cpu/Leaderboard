@@ -21,15 +21,21 @@ const { settings, urlOf } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
 
 const current = computed(() => celebrations.value[0] ?? null)
-const isManual = computed(() => current.value?.event.kind === 'manual')
+const isTeam = computed(() => current.value?.scope === 'team')
+/** يدوي أو احتفال نهاية ربع — نفس شارة "الكأس"، بخلاف زيادة مبيعات مكتشفة تلقائياً. */
+const isManual = computed(() => {
+  const c = current.value
+  return c?.scope === 'agent' && (c.event.kind === 'manual' || c.event.kind === 'quarter')
+})
 
 /**
  * الحدث يحمل الاسم والصورة بنفسه، فالاحتفال يُعرض حتى لو المستشار خارج
  * الربع المعروض على اللوحة لحظتها.
  */
 const agent = computed<BoardEntity | null>(() => {
-  const e = current.value?.event
-  if (!e) return null
+  const c = current.value
+  if (!c || c.scope !== 'agent') return null
+  const e = c.event
   return {
     id: e.agent_id,
     name: localName(e.name, e.name_ar),
@@ -41,26 +47,69 @@ const agent = computed<BoardEntity | null>(() => {
   }
 })
 
+/** بطاقة الفريق: اسمه وصورته، لاحتفال نهاية الربع. */
+const team = computed<BoardEntity | null>(() => {
+  const c = current.value
+  if (!c || c.scope !== 'team') return null
+  const e = c.event
+  return {
+    id: e.team_id,
+    name: localName(e.name, e.name_ar),
+    photo: drivePhotoUrl(e.photo_url),
+    deals: e.total_egp,
+    target: 0,
+    pct: 0,
+  }
+})
+
+/** مديرو الفريق مجتمعين تحت بطاقة الفريق. */
+const teamManagers = computed<BoardEntity[]>(() => {
+  const c = current.value
+  if (!c || c.scope !== 'team') return []
+  return c.event.managers.map((m) => ({
+    id: m.id,
+    name: localName(m.name, m.name_ar),
+    photo: drivePhotoUrl(m.photo_url),
+    deals: 0,
+    target: 0,
+    pct: 0,
+  }))
+})
+
 /*
  * الاحتفال أعلى الأولويات، فما بيستناش حد — بس بيسجّل دوره عشان الشاشات
  * التانية تعرف إنها تستنى وراه.
  */
-useOverlayLayer('celebration', computed(() => Boolean(current.value && agent.value)))
+useOverlayLayer('celebration', computed(() => Boolean(current.value && (agent.value || team.value))))
 
 /** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. */
 const rank = computed(() => {
-  const e = current.value?.event
-  if (!e || e.year !== year.value || e.quarter !== quarter.value) return 0
+  const c = current.value
+  if (!c || c.scope !== 'agent') return 0
+  const e = c.event
+  if (e.year !== year.value || e.quarter !== quarter.value) return 0
   return agents.value.findIndex((a) => a.id === e.agent_id) + 1
 })
 
-/** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي للتهنئة اليدوية. */
+/** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع. */
 const headline = computed(() => {
-  const e = current.value?.event
-  if (!e) return null
-  if (e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
+  const c = current.value
+  if (!c) return null
+  const e = c.event
+  if (c.scope === 'agent' && e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
   // التهنئة قد تُعاد لاحقاً من الإشعارات، فلا نقول «الآن» عن رقم وقت إرسالها
   return e.total_egp > 0 ? { label: t('celebrate.total'), value: e.total_egp } : null
+})
+
+/** زيادة مبيعات مكتشفة تلقائياً فقط — بخلاف اليدوي واحتفال نهاية الربع وبطاقة الفريق. */
+const isSale = computed(() => current.value?.scope === 'agent' && current.value.event.kind === 'sale')
+
+const announceText = computed(() => {
+  const c = current.value
+  if (!c) return ''
+  if (c.scope === 'team') return t('celebrate.announceTeam', { name: team.value?.name ?? '' })
+  if (isSale.value) return t('celebrate.announce', { name: agent.value?.name ?? '', amount: egp(c.event.amount_egp) })
+  return t('celebrate.announceManual', { name: agent.value?.name ?? '' })
 })
 
 function onKeydown(event: KeyboardEvent) {
@@ -149,18 +198,12 @@ onBeforeUnmount(() => {
     <!-- data-export-hide: لا يظهر في صور PNG المصدَّرة -->
     <!-- النقر في أي مكان أو Esc يغلق الاحتفال مبكراً -->
     <div
-      v-if="current && agent"
+      v-if="current && (agent || team)"
       data-export-hide
       class="fixed inset-0 z-[60] flex cursor-pointer items-center justify-center overflow-hidden bg-header/80 px-5 backdrop-blur-sm"
       @click="close"
     >
-      <p class="sr-only" role="status" aria-live="polite">
-        {{
-          isManual
-            ? t('celebrate.announceManual', { name: agent.name })
-            : t('celebrate.announce', { name: agent.name, amount: egp(current.event.amount_egp) })
-        }}
-      </p>
+      <p class="sr-only" role="status" aria-live="polite">{{ announceText }}</p>
 
       <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0">
         <span
@@ -191,11 +234,11 @@ onBeforeUnmount(() => {
           class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-white text-[clamp(14px,2.2vh,26px)]"
         >
           <iconify-icon
-            :icon="isManual ? 'mdi:trophy' : 'mdi:party-popper'"
+            :icon="isSale ? 'mdi:party-popper' : 'mdi:trophy'"
             aria-hidden="true"
             class="text-gold text-[1.3em]"
           />
-          {{ isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
+          {{ isTeam ? t('celebrate.teamTitle') : isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
         </div>
 
         <div class="relative">
@@ -204,6 +247,13 @@ onBeforeUnmount(() => {
             class="animate-celebrate-halo absolute -inset-[8%] rounded-full bg-accent/25 blur-xl"
           />
           <Avatar
+            v-if="team"
+            :entity="team"
+            kind="team"
+            class="relative size-[clamp(7rem,20vh,14rem)] rounded-[22%] text-[clamp(2.25rem,6vh,4.5rem)] ring-[clamp(3px,0.5vh,6px)] ring-accent/70"
+          />
+          <Avatar
+            v-else-if="agent"
             :entity="agent"
             kind="agent"
             class="relative size-[clamp(7rem,20vh,14rem)] rounded-[22%] text-[clamp(2.25rem,6vh,4.5rem)] ring-[clamp(3px,0.5vh,6px)] ring-accent/70"
@@ -212,10 +262,22 @@ onBeforeUnmount(() => {
 
         <div class="flex flex-col gap-[0.25em] max-w-full">
           <div class="font-bold leading-tight text-strong text-[clamp(26px,5.2vh,62px)] break-words">
-            {{ agent.name }}
+            {{ team?.name ?? agent?.name }}
           </div>
-          <div v-if="agent.team" class="font-medium text-mute text-[clamp(15px,2.6vh,30px)]">
+          <div v-if="agent?.team" class="font-medium text-mute text-[clamp(15px,2.6vh,30px)]">
             {{ t('spotlight.ofTeam', { team: agent.team }) }}
+          </div>
+        </div>
+
+        <!-- مديرو الفريق مجتمعين بصورهم، لبطاقة احتفال الفريق فقط -->
+        <div v-if="teamManagers.length" class="flex flex-wrap items-center justify-center gap-[1em] max-w-full">
+          <div v-for="m in teamManagers" :key="m.id" class="flex flex-col items-center gap-[0.3em]">
+            <Avatar
+              :entity="m"
+              kind="agent"
+              class="size-[clamp(2.5rem,7vh,4.5rem)] rounded-full text-[clamp(0.9rem,2vh,1.4rem)] ring-2 ring-accent/50"
+            />
+            <span class="font-semibold text-mute text-[clamp(11px,1.6vh,16px)] max-w-[10ch] truncate">{{ m.name }}</span>
           </div>
         </div>
 
@@ -244,12 +306,12 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          v-if="!isManual || rank > 0"
+          v-if="isSale || rank > 0"
           class="flex flex-wrap items-center justify-center gap-x-[1.5em] gap-y-1 border-t border-divider pt-[0.8em] w-full font-medium text-mute text-[clamp(15px,2.6vh,30px)]"
         >
-          <span v-if="!isManual" :title="egp(current.event.total_egp)">
+          <span v-if="isSale" :title="egp(current!.event.total_egp)">
             {{ t('celebrate.newTotal') }}
-            <b class="font-bold tabular-nums text-strong">{{ compact(current.event.total_egp) }}</b>
+            <b class="font-bold tabular-nums text-strong">{{ compact(current!.event.total_egp) }}</b>
           </span>
           <span v-if="rank > 0" class="font-bold tabular-nums text-strong">{{ t('celebrate.rank', { n: rank }) }}</span>
         </div>

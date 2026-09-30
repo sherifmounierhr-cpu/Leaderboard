@@ -14,6 +14,7 @@ import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
+import QuarterCelebrateAdmin from '@/components/admin/QuarterCelebrateAdmin.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
@@ -235,6 +236,7 @@ const FIELD =
         <div v-else-if="tab === 'celebrate'" class="grid items-start gap-6 xl:grid-cols-2">
           <div class="flex flex-col gap-6">
             <CelebrateAdmin />
+            <QuarterCelebrateAdmin />
             <CelebrationSettings />
           </div>
           <MediaLibrary />
