@@ -287,8 +287,11 @@ onBeforeUnmount(() => {
         </span>
       </div>
 
-      <!-- الترتيب واضح وأعلى الشاشة — الأول تاج وتوهّج، والباقي ميدالية -->
-      <div v-if="rank > 0" class="absolute inset-x-0 top-[6vh] flex justify-center">
+      <!--
+        الترتيب أعلى الشاشة في النص — للفريق فقط، لأن مافيش وش هناك يتغطّى.
+        للفرد الشارة بتتحط في عمود النص بدل ما تتحط فوق وشه في نص الشاشة.
+      -->
+      <div v-if="isTeam && rank > 0" class="absolute inset-x-0 top-[6vh] flex justify-center">
         <span
           class="flex items-center gap-[0.45em] rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
           :class="isChampion
@@ -312,6 +315,18 @@ onBeforeUnmount(() => {
           ? 'w-full items-center justify-center px-[6vw] text-center'
           : 'w-[min(60vw,44rem)] items-start justify-end ps-[6vw] pe-[3vw] pb-[clamp(40px,8vh,100px)] text-start'"
       >
+        <!-- ترتيب الفرد هنا في عمود النص، لا فوق وشه في نص الشاشة -->
+        <span
+          v-if="!isTeam && rank > 0"
+          class="flex items-center gap-[0.45em] self-start rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
+          :class="isChampion
+            ? 'celebrate-rank-pulse px-[1.4em] py-[0.6em] text-[clamp(20px,3.4vh,46px)]'
+            : 'px-[1.2em] py-[0.5em] text-[clamp(16px,2.8vh,38px)]'"
+        >
+          <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
+          {{ t('celebrate.rank', { n: rank }) }}
+        </span>
+
         <div
           class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
         >
