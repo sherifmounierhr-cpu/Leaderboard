@@ -1,7 +1,7 @@
--- حماية إضافية عند الاستيراد: لو q*_deals لمستشار في ورقة Agents طلع بالظبط
--- نفس إجمالي صفقاته المرفوعة لنفس الربع في ورقة Deals، فده غالباً غلطة
--- إدخال (نفس الرقم اتكتب مرتين) مش قيمة حقيقية — يوقف الاستيراد بالكامل
--- برسالة توضح المستشار والربع، بدل ما يدخل رقم مضاعف على اللوحة بصمت.
+-- تصحيح: 0030 السابقة كانت مبنية على نسخة lb_admin_import القديمة (0024)
+-- وبكده كانت بترجع فريق الصفقة لفريق المستشار الحالي دايماً، متجاهلة عمود
+-- team في ورقة Deals اللي أضافته 0025. النسخة دي مبنية على 0025 بالظبط
+-- ومضاف ليها بس حماية الاستيراد المزدوج (q*_deals = نفس إجمالي صفقات الربع).
 
 create or replace function public.lb_admin_import(p_year smallint, p_payload jsonb)
 returns jsonb
@@ -34,25 +34,33 @@ begin
   for r in
     with incoming as (
       select
-        nullif(btrim(d->>'agent'), '')                         as agent,
-        (d->>'date')::date                                     as deal_date,
-        round((d->>'amount')::numeric, 2)                      as amount,
+        nullif(btrim(d->>'agent'), '')                             as agent,
+        nullif(btrim(coalesce(d->>'team', '')), '')                as team,
+        (d->>'date')::date                                         as deal_date,
+        round((d->>'amount')::numeric, 2)                          as amount,
         left(nullif(btrim(coalesce(d->>'developer', '')), ''), 80) as developer,
         left(nullif(btrim(coalesce(d->>'project', '')), ''), 80)   as project,
-        (d->>'row')::integer                                   as row_no
+        (d->>'row')::integer                                       as row_no
       from jsonb_array_elements(coalesce(p_payload->'deals', '[]'::jsonb)) d
     )
-    select i.agent, i.deal_date, i.amount, i.developer, i.project,
+    select i.agent, i.team, i.deal_date, i.amount, i.developer, i.project,
            count(*)::integer as copies, min(i.row_no) as row_no,
            (select a.id from leaderboard.agents a
              where lower(a.name) = lower(i.agent) or lower(a.name_ar) = lower(i.agent)
-             order by (lower(a.name) = lower(i.agent)) desc limit 1) as agent_id
+             order by (lower(a.name) = lower(i.agent)) desc limit 1) as agent_id,
+           (select t.id from leaderboard.teams t
+             where lower(t.name) = lower(i.team) or lower(t.name_ar) = lower(i.team)
+             order by (lower(t.name) = lower(i.team)) desc limit 1) as team_id
     from incoming i
-    group by i.agent, i.deal_date, i.amount, i.developer, i.project
+    group by i.agent, i.team, i.deal_date, i.amount, i.developer, i.project
     order by min(i.row_no)
   loop
     if r.agent_id is null then
       raise exception 'ورقة Deals، الصف %: المستشار «%» غير موجود في ورقة Agents ولا في اللوحة', r.row_no, r.agent
+        using errcode = '22023';
+    end if;
+    if r.team is not null and r.team_id is null then
+      raise exception 'ورقة Deals، الصف %: الفريق «%» غير موجود في ورقة Teams ولا في اللوحة', r.row_no, r.team
         using errcode = '22023';
     end if;
     if r.amount is null or r.amount <= 0 then
@@ -65,15 +73,17 @@ begin
       raise exception 'ورقة Deals، الصف %: التاريخ قديم جداً', r.row_no using errcode = '22023';
     end if;
 
+    -- فريق الصفقة: من الملف، وإلا فريق المستشار الحالي
+    v_team := coalesce(r.team_id, (select team_id from leaderboard.agents where id = r.agent_id));
+
     select r.copies - count(*) into v_need
     from leaderboard.deals d
     where d.agent_id = r.agent_id and d.deal_date = r.deal_date and d.amount_egp = r.amount
-      and d.developer is not distinct from r.developer and d.project is not distinct from r.project;
+      and d.developer is not distinct from r.developer and d.project is not distinct from r.project
+      and d.team_id is not distinct from v_team;
 
     v_skipped := v_skipped + (r.copies - greatest(v_need, 0));
     continue when v_need <= 0;
-
-    select team_id into v_team from leaderboard.agents where id = r.agent_id;
 
     insert into leaderboard.deals (agent_id, team_id, deal_date, amount_egp, developer, project, created_by)
     select r.agent_id, v_team, r.deal_date, r.amount, r.developer, r.project, auth.uid()
