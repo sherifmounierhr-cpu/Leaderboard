@@ -109,6 +109,17 @@ const teams = computed<BoardEntity[]>(() => {
     }))
 })
 
+/**
+ * إجمالي الشركة (الصورة الكبيرة في الأعلى) من كل الفرق بلا استثناء — حتى لو
+ * فريق ما ظهرش على اللوحة (صفر مبيعات)، هدفه لسه جزء من المستهدف الكلي.
+ */
+const companyTotals = computed(() => {
+  const list = rawTeams.value ?? (showDemo.value ? DEMO_TEAMS : [])
+  const deals = list.reduce((s, t) => s + (Number(t.deals) || 0), 0)
+  const target = list.reduce((s, t) => s + (Number(t.target) || 0), 0)
+  return { deals, target, pct: target > 0 ? Math.round((deals / target) * 100) : 0 }
+})
+
 function teamLeads(t: TeamStanding): TeamLead[] {
   return (t.leads ?? []).map((l) => ({
     id: l.id,
@@ -285,6 +296,7 @@ export function useBoardData() {
   start()
   return {
     teams,
+    companyTotals,
     agents,
     history,
     quarterTotals,

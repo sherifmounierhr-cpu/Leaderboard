@@ -11,15 +11,10 @@ import { useCountUp } from '@/composables/useCountUp'
  * الأيام المتبقية، والمطلوب يومياً للوصول للمستهدف.
  */
 const { t } = useI18n()
-const { teams } = useBoardData()
+const { teams, companyTotals } = useBoardData()
 const { progress, expectedPct, statusOf } = usePace()
 
-const totals = computed(() => {
-  const deals = teams.value.reduce((s, x) => s + x.deals, 0)
-  const target = teams.value.reduce((s, x) => s + x.target, 0)
-  const pct = target > 0 ? Math.round((deals / target) * 100) : 0
-  return { deals, target, pct }
-})
+const totals = companyTotals
 
 const shownDeals = useCountUp(computed(() => totals.value.deals))
 const status = computed(() => statusOf(totals.value.pct))
