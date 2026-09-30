@@ -328,7 +328,8 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 /**
  * تاريخ من خلية Excel: Date (خلية تاريخ)، أو رقم تسلسلي (خلية تاريخ من غير
- * تنسيق)، أو نص 2026-09-23 / 23/09/2026 / 23-9-2026. يرجّع YYYY-MM-DD أو null.
+ * تنسيق)، أو نص بفواصل - أو / أو . أو \ مثل 2026-09-23 / 23/09/2026 / 2026\9\23.
+ * يرجّع YYYY-MM-DD أو null.
  */
 function toIsoDate(value: unknown): string | null {
   let y: number, m: number, d: number
@@ -342,9 +343,9 @@ function toIsoDate(value: unknown): string | null {
     y = date.getUTCFullYear(); m = date.getUTCMonth() + 1; d = date.getUTCDate()
   } else {
     const text = toText(value)
-    let match = text.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/)
+    let match = text.match(/^(\d{4})[-/.\\](\d{1,2})[-/.\\](\d{1,2})$/)
     if (match) { y = +match[1]; m = +match[2]; d = +match[3] }
-    else if ((match = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/))) { d = +match[1]; m = +match[2]; y = +match[3] }
+    else if ((match = text.match(/^(\d{1,2})[-/.\\](\d{1,2})[-/.\\](\d{4})$/))) { d = +match[1]; m = +match[2]; y = +match[3] }
     else return null
   }
   const check = new Date(Date.UTC(y, m - 1, d))
