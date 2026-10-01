@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { hasSupabaseConfig, supabase } from '@/lib/supabase'
-import type { SaleEventRow, TeamEventRow } from '@/lib/types'
+import type { IntroEventRow, SaleEventRow, TeamEventRow } from '@/lib/types'
 
 /**
  * عدد الإشعارات المعروضة في القائمة. أعلى من المعتاد بكتير عشان دفعة احتفال
@@ -34,6 +34,7 @@ const READ_KEY = 'everest-leaderboard:notifications-read'
 export type Celebration =
   | { key: string; scope: 'agent'; event: SaleEventRow }
   | { key: string; scope: 'team'; event: TeamEventRow }
+  | { key: string; scope: 'intro'; event: IntroEventRow }
 
 // ------------------------------------------------------------------ state
 const events = ref<SaleEventRow[]>([])
@@ -44,6 +45,8 @@ const lastReadId = ref(readStoredId())
 let lastSeenId = 0
 /** نفس الفكرة لاحتفالات الفرق، بمعزل عن أحداث المستشارين. */
 let lastSeenTeamId = 0
+/** ونفسها لافتتاحية احتفال نهاية الربع. */
+let lastSeenIntroId = 0
 
 /**
  * ما وقع قبل فتح الصفحة تاريخ، لا حدث جديد. نقارن بالوقت لا بـ«أول تحميل»:
@@ -94,11 +97,21 @@ function normalizeTeam(row: TeamEventRow): TeamEventRow {
   }
 }
 
+function normalizeIntro(row: IntroEventRow): IntroEventRow {
+  return {
+    ...row,
+    mute: Boolean(row.mute),
+    duration_s: Number(row.duration_s) || 18,
+    directors: row.directors ?? [],
+  }
+}
+
 // ------------------------------------------------------------ celebrations
-function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = []) {
+function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = [], freshIntros: IntroEventRow[] = []) {
   const cutoff = Date.now() - STALE_MS
   const recent = fresh.filter((e) => new Date(e.created_at).getTime() >= cutoff)
   const recentTeams = freshTeams.filter((e) => new Date(e.created_at).getTime() >= cutoff)
+  const recentIntros = freshIntros.filter((e) => new Date(e.created_at).getTime() >= cutoff)
 
   // احتفال نهاية الربع طلبه المسؤول عمداً لكل من يستحقه — لا يُقصر كباقي الأنواع
   const quarter = recent.filter((e) => e.kind === 'quarter').slice(0, MAX_QUARTER_CELEBRATIONS)
@@ -109,7 +122,12 @@ function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = []) {
     .sort((a, b) => b.amount_egp - a.amount_egp)
     .slice(0, MAX_CELEBRATIONS)
 
-  // ترتيب العرض: احتفال الفرق (وترتيبها هو ترتيب مديريها بعدها) ثم الأفراد
+  // ترتيب العرض: الافتتاحية أولاً، ثم الفرق (ومديروها بعدها)، ثم الأفراد
+  const introCelebrations: Celebration[] = recentIntros.map((event) => ({
+    key: `intro:${event.id}`,
+    scope: 'intro' as const,
+    event,
+  }))
   const teamCelebrations: Celebration[] = recentTeams
     .slice(0, MAX_QUARTER_CELEBRATIONS)
     .map((event) => ({ key: `team:${event.id}`, scope: 'team' as const, event }))
@@ -120,8 +138,8 @@ function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = []) {
     event,
   }))
 
-  if (!teamCelebrations.length && !agentCelebrations.length) return
-  celebrations.value = [...celebrations.value, ...teamCelebrations, ...agentCelebrations]
+  if (!introCelebrations.length && !teamCelebrations.length && !agentCelebrations.length) return
+  celebrations.value = [...celebrations.value, ...introCelebrations, ...teamCelebrations, ...agentCelebrations]
 }
 
 /** إعادة عرض إشعار قديم على هذه الشاشة وحدها. */
@@ -151,11 +169,29 @@ async function loadTeams(): Promise<TeamEventRow[]> {
   return fresh
 }
 
+async function loadIntros(): Promise<IntroEventRow[]> {
+  const { data, error } = await supabase
+    .from('lb_celebration_intros')
+    .select('*')
+    .order('id', { ascending: false })
+    .limit(20)
+  if (error) {
+    console.warn('[useSaleEvents:intros]', error.message)
+    return []
+  }
+  const rows = ((data ?? []) as IntroEventRow[]).map(normalizeIntro)
+  const seen = lastSeenIntroId
+  const fresh = rows.filter((e) => e.id > seen && new Date(e.created_at).getTime() >= openedAt)
+  lastSeenIntroId = Math.max(seen, rows[0]?.id ?? 0)
+  return fresh
+}
+
 async function load() {
   if (!hasSupabaseConfig) return
-  const [{ data, error }, freshTeams] = await Promise.all([
+  const [{ data, error }, freshTeams, freshIntros] = await Promise.all([
     supabase.from('lb_sale_events').select('*').order('id', { ascending: false }).limit(FEED_LIMIT),
     loadTeams(),
+    loadIntros(),
   ])
   if (error) {
     console.warn('[useSaleEvents]', error.message)
@@ -165,7 +201,7 @@ async function load() {
   const rows = ((data ?? []) as SaleEventRow[]).map(normalize)
   const seen = lastSeenId
   const fresh = rows.filter((e) => e.id > seen && new Date(e.created_at).getTime() >= openedAt)
-  if (fresh.length || freshTeams.length) enqueue(fresh, freshTeams)
+  if (fresh.length || freshTeams.length || freshIntros.length) enqueue(fresh, freshTeams, freshIntros)
   lastSeenId = Math.max(seen, rows[0]?.id ?? 0)
   events.value = rows
 }
@@ -196,18 +232,22 @@ export interface QuarterCelebrationCounts {
   agents: number
 }
 
-/** احتفال نهاية الربع: فريق لكل فريق باع، وفردي لكل مدير ولكل مستشار باع. */
+/** احتفال نهاية الربع: افتتاحية، ثم فريق لكل فريق باع، وفردي لكل مدير ولكل مستشار باع. */
 async function celebrateQuarter(
   year: number,
   quarter: number,
   teamNote: string,
   agentNote: string,
+  introMessage: string,
+  introSongId: string | null,
 ): Promise<QuarterCelebrationCounts> {
   const { data, error } = await supabase.rpc('lb_admin_celebrate_quarter', {
     p_year: year,
     p_quarter: quarter,
     p_team_note: teamNote.trim() || null,
     p_agent_note: agentNote.trim() || null,
+    p_intro_message: introMessage.trim() || null,
+    p_intro_song_id: introSongId,
   })
   if (error) throw new Error(error.message)
   return data as QuarterCelebrationCounts
@@ -231,6 +271,7 @@ function start() {
     .channel('leaderboard-events')
     .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'sale_events' }, scheduleLoad)
     .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'team_events' }, scheduleLoad)
+    .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'celebration_intros' }, scheduleLoad)
     .subscribe()
 
   setInterval(() => void load(), FALLBACK_POLL_MS)

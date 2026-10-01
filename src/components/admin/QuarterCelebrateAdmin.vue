@@ -2,16 +2,21 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBoardData } from '@/composables/useBoardData'
+import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useCelebrate, type QuarterCelebrationCounts } from '@/composables/useSaleEvents'
 
 const NOTE_MAX = 140
+const INTRO_MAX = 280
 
 const { t } = useI18n()
 const { year: boardYear, quarter: boardQuarter } = useBoardData()
+const { songs } = useBoardMedia()
 const { celebrateQuarter } = useCelebrate()
 
 const year = ref(boardYear.value)
 const quarter = ref(boardQuarter.value)
+const introMessage = ref(t('admin.quarterCelebrateIntroDefault'))
+const introSongId = ref<string | null>(null)
 const teamNote = ref(t('admin.quarterCelebrateTeamNoteDefault'))
 const agentNote = ref(t('admin.quarterCelebrateAgentNoteDefault'))
 const sending = ref(false)
@@ -27,7 +32,14 @@ async function onSubmit() {
   sending.value = true
   message.value = null
   try {
-    const counts: QuarterCelebrationCounts = await celebrateQuarter(year.value, quarter.value, teamNote.value, agentNote.value)
+    const counts: QuarterCelebrationCounts = await celebrateQuarter(
+      year.value,
+      quarter.value,
+      teamNote.value,
+      agentNote.value,
+      introMessage.value,
+      introSongId.value,
+    )
     message.value = {
       ok: true,
       text: t('admin.quarterCelebrateDone', { teams: counts.teams, managers: counts.managers, agents: counts.agents }),
@@ -66,6 +78,27 @@ const FIELD =
         <span class="font-semibold text-caption text-mute">{{ t('quarter.label') }}</span>
         <select v-model.number="quarter" required :class="FIELD">
           <option v-for="q in [1, 2, 3, 4]" :key="q" :value="q">{{ t('quarter.short', { n: q }) }}</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="flex flex-col gap-3 rounded-lg border border-card-border p-3 lg:p-4">
+      <p class="m-0 font-semibold text-strong text-sm">{{ t('admin.quarterCelebrateIntroTitle') }}</p>
+      <p class="m-0 text-caption text-mute">{{ t('admin.quarterCelebrateIntroHint') }}</p>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="flex items-center justify-between font-semibold text-caption text-mute">
+          <span>{{ t('admin.quarterCelebrateIntroMessage') }}</span>
+          <span class="tabular-nums text-dim">{{ introMessage.length }}/{{ INTRO_MAX }}</span>
+        </span>
+        <textarea v-model="introMessage" rows="3" :maxlength="INTRO_MAX" :class="FIELD" />
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="font-semibold text-caption text-mute">{{ t('screen.celebrationSong') }}</span>
+        <select v-model="introSongId" :class="FIELD">
+          <option :value="null">{{ t('screen.noSong') }}</option>
+          <option v-for="s in songs" :key="s.id" :value="s.id">{{ s.name }}</option>
         </select>
       </label>
     </div>

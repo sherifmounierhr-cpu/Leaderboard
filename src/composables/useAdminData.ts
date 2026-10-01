@@ -177,7 +177,7 @@ export function useAdminData() {
    * اسم الملف يحمل طابعاً زمنياً حتى لا يعرض المتصفح نسخة مخبأة قديمة بعد
    * استبدال صورة الشخص نفسه.
    */
-  async function uploadPhoto(file: File, kind: 'team' | 'agent', id: string | null) {
+  async function uploadPhoto(file: File, kind: 'team' | 'agent' | 'director', id: string | null) {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase()
     // السجل الجديد لا معرّف له بعد، فنولّد مساراً مستقلاً للصورة
     const key = id ?? crypto.randomUUID()

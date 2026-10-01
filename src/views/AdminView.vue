@@ -15,6 +15,7 @@ import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
 import QuarterCelebrateAdmin from '@/components/admin/QuarterCelebrateAdmin.vue'
+import DirectorsAdmin from '@/components/admin/DirectorsAdmin.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
@@ -237,6 +238,7 @@ const FIELD =
           <div class="flex flex-col gap-6">
             <CelebrateAdmin />
             <QuarterCelebrateAdmin />
+            <DirectorsAdmin />
             <CelebrationSettings />
           </div>
           <MediaLibrary />

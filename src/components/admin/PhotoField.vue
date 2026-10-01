@@ -5,7 +5,7 @@ import { useAdminData } from '@/composables/useAdminData'
 
 const props = defineProps<{
   modelValue: string | null
-  kind: 'team' | 'agent'
+  kind: 'team' | 'agent' | 'director'
   recordId: string | null
   name: string
 }>()

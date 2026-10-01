@@ -122,6 +122,43 @@ export interface TeamEventRow {
   managers: TeamEventLead[]
 }
 
+/** صف من public.lb_directors — مديرو الشركة، قائمة ثابتة تُدار من الإدارة. */
+export interface DirectorRow {
+  id: string
+  name: string
+  name_ar: string | null
+  title: string
+  title_ar: string | null
+  photo_url: string | null
+  position: number
+  active: boolean
+  created_at: string
+}
+
+/** مدير داخل صف public.lb_celebration_intros. */
+export interface IntroDirector {
+  id: string
+  name: string
+  name_ar: string | null
+  title: string
+  title_ar: string | null
+  photo_url: string | null
+}
+
+/** صف من public.lb_celebration_intros — افتتاحية احتفال نهاية الربع. */
+export interface IntroEventRow {
+  id: number
+  year: number
+  quarter: number
+  kind: 'quarter'
+  message: string | null
+  song_id: string | null
+  mute: boolean
+  duration_s: number
+  created_at: string
+  directors: IntroDirector[]
+}
+
 /** صف من public.lb_devices — شاشة أو متصفح فاتح البرنامج */
 export interface DeviceRow {
   id: string
