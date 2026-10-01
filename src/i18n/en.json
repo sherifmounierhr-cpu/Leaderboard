@@ -442,6 +442,9 @@
     "enableSound": "Tap to enable sound"
   },
   "screen": {
+    "celebrationLang": "Celebration language",
+    "langAuto": "Follow each screen's language",
+    "celebrationLangHint": "Controls the language of every celebration card (titles, numbers, names, and page direction) on all screens, even if a screen itself is set to another language. An advisor or team name shows in Arabic only if its Arabic name is filled in.",
     "settingsTitle": "Celebration settings",
     "settingsHint": "Applies to every screen: automatic deal celebrations and manual shout-outs.",
     "duration": "Display time",

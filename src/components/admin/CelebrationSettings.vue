@@ -6,12 +6,13 @@ import { useAudioPlayer } from '@/composables/useAudioPlayer'
 
 /** مدة الاحتفال، الأغنية الافتراضية، ومستوى الصوت لكل الشاشات. */
 const { t } = useI18n()
-const { settings, songs, urlOf, saveSettings } = useScreenAdmin()
+const { settings, songs, urlOf, saveSettings, saveCelebrationLang } = useScreenAdmin()
 const { play, stop, playing } = useAudioPlayer()
 
 const seconds = ref(settings.value.celebration_seconds)
 const songId = ref<string | null>(settings.value.celebration_song_id)
 const volume = ref(settings.value.volume)
+const lang = ref<'auto' | 'ar' | 'en'>(settings.value.celebration_lang ?? 'auto')
 const saving = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 
@@ -21,19 +22,22 @@ watch(settings, (s) => {
   seconds.value = s.celebration_seconds
   songId.value = s.celebration_song_id
   volume.value = s.volume
+  lang.value = s.celebration_lang ?? 'auto'
 })
 
 const dirty = computed(
   () =>
     seconds.value !== settings.value.celebration_seconds ||
     songId.value !== settings.value.celebration_song_id ||
-    volume.value !== settings.value.volume,
+    volume.value !== settings.value.volume ||
+    lang.value !== (settings.value.celebration_lang ?? 'auto'),
 )
 
 async function onSave() {
   saving.value = true
   message.value = null
   try {
+    if (lang.value !== (settings.value.celebration_lang ?? 'auto')) await saveCelebrationLang(lang.value)
     await saveSettings(seconds.value, songId.value, volume.value)
     message.value = { ok: true, text: t('screen.settingsSaved') }
   } catch (err) {
@@ -86,6 +90,16 @@ const FIELD =
         <b class="tabular-nums text-strong text-sm">{{ volume }}%</b>
       </span>
       <input v-model.number="volume" type="range" min="0" max="100" step="5" class="w-full accent-[var(--color-accent)]" />
+    </label>
+
+    <label class="flex flex-col gap-1.5">
+      <span class="font-semibold text-caption text-mute">{{ t('screen.celebrationLang') }}</span>
+      <select v-model="lang" :class="FIELD">
+        <option value="auto">{{ t('screen.langAuto') }}</option>
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+      </select>
+      <span class="text-caption text-dim">{{ t('screen.celebrationLangHint') }}</span>
     </label>
 
     <p

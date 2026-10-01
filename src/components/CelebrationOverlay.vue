@@ -1,24 +1,36 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compact, drivePhotoUrl, egp } from '@/lib/format'
+import { compact as compactNumber, drivePhotoUrl, egp as egpNumber } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
 import { useSaleEvents } from '@/composables/useSaleEvents'
-import { useLocalName } from '@/composables/useLocalName'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { supabase } from '@/lib/supabase'
-import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
+import type { AgentStanding, LocaleName, TeamContribution, TeamStanding } from '@/lib/types'
 import Avatar from './Avatar.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
 const PIECES = 44
 
-const { t } = useI18n()
-const localName = useLocalName()
+const { t: translate, locale } = useI18n()
 const { celebrations, dismissCelebration } = useSaleEvents()
 const { settings, urlOf } = useBoardMedia()
+
+/**
+ * لغة الاحتفال: من إعدادات الإدارة لو اتحددت (عربي/إنجليزي لكل الشاشات)،
+ * وإلا لغة الشاشة نفسها. كل النصوص والأسماء والأرقام والاتجاه هنا بتتبعها،
+ * بمعزل عن لغة اللوحة اللي وراها.
+ */
+const lang = computed<LocaleName>(() => {
+  const forced = settings.value.celebration_lang
+  return forced === 'ar' || forced === 'en' ? forced : (locale.value as LocaleName)
+})
+const t = (key: string, named: Record<string, unknown> = {}) => translate(key, named, { locale: lang.value })
+const localName = (name: string, nameAr?: string | null) => (lang.value === 'ar' && nameAr ? nameAr : name)
+const compact = (value: unknown) => compactNumber(value, lang.value)
+const egp = (value: unknown) => egpNumber(value, lang.value)
 const { play, stop } = useAudioPlayer()
 
 const current = computed(() => celebrations.value[0] ?? null)
@@ -198,8 +210,9 @@ interface StandingsSnapshot {
 }
 const standingsCache = ref(new Map<string, StandingsSnapshot>())
 
+/** اللغة جزء من المفتاح: الأسماء المخزّنة مترجمة بلغة الاحتفال وقت الجلب. */
 function standingsKey(y: number, q: number) {
-  return `${y}:${q}`
+  return `${lang.value}:${y}:${q}`
 }
 
 async function ensureStandings(y: number, q: number) {
@@ -252,8 +265,8 @@ async function ensureStandings(y: number, q: number) {
 }
 
 watch(
-  () => current.value,
-  (c) => {
+  [current, lang] as const,
+  ([c]) => {
     if (c && (c.scope === 'agent' || c.scope === 'team' || c.scope === 'divider' || c.scope === 'ranking')) {
       void ensureStandings(c.event.year, c.event.quarter)
     }
@@ -488,6 +501,8 @@ onBeforeUnmount(() => {
       role="dialog"
       aria-modal="true"
       :aria-label="announceText"
+      :dir="lang === 'ar' ? 'rtl' : 'ltr'"
+      :lang="lang"
       class="fixed inset-0 z-[60] flex cursor-pointer overflow-hidden bg-header"
       :class="isChampion ? 'celebrate-champion-ring' : ''"
       @click="close"

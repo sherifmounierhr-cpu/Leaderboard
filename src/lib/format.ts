@@ -23,8 +23,8 @@ const fullCache = new Map<string, Intl.NumberFormat>()
 const timeCache = new Map<string, Intl.DateTimeFormat>()
 const dateCache = new Map<string, Intl.DateTimeFormat>()
 
-function compactFormatter() {
-  const tag = LOCALE_TAG[activeLocale]
+function compactFormatter(locale: LocaleName = activeLocale) {
+  const tag = LOCALE_TAG[locale]
   let f = compactCache.get(tag)
   if (!f) {
     f = new Intl.NumberFormat(tag, { notation: 'compact', maximumFractionDigits: 1 })
@@ -33,8 +33,8 @@ function compactFormatter() {
   return f
 }
 
-function fullFormatter() {
-  const tag = LOCALE_TAG[activeLocale]
+function fullFormatter(locale: LocaleName = activeLocale) {
+  const tag = LOCALE_TAG[locale]
   let f = fullCache.get(tag)
   if (!f) {
     f = new Intl.NumberFormat(tag)
@@ -44,8 +44,8 @@ function fullFormatter() {
 }
 
 /** رقم مختصر للعرض الكبير: 11.8M */
-export function compact(value: unknown): string {
-  return compactFormatter().format(Number(value) || 0)
+export function compact(value: unknown, locale?: LocaleName): string {
+  return compactFormatter(locale).format(Number(value) || 0)
 }
 
 /**
@@ -61,9 +61,9 @@ export function millions(value: unknown): string {
 }
 
 /** المبلغ كاملاً مع العملة — يُستخدم في الـ tooltip وقارئ الشاشة. */
-export function egp(value: unknown): string {
-  const n = fullFormatter().format(Number(value) || 0)
-  return `${n} ${CURRENCY[activeLocale]}`
+export function egp(value: unknown, locale?: LocaleName): string {
+  const n = fullFormatter(locale).format(Number(value) || 0)
+  return `${n} ${CURRENCY[locale ?? activeLocale]}`
 }
 
 /** نسبة مئوية بصيغة المحلية الحالية. */

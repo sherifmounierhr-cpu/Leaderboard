@@ -92,6 +92,12 @@ export function useScreenAdmin() {
     await media.reload()
   }
 
+  async function saveCelebrationLang(lang: 'auto' | 'ar' | 'en') {
+    const { error } = await supabase.rpc('lb_admin_set_celebration_lang', { p_lang: lang })
+    fail(error)
+    await media.reload()
+  }
+
   async function saveAnnouncement(d: AnnouncementDraft) {
     const { data, error } = await supabase.rpc('lb_admin_save_announcement', {
       p_id: d.id,
@@ -117,5 +123,5 @@ export function useScreenAdmin() {
     await announcements.reload()
   }
 
-  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveAnnouncement, deleteAnnouncement }
+  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveAnnouncement, deleteAnnouncement }
 }

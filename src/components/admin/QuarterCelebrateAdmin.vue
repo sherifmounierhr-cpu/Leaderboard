@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBoardData } from '@/composables/useBoardData'
 import { useBoardMedia } from '@/composables/useBoardMedia'
@@ -8,17 +8,39 @@ import { useCelebrate, type QuarterCelebrationCounts } from '@/composables/useSa
 const NOTE_MAX = 140
 const INTRO_MAX = 280
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { year: boardYear, quarter: boardQuarter } = useBoardData()
-const { songs } = useBoardMedia()
+const { songs, settings } = useBoardMedia()
+
+/** الرسائل الافتراضية بلغة الاحتفال (من الإعدادات)، مش لغة صفحة الإدارة. */
+const celebrationLang = computed(() => {
+  const forced = settings.value.celebration_lang
+  return forced === 'ar' || forced === 'en' ? forced : locale.value
+})
+const DEFAULT_KEYS = {
+  intro: 'admin.quarterCelebrateIntroDefault',
+  team: 'admin.quarterCelebrateTeamNoteDefault',
+  agent: 'admin.quarterCelebrateAgentNoteDefault',
+} as const
+const defaultIn = (key: string, lang: string) => t(key, {}, { locale: lang })
 const { celebrateQuarter } = useCelebrate()
 
 const year = ref(boardYear.value)
 const quarter = ref(boardQuarter.value)
-const introMessage = ref(t('admin.quarterCelebrateIntroDefault'))
+const introMessage = ref(defaultIn(DEFAULT_KEYS.intro, celebrationLang.value))
 const introSongId = ref<string | null>(null)
-const teamNote = ref(t('admin.quarterCelebrateTeamNoteDefault'))
-const agentNote = ref(t('admin.quarterCelebrateAgentNoteDefault'))
+const teamNote = ref(defaultIn(DEFAULT_KEYS.team, celebrationLang.value))
+const agentNote = ref(defaultIn(DEFAULT_KEYS.agent, celebrationLang.value))
+
+// تغيّرت لغة الاحتفال: الرسالة اللي لسه على نصّها الافتراضي تتبدّل للغة الجديدة؛ اللي اتعدّلت بإيدك تفضل
+watch(celebrationLang, (next, prev) => {
+  const swap = (field: typeof introMessage, key: string) => {
+    if (field.value === defaultIn(key, prev)) field.value = defaultIn(key, next)
+  }
+  swap(introMessage, DEFAULT_KEYS.intro)
+  swap(teamNote, DEFAULT_KEYS.team)
+  swap(agentNote, DEFAULT_KEYS.agent)
+})
 const sending = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const confirmed = ref(false)

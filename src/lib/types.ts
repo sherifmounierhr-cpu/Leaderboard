@@ -262,6 +262,8 @@ export interface BoardSettings {
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number
+  /** لغة الاحتفال على كل الشاشات: auto = لغة كل شاشة. */
+  celebration_lang?: 'auto' | 'ar' | 'en'
 }
 
 /** صف من public.lb_announcements */
