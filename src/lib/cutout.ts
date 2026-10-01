@@ -10,7 +10,13 @@ let segmenter: Promise<Segmenter> | null = null
 
 function loadSegmenter(): Promise<Segmenter> {
   segmenter ??= import('@huggingface/transformers')
-    .then(({ pipeline }) => pipeline('background-removal', 'Xenova/modnet', { dtype: 'fp32' }) as unknown as Promise<Segmenter>)
+    .then(({ env, pipeline }) => {
+      // في البناء: ملفات التشغيل من الموقع نفسه (/ort/)، مش jsdelivr اللي سياسة الأمان بتمنعه
+      if (import.meta.env.PROD && env.backends.onnx.wasm) {
+        env.backends.onnx.wasm.wasmPaths = `${import.meta.env.BASE_URL}ort/`
+      }
+      return pipeline('background-removal', 'Xenova/modnet', { dtype: 'fp32' }) as unknown as Promise<Segmenter>
+    })
     .catch((err) => {
       segmenter = null
       throw err

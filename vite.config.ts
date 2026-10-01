@@ -2,6 +2,7 @@ import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
+import { readFileSync } from 'node:fs'
 
 /**
  * على Vercel بتتخدم دوال `api/*.ts` تلقائياً. خادم التطوير عنده ما فيش دوال،
@@ -61,7 +62,8 @@ function contentSecurityPolicy(): Plugin {
       const realtime = supabase.replace(/^https:/, 'wss:')
       const policy = [
         "default-src 'self'",
-        "script-src 'self'",
+        // wasm-unsafe-eval: تجميع WebAssembly فقط (عزل خلفية الصور في الإدارة)، مش eval لجافاسكربت
+        "script-src 'self' 'wasm-unsafe-eval'",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "font-src 'self' data: https://fonts.gstatic.com",
         "img-src 'self' data: blob: https:",
@@ -72,6 +74,8 @@ function contentSecurityPolicy(): Plugin {
           'https://dashboard.everest-realestate.net',
           'https://fonts.googleapis.com', 'https://fonts.gstatic.com',
           'https://api.iconify.design', 'https://api.simplesvg.com', 'https://api.unisvg.com',
+          // ملفات موديل عزل الخلفية (بيانات فقط): huggingface.co بيحوّل لتخزينه على *.hf.co
+          'https://huggingface.co', 'https://*.hf.co',
         ].filter(Boolean).join(' '),
         "object-src 'none'",
         "base-uri 'self'",
@@ -81,6 +85,24 @@ function contentSecurityPolicy(): Plugin {
         { tag: 'meta', attrs: { 'http-equiv': 'Content-Security-Policy', content: policy }, injectTo: 'head-prepend' },
         { tag: 'meta', attrs: { name: 'referrer', content: 'strict-origin-when-cross-origin' }, injectTo: 'head-prepend' },
       ]
+    },
+  }
+}
+
+/**
+ * ملفات تشغيل onnxruntime (لعزل الخلفية) تُنسخ جنب الموقع في /ort/ بدل
+ * تحميلها من jsdelivr — سياسة الأمان ما بتسمحش بسكربتات من خارج الموقع.
+ */
+function onnxRuntimeFiles(): Plugin {
+  const dir = 'node_modules/onnxruntime-web/dist'
+  const files = ['ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm']
+  return {
+    name: 'everest-ort-files',
+    apply: 'build',
+    generateBundle() {
+      for (const f of files) {
+        this.emitFile({ type: 'asset', fileName: `ort/${f}`, source: readFileSync(`${dir}/${f}`) })
+      }
     },
   }
 }
@@ -100,6 +122,7 @@ export default defineConfig({
     tailwindcss(),
     apiDevRoutes(),
     contentSecurityPolicy(),
+    onnxRuntimeFiles(),
   ],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
