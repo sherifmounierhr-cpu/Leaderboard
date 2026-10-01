@@ -260,7 +260,7 @@
     "quarterCelebrateAgentNote": "Appreciation message for every agent",
     "quarterCelebrateAgentNoteDefault": "👏 Thank you for your great effort and contribution this quarter!",
     "quarterCelebrateSend": "Start the celebration",
-    "quarterCelebrateConfirm": "A separate celebration will play for every qualifying team, manager, and agent — this can take several minutes on screen. Click again to confirm.",
+    "quarterCelebrateConfirm": "A celebration will play for every qualifying team and every agent with sales — this can take several minutes on screen. Click again to confirm.",
     "quarterCelebrateConfirmSend": "Confirm launch",
     "quarterCelebrateDone": "Done — {teams} teams, {agents} agents.",
     "cutouts": "Team manager cutouts",

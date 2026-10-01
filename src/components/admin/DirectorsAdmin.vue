@@ -6,7 +6,7 @@ import type { DirectorRow } from '@/lib/types'
 import PhotoField from './PhotoField.vue'
 
 const { directors, saveDirector, deleteDirector, load } = useDirectors()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
 onMounted(load)
 
@@ -179,9 +179,9 @@ const FIELD =
         >{{ d.photo_url ? '' : d.name.slice(0, 2).toUpperCase() }}</span>
 
         <div class="min-w-0 flex-1">
-          <p class="m-0 font-semibold text-strong truncate">{{ d.name_ar || d.name }}</p>
+          <p class="m-0 font-semibold text-strong truncate">{{ locale === 'ar' && d.name_ar ? d.name_ar : d.name }}</p>
           <p class="m-0 text-caption text-mute truncate">
-            {{ d.title_ar || d.title }}<template v-if="!d.active"> · {{ t('admin.inactive') }}</template>
+            {{ locale === 'ar' && d.title_ar ? d.title_ar : d.title }}<template v-if="!d.active"> · {{ t('admin.inactive') }}</template>
           </p>
         </div>
 

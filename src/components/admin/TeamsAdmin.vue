@@ -194,7 +194,7 @@ const FIELD =
 
             <select :class="FIELD" :aria-label="`${t('admin.addLead')} ${t(`admin.${role}`)}`" @change="addLead(role, $event)">
               <option value="">{{ t('admin.addLead') }}</option>
-              <optgroup v-if="leadOptions.own.length" :label="editing.name_ar || editing.name">
+              <optgroup v-if="leadOptions.own.length" :label="locale === 'ar' && editing.name_ar ? editing.name_ar : editing.name">
                 <option v-for="o in leadOptions.own" :key="o.id" :value="o.id">{{ o.label }}</option>
               </optgroup>
               <optgroup :label="leadOptions.own.length ? t('admin.otherTeams') : t('admin.agents')">
@@ -241,9 +241,9 @@ const FIELD =
         >{{ team.photo_url ? '' : team.name.slice(0, 2).toUpperCase() }}</span>
 
         <div class="min-w-0 flex-1">
-          <p class="m-0 font-semibold text-strong truncate">{{ team.name_ar || team.name }}</p>
+          <p class="m-0 font-semibold text-strong truncate">{{ locale === 'ar' && team.name_ar ? team.name_ar : team.name }}</p>
           <p class="m-0 text-caption text-mute truncate">
-            {{ team.name }}<template v-if="!team.active"> · {{ t('admin.inactive') }}</template>
+            {{ locale === 'ar' ? team.name : (team.name_ar ?? team.name) }}<template v-if="!team.active"> · {{ t('admin.inactive') }}</template>
           </p>
           <p v-if="team.manager_ids.length || team.supervisor_ids.length" class="m-0 mt-0.5 text-caption text-mute truncate">
             <template v-if="team.manager_ids.length">

@@ -26,8 +26,18 @@ import { ADMIN_TABS, tabLabelKey, type AdminTab } from '@/lib/adminTabs'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import { useStorageHealth } from '@/composables/useStorageHealth'
+import { applyLocale, rememberLocale } from '@/i18n'
+import type { LocaleName } from '@/lib/types'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
+
+/** تبديل لغة لوحة الإدارة: يتطبّق فوراً ويتحفظ على الجهاز. */
+function toggleLanguage() {
+  const next: LocaleName = locale.value === 'ar' ? 'en' : 'ar'
+  applyLocale(next)
+  rememberLocale(next)
+}
+
 const {
   ready, busy, authError, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
   email, signIn, signOut,
@@ -91,6 +101,15 @@ const FIELD =
 
       <!-- أزرار التنقّل تختفي عند طباعة تقرير؛ الشعار والعنوان يبقيان في الورقة -->
       <div class="flex items-center gap-2" data-export-hide>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          :aria-label="t('settings.language')"
+          @click="toggleLanguage"
+        >
+          <iconify-icon icon="mdi:translate" aria-hidden="true" />
+          {{ locale === 'ar' ? 'English' : 'العربية' }}
+        </button>
         <a
           :href="boardUrl"
           class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"

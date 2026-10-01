@@ -137,7 +137,7 @@ const FIELD =
           <select v-model="editing.team_id" :class="FIELD">
             <option :value="null">— {{ t('admin.noTeam') }} —</option>
             <option v-for="team in teams" :key="team.id" :value="team.id">
-              {{ team.name_ar || team.name }}
+              {{ localName(team.name, team.name_ar) }}
             </option>
           </select>
         </label>
