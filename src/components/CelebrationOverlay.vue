@@ -121,7 +121,7 @@ const introMessage = computed(() => (current.value?.scope === 'intro' ? current.
  * مرة لكل ربع ويُحتفظ بها هنا طوال الدفعة.
  */
 interface RankingRow { id: string; rank: number; name: string; photo: string; deals: number; target: number; pct: number }
-const standingsCache = ref(new Map<string, { teams: RankingRow[]; agents: RankingRow[] }>())
+const standingsCache = ref(new Map<string, { teams: RankingRow[]; agents: RankingRow[]; teamPhotos: Map<string, string> }>())
 
 function standingsKey(y: number, q: number) {
   return `${y}:${q}`
@@ -155,8 +155,14 @@ async function ensureStandings(y: number, q: number) {
     target: 0,
     pct: 0,
   }))
+  // صور كل الفرق حتى اللي مالهاش مبيعات في الربع — فريق المستشار الحالي ممكن يكون منهم
+  const teamPhotos = new Map<string, string>()
+  for (const row of (teamRes.data ?? []) as TeamStanding[]) {
+    const photo = drivePhotoUrl(row.photo_url)
+    if (photo) teamPhotos.set(localName(row.name, row.name_ar), photo)
+  }
   const next = new Map(standingsCache.value)
-  next.set(key, { teams: teamRows, agents: agentRows })
+  next.set(key, { teams: teamRows, agents: agentRows, teamPhotos })
   standingsCache.value = next
 }
 
@@ -234,13 +240,16 @@ const agentTeamPhoto = computed(() => {
   const c = current.value
   if (!c || c.scope !== 'agent' || !agent.value?.team) return ''
   const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
-  return snap?.teams.find((t) => t.name === agent.value!.team)?.photo ?? ''
+  return snap?.teamPhotos.get(agent.value.team) ?? ''
 })
 
-/** خلفية البطاقة بملء الشاشة: صورة الفريق، أو صورة المستشار (مغبّشة)، وإلا تدرّج. */
+/**
+ * خلفية البطاقة بملء الشاشة: صورة الفريق؛ للمستشار صورته مغبّشة، أو صورة
+ * فريقه لو صورته معزولة أو مش مرفوعة أصلاً؛ وإلا تدرّج.
+ */
 const photoUrl = computed(() => {
   if (team.value) return team.value.photo
-  if (agent.value) return agentCutout.value ? agentTeamPhoto.value : agent.value.photo
+  if (agent.value) return agentCutout.value || !agent.value.photo ? agentTeamPhoto.value : agent.value.photo
   return ''
 })
 const imgBroken = ref(false)
@@ -389,7 +398,7 @@ onBeforeUnmount(() => {
         alt=""
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
-        :class="agent && !agentCutout ? 'celebrate-ambient' : 'celebrate-zoom object-center'"
+        :class="agent?.photo && !agentCutout ? 'celebrate-ambient' : 'celebrate-zoom object-center'"
         @error="imgBroken = true"
       />
       <div
