@@ -94,6 +94,67 @@ const heroManager = computed(() => (teamManagers.value.length === 1 ? teamManage
 const sideManagers = computed(() => (heroManager.value ? [] : teamManagers.value.slice(0, 2)))
 const extraManagers = computed(() => teamManagers.value.slice(2))
 
+/**
+ * صور معزولة كتير بتيجي بهوامش شفافة حوالين الشخص (مربعة والشخص في نصها)،
+ * فلو اتحجّمت بمقاس الصورة كلها الشخص يطلع صغير. بنقصّ الهوامش الشفافة مرة
+ * لكل صورة ونعرض النسخة المقصوصة؛ لو القراءة ممنوعة أو مفيش هوامش تفضل الأصلية.
+ */
+const trimmedSrc = ref<Record<string, string>>({})
+const trimming = new Set<string>()
+function ensureTrimmed(url: string) {
+  if (!url || trimmedSrc.value[url] || trimming.has(url)) return
+  trimming.add(url)
+  const done = (out: string) => {
+    trimmedSrc.value = { ...trimmedSrc.value, [url]: out }
+  }
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  img.onerror = () => done(url)
+  img.onload = () => {
+    try {
+      const W = img.naturalWidth
+      const H = img.naturalHeight
+      // حدود الشخص على نسخة مصغّرة (سريعة)، والقصّ نفسه بالدقة الكاملة
+      const s = Math.min(1, 256 / Math.max(W, H))
+      const w = Math.max(1, Math.round(W * s))
+      const h = Math.max(1, Math.round(H * s))
+      const probe = document.createElement('canvas')
+      probe.width = w
+      probe.height = h
+      const pctx = probe.getContext('2d')!
+      pctx.drawImage(img, 0, 0, w, h)
+      const d = pctx.getImageData(0, 0, w, h).data
+      let top = h, left = w, right = -1, bottom = -1
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          if (d[(y * w + x) * 4 + 3] > 24) {
+            if (x < left) left = x
+            if (x > right) right = x
+            if (y < top) top = y
+            if (y > bottom) bottom = y
+          }
+        }
+      }
+      if (right < 0) return done(url)
+      const x0 = Math.max(0, Math.floor((left - 1) / s))
+      const y0 = Math.max(0, Math.floor((top - 1) / s))
+      const x1 = Math.min(W, Math.ceil((right + 2) / s))
+      const y1 = Math.min(H, Math.ceil((bottom + 2) / s))
+      if ((x1 - x0) / W > 0.96 && (y1 - y0) / H > 0.96) return done(url)
+      const crop = document.createElement('canvas')
+      crop.width = x1 - x0
+      crop.height = y1 - y0
+      crop.getContext('2d')!.drawImage(img, x0, y0, crop.width, crop.height, 0, 0, crop.width, crop.height)
+      crop.toBlob((b) => done(b ? URL.createObjectURL(b) : url), 'image/png')
+    } catch {
+      done(url)
+    }
+  }
+  img.src = url
+}
+
+watch(teamManagers, (list) => list.forEach((m) => ensureTrimmed(m.cutout)), { immediate: true })
+
 /** نسبة عرض/طول كل صورة معزولة — عشان نحجّمها بالظبط وننزّل أسفلها تحت حافة الشاشة. */
 const figureRatio = ref<Record<string, number>>({})
 function onFigureLoad(id: string, ev: Event) {
@@ -242,7 +303,10 @@ watch(
         const ctx = c.getContext('2d')!
         ctx.drawImage(probe, 0, 0, 8, 8)
         const d = ctx.getImageData(0, 0, 8, 8).data
-        if (agent.value?.photo === src) agentCutout.value = [0, 7, 56, 63].some((p) => d[p * 4 + 3] < 16)
+        if (agent.value?.photo === src && [0, 7, 56, 63].some((p) => d[p * 4 + 3] < 16)) {
+          agentCutout.value = true
+          ensureTrimmed(src)
+        }
       } catch {
         /* canvas محجوب — صورة عادية */
       }
@@ -487,18 +551,20 @@ onBeforeUnmount(() => {
           ? 'start-[2vw] w-[46vw]'
           : ['w-[32vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
       >
-        <img
-          v-if="m.cutout"
-          :src="m.cutout"
-          alt=""
-          class="celebrate-figure"
-          :style="{
-            '--ar': figureRatio[m.id] ?? 0.62,
-            '--max-h': heroManager ? '124vh' : '104vh',
-            '--max-w': heroManager ? '44vw' : '31vw',
-          }"
-          @load="onFigureLoad(m.id, $event)"
-        />
+        <template v-if="m.cutout">
+          <img
+            v-if="trimmedSrc[m.cutout]"
+            :src="trimmedSrc[m.cutout]"
+            alt=""
+            class="celebrate-figure"
+            :style="{
+              '--ar': figureRatio[m.id] ?? 0.62,
+              '--max-h': heroManager ? '124vh' : '104vh',
+              '--max-w': heroManager ? '44vw' : '31vw',
+            }"
+            @load="onFigureLoad(m.id, $event)"
+          />
+        </template>
         <!-- لسه ما اتعزلتش من الإدارة: الصورة الأصلية في إطار، مش مربع صغير -->
         <div
           v-else
@@ -554,9 +620,9 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- صورة معزولة: المستشار واقف من أسفل الشاشة على الجنب التاني، زي مديري الفرق -->
-      <div v-if="agent?.photo && agentCutout" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
+      <div v-if="agent?.photo && agentCutout && trimmedSrc[agent.photo]" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
         <img
-          :src="agent.photo"
+          :src="trimmedSrc[agent.photo]"
           alt=""
           class="celebrate-figure"
           :style="{ '--ar': figureRatio[agent.id] ?? 0.62, '--max-h': '124vh', '--max-w': '40vw' }"
