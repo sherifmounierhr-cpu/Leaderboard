@@ -200,8 +200,49 @@ const rank = computed(() => {
 /** الأول مميَّز — تاج بدل ميدالية، وتوهّج حوالين الشاشة. الاحتفالات بتتصاعد من الأقل للأعلى فيُختم به. */
 const isChampion = computed(() => rank.value === 1)
 
-/** صورة البطاقة بملء الشاشة: صورة الفريق أو المستشار، وإلا خلفية متدرّجة. */
-const photoUrl = computed(() => team.value?.photo || agent.value?.photo || '')
+/**
+ * صورة المستشار معزولة (PNG شفاف من زرار عزل الخلفية)؟ بنكشفها بقراءة
+ * أركان الصورة. صورة من مصدر ما يسمحش بالقراءة (Drive) تتعامل كعادية.
+ */
+const agentCutout = ref(false)
+watch(
+  () => (current.value?.scope === 'agent' ? agent.value?.photo ?? '' : ''),
+  (src) => {
+    agentCutout.value = false
+    if (!src) return
+    const probe = new Image()
+    probe.crossOrigin = 'anonymous'
+    probe.onload = () => {
+      try {
+        const c = document.createElement('canvas')
+        c.width = c.height = 8
+        const ctx = c.getContext('2d')!
+        ctx.drawImage(probe, 0, 0, 8, 8)
+        const d = ctx.getImageData(0, 0, 8, 8).data
+        if (agent.value?.photo === src) agentCutout.value = [0, 7, 56, 63].some((p) => d[p * 4 + 3] < 16)
+      } catch {
+        /* canvas محجوب — صورة عادية */
+      }
+    }
+    probe.src = src
+  },
+  { immediate: true },
+)
+
+/** صورة فريق المستشار — خلفيته لما صورته معزولة، زي مديري الفرق. */
+const agentTeamPhoto = computed(() => {
+  const c = current.value
+  if (!c || c.scope !== 'agent' || !agent.value?.team) return ''
+  const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
+  return snap?.teams.find((t) => t.name === agent.value!.team)?.photo ?? ''
+})
+
+/** خلفية البطاقة بملء الشاشة: صورة الفريق، أو صورة المستشار (مغبّشة)، وإلا تدرّج. */
+const photoUrl = computed(() => {
+  if (team.value) return team.value.photo
+  if (agent.value) return agentCutout.value ? agentTeamPhoto.value : agent.value.photo
+  return ''
+})
 const imgBroken = ref(false)
 
 /** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم للافتتاحية أو البطاقات المحلية. */
@@ -347,8 +388,8 @@ onBeforeUnmount(() => {
         :src="photoUrl"
         alt=""
         referrerpolicy="no-referrer"
-        class="celebrate-zoom absolute inset-0 size-full object-cover"
-        :class="isTeam ? 'object-center' : 'object-top'"
+        class="absolute inset-0 size-full object-cover"
+        :class="agent && !agentCutout ? 'celebrate-ambient' : 'celebrate-zoom object-center'"
         @error="imgBroken = true"
       />
       <div
@@ -361,10 +402,11 @@ onBeforeUnmount(() => {
         تدرّج جانبي للفرد (الكلام في جنبه)، وتدرّج علوي-سفلي للفريق والافتتاحية
         (الكلام في النص، مالياً عرض الشاشة).
       -->
+      <!-- الفرد: الخلفية نسخة مغبّشة من صورته، والكلام فوقها مقروء — الصورة الواضحة في إطارها -->
       <span
         v-if="!isTeam && !isIntro && !isDivider && !isRanking"
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,14,18,0.95)_0%,rgba(10,14,18,0.86)_30%,rgba(10,14,18,0.4)_54%,rgba(10,14,18,0.08)_72%)] rtl:bg-[linear-gradient(to_left,rgba(10,14,18,0.95)_0%,rgba(10,14,18,0.86)_30%,rgba(10,14,18,0.4)_54%,rgba(10,14,18,0.08)_72%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,14,18,0.82)_0%,rgba(10,14,18,0.55)_60%,rgba(10,14,18,0.4)_100%)] rtl:bg-[linear-gradient(to_left,rgba(10,14,18,0.82)_0%,rgba(10,14,18,0.55)_60%,rgba(10,14,18,0.4)_100%)]"
       />
       <span
         v-else
@@ -466,6 +508,29 @@ onBeforeUnmount(() => {
       </div>
 
       <!--
+        صورة الفرد كاملة في إطار طولي على الجنب التاني من الكلام — ما تتغطاش
+        بالنص، وما تتقصّش على الوش بس (البوستر كله باين زي ما اتصمم).
+      -->
+      <div
+        v-if="agent?.photo && !agentCutout"
+        class="celebrate-portrait absolute end-[5vw] top-1/2 aspect-[4/5] h-[82vh] max-w-[38vw] overflow-hidden rounded-[clamp(18px,3vh,36px)] bg-avatar shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]"
+        :class="isChampion ? 'ring-[4px] ring-gold' : 'ring-1 ring-white/20'"
+      >
+        <img :src="agent.photo" alt="" referrerpolicy="no-referrer" class="size-full object-cover object-top" />
+      </div>
+
+      <!-- صورة معزولة: المستشار واقف من أسفل الشاشة على الجنب التاني، زي مديري الفرق -->
+      <div v-if="agent?.photo && agentCutout" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
+        <img
+          :src="agent.photo"
+          alt=""
+          class="celebrate-figure"
+          :style="{ '--ar': figureRatio[agent.id] ?? 0.62, '--max-h': '124vh', '--max-w': '40vw' }"
+          @load="onFigureLoad(agent.id, $event)"
+        />
+      </div>
+
+      <!--
         ترتيب الفرد: شارة ثابتة أعلى الجنب الغامق من التدرّج (بعيدة عن الوش
         المقصوص من أعلى الصورة)، واضحة من أول لحظة بدل ما تُدفَن بين سطور
         النص السفلية.
@@ -493,7 +558,7 @@ onBeforeUnmount(() => {
         class="animate-celebrate-in relative flex h-full flex-col gap-[clamp(12px,2.2vh,26px)] py-[6vh] text-white"
         :class="isTeam
           ? (heroManager ? 'w-1/2 ms-auto items-center justify-center px-[3vw] text-center' : 'w-full items-center justify-center px-[6vw] text-center')
-          : 'w-[min(60vw,44rem)] items-start justify-end ps-[6vw] pe-[3vw] pb-[clamp(40px,8vh,100px)] text-start'"
+          : 'w-[54vw] items-start justify-end ps-[6vw] pe-[2vw] pb-[clamp(40px,8vh,100px)] text-start'"
       >
         <span
           v-if="isTeam && heroManager && rank > 0"
@@ -702,6 +767,19 @@ onBeforeUnmount(() => {
 .celebrate-zoom {
   animation: celebrate-zoom 20s ease-out both;
 }
+/* خلفية الفرد: صورته نفسها مغبّشة وغامقة — بتملا الشاشة من غير ما تنافس الإطار */
+.celebrate-ambient {
+  filter: blur(36px) brightness(0.55) saturate(1.1);
+  transform: scale(1.15);
+}
+.celebrate-portrait {
+  transform: translateY(-50%);
+  animation: celebrate-portrait-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes celebrate-portrait-in {
+  from { opacity: 0; transform: translateY(calc(-50% + 4vh)) scale(0.97); }
+  to { opacity: 1; transform: translateY(-50%); }
+}
 @keyframes celebrate-zoom {
   from { transform: scale(1.06); }
   to { transform: scale(1.14); }
@@ -761,6 +839,6 @@ onBeforeUnmount(() => {
   50% { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .celebrate-champion-ring, .celebrate-rank-pulse, .celebrate-figure { animation: none; }
+  .celebrate-champion-ring, .celebrate-rank-pulse, .celebrate-figure, .celebrate-portrait { animation: none; }
 }
 </style>

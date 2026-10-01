@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminData } from '@/composables/useAdminData'
+import CutoutReview from './CutoutReview.vue'
 
 const props = defineProps<{
   modelValue: string | null
@@ -58,14 +59,15 @@ async function onPick(event: Event) {
 /** الصورة قبل العزل — للتراجع قبل الحفظ لو النتيجة ما عجبتش. */
 const previous = ref<string | null>(null)
 const cutting = ref(false)
+/** العزل بيتراجع في نافذة قبل ما يترفع: درجة تنضيف الحواف + معاينة على غامق. */
+const reviewing = ref(false)
 
-async function onCutout() {
+async function onReviewed(blob: Blob) {
+  reviewing.value = false
   if (!props.modelValue || cutting.value) return
   cutting.value = true
   error.value = null
   try {
-    const { removeBackground } = await import('@/lib/cutout')
-    const blob = await removeBackground(props.modelValue)
     const file = new File([blob], 'cutout.png', { type: 'image/png' })
     const before = props.modelValue
     emit('update:modelValue', await uploadPhoto(file, props.kind, props.recordId))
@@ -122,7 +124,7 @@ function undoCutout() {
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong disabled:opacity-50"
           :disabled="cutting || uploading"
-          @click="onCutout"
+          @click="reviewing = true"
         >
           <iconify-icon :icon="cutting ? 'mdi:loading' : 'mdi:auto-fix'" aria-hidden="true" :class="cutting ? 'animate-spin' : ''" />
           {{ cutting ? t('admin.cutoutWorking') : t('admin.cutoutAuto') }}
@@ -158,6 +160,14 @@ function undoCutout() {
       class="sr-only"
       :aria-label="t('admin.uploadPhoto')"
       @change="onPick"
+    />
+
+    <CutoutReview
+      v-if="reviewing && modelValue"
+      :src="modelValue"
+      :name="name"
+      @confirm="onReviewed"
+      @cancel="reviewing = false"
     />
   </div>
 </template>

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { removeBackground } from '@/lib/cutout'
 import type { TeamManagerRow } from '@/lib/types'
+import CutoutReview from './CutoutReview.vue'
 
 const { t, locale } = useI18n()
 
@@ -61,6 +62,14 @@ async function autoCutAll() {
   const list = missing.value.length ? [...missing.value] : managers.value.filter((m) => m.photo_url)
   for (const m of list) await autoCut(m)
   runningAll.value = false
+}
+
+/** العزل الفردي بيعدّي على نافذة المراجعة (درجة تنضيف الحواف) قبل الحفظ. */
+const reviewFor = ref<TeamManagerRow | null>(null)
+function onReviewed(blob: Blob) {
+  const m = reviewFor.value
+  reviewFor.value = null
+  if (m) void run(m, async () => blob)
 }
 
 function onUpload(m: TeamManagerRow, ev: Event) {
@@ -133,9 +142,9 @@ const BTN =
         </div>
 
         <div class="flex items-center gap-2">
-          <button type="button" :class="BTN" :disabled="!m.photo_url || !!busy[m.id]" @click="autoCut(m)">
+          <button type="button" :class="BTN" :disabled="!m.photo_url || !!busy[m.id] || runningAll" @click="reviewFor = m">
             <iconify-icon icon="mdi:auto-fix" aria-hidden="true" />
-            {{ m.cutout_url ? t('admin.cutoutRedo') : t('admin.cutoutAuto') }}
+            {{ m.cutout_url ? t('admin.cutoutReview') : t('admin.cutoutAuto') }}
           </button>
           <label :class="[BTN, 'cursor-pointer']">
             <iconify-icon icon="mdi:upload" aria-hidden="true" />
@@ -155,6 +164,14 @@ const BTN =
       </li>
       <li v-if="!managers.length" class="text-caption text-dim">{{ t('admin.cutoutsEmpty') }}</li>
     </ul>
+
+    <CutoutReview
+      v-if="reviewFor?.photo_url"
+      :src="reviewFor.photo_url"
+      :name="nameOf(reviewFor)"
+      @confirm="onReviewed"
+      @cancel="reviewFor = null"
+    />
   </section>
 </template>
 
