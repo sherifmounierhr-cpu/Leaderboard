@@ -55,9 +55,11 @@ function autoCut(m: TeamManagerRow) {
   return run(m, () => removeBackground(m.photo_url!))
 }
 
+/** لو في ناقصين يتعزلوا هما بس، وإلا إعادة عزل الكل (مثلاً بعد تحسين الحواف). */
 async function autoCutAll() {
   runningAll.value = true
-  for (const m of missing.value) await autoCut(m)
+  const list = missing.value.length ? [...missing.value] : managers.value.filter((m) => m.photo_url)
+  for (const m of list) await autoCut(m)
   runningAll.value = false
 }
 
@@ -88,14 +90,16 @@ const BTN =
         <p class="m-0 text-mute text-sm leading-relaxed">{{ t('admin.cutoutsHint') }}</p>
       </div>
       <button
-        v-if="missing.length"
+        v-if="managers.length"
         type="button"
         class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
         :disabled="runningAll"
         @click="autoCutAll"
       >
         <iconify-icon icon="mdi:auto-fix" aria-hidden="true" />
-        {{ runningAll ? t('admin.cutoutWorking') : t('admin.cutoutAll', { n: missing.length }) }}
+        {{ runningAll
+          ? t('admin.cutoutWorking')
+          : missing.length ? t('admin.cutoutAll', { n: missing.length }) : t('admin.cutoutRedoAll') }}
       </button>
     </header>
 

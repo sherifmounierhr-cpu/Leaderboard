@@ -45,6 +45,7 @@ async function onPick(event: Event) {
 
   uploading.value = true
   try {
+    previous.value = null
     emit('update:modelValue', await uploadPhoto(file, props.kind, props.recordId))
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
@@ -53,12 +54,41 @@ async function onPick(event: Event) {
     if (input.value) input.value.value = ''
   }
 }
+
+/** الصورة قبل العزل — للتراجع قبل الحفظ لو النتيجة ما عجبتش. */
+const previous = ref<string | null>(null)
+const cutting = ref(false)
+
+async function onCutout() {
+  if (!props.modelValue || cutting.value) return
+  cutting.value = true
+  error.value = null
+  try {
+    const { removeBackground } = await import('@/lib/cutout')
+    const blob = await removeBackground(props.modelValue)
+    const file = new File([blob], 'cutout.png', { type: 'image/png' })
+    const before = props.modelValue
+    emit('update:modelValue', await uploadPhoto(file, props.kind, props.recordId))
+    previous.value = before
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : String(err)
+  } finally {
+    cutting.value = false
+  }
+}
+
+function undoCutout() {
+  emit('update:modelValue', previous.value)
+  previous.value = null
+}
 </script>
 
 <template>
   <div class="flex items-center gap-3">
+    <!-- بعد العزل: مربعات شطرنج ورا المعاينة عشان الشفافية تبان -->
     <div
-      class="relative size-16 shrink-0 overflow-hidden rounded-xl bg-avatar outline outline-1 -outline-offset-1 outline-strong/10 flex items-center justify-center"
+      class="relative size-16 shrink-0 overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-strong/10 flex items-center justify-center"
+      :class="previous ? 'photo-checker' : 'bg-avatar'"
     >
       <span aria-hidden="true" class="font-bold text-avatar-text text-lg leading-none">
         {{ initials }}
@@ -88,16 +118,36 @@ async function onPick(event: Event) {
         </button>
 
         <button
+          v-if="modelValue && !previous"
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong disabled:opacity-50"
+          :disabled="cutting || uploading"
+          @click="onCutout"
+        >
+          <iconify-icon :icon="cutting ? 'mdi:loading' : 'mdi:auto-fix'" aria-hidden="true" :class="cutting ? 'animate-spin' : ''" />
+          {{ cutting ? t('admin.cutoutWorking') : t('admin.cutoutAuto') }}
+        </button>
+        <button
+          v-if="previous"
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong"
+          @click="undoCutout"
+        >
+          <iconify-icon icon="mdi:undo" aria-hidden="true" />
+          {{ t('admin.cutoutUndo') }}
+        </button>
+
+        <button
           v-if="modelValue"
           type="button"
           class="rounded-lg border border-card-border px-2.5 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-down"
-          @click="emit('update:modelValue', null)"
+          @click="emit('update:modelValue', null); previous = null"
         >
           {{ t('admin.removePhoto') }}
         </button>
       </div>
 
-      <p class="m-0 text-eyebrow text-dim">{{ t('admin.photoHint') }}</p>
+      <p class="m-0 text-eyebrow text-dim">{{ previous ? t('admin.cutoutSaveHint') : t('admin.photoHint') }}</p>
       <p v-if="error" class="m-0 text-caption text-down">{{ error }}</p>
     </div>
 
@@ -111,3 +161,11 @@ async function onPick(event: Event) {
     />
   </div>
 </template>
+
+<style scoped>
+.photo-checker {
+  background-color: #fff;
+  background-image: conic-gradient(#d9dde2 25%, transparent 0 50%, #d9dde2 0 75%, transparent 0);
+  background-size: 10px 10px;
+}
+</style>

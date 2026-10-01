@@ -94,6 +94,13 @@ const heroManager = computed(() => (teamManagers.value.length === 1 ? teamManage
 const sideManagers = computed(() => (heroManager.value ? [] : teamManagers.value.slice(0, 2)))
 const extraManagers = computed(() => teamManagers.value.slice(2))
 
+/** نسبة عرض/طول كل صورة معزولة — عشان نحجّمها بالظبط وننزّل أسفلها تحت حافة الشاشة. */
+const figureRatio = ref<Record<string, number>>({})
+function onFigureLoad(id: string, ev: Event) {
+  const img = ev.target as HTMLImageElement
+  if (img.naturalHeight) figureRatio.value = { ...figureRatio.value, [id]: img.naturalWidth / img.naturalHeight }
+}
+
 /** افتتاحية الاحتفال: كلمة الإدارة وصور المديرين — مرة واحدة قبل الفرق. */
 interface IntroPerson { id: string; name: string; title: string; photo: string }
 const introDirectors = computed<IntroPerson[]>(() => {
@@ -399,16 +406,22 @@ onBeforeUnmount(() => {
       <div
         v-for="(m, i) in heroManager ? [heroManager] : sideManagers"
         :key="m.id"
-        class="pointer-events-none absolute bottom-0 flex items-end justify-center"
+        class="pointer-events-none absolute inset-y-0 flex items-end justify-center"
         :class="heroManager
-          ? 'start-[2vw] h-[92vh] w-[46vw]'
-          : ['h-[80vh] w-[30vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
+          ? 'start-[2vw] w-[46vw]'
+          : ['w-[32vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
       >
         <img
           v-if="m.cutout"
           :src="m.cutout"
           alt=""
-          class="celebrate-figure size-full object-contain object-bottom"
+          class="celebrate-figure"
+          :style="{
+            '--ar': figureRatio[m.id] ?? 0.62,
+            '--max-h': heroManager ? '124vh' : '104vh',
+            '--max-w': heroManager ? '44vw' : '31vw',
+          }"
+          @load="onFigureLoad(m.id, $event)"
         />
         <!-- لسه ما اتعزلتش من الإدارة: الصورة الأصلية في إطار، مش مربع صغير -->
         <div
@@ -702,6 +715,18 @@ onBeforeUnmount(() => {
  * صور البوستر بتحط اسم الموظف ولقبه على الجزء السفلي، والذوبان بيخفيهم.
  */
 .celebrate-figure {
+  /*
+   * الطول: أكبر حاجة تساع العمود. الربع السفلي (اللي فيه اسم البوستر وذوبانه)
+   * بينزل تحت حافة الشاشة، فالشخص "واقف" من أسفل الشاشة بدل ما يطفو في نصها.
+   */
+  --fig-h: min(var(--max-h), calc(var(--max-w) / var(--ar)));
+  position: absolute;
+  inset-inline: 0;
+  margin-inline: auto;
+  bottom: calc(var(--fig-h) * -0.26);
+  height: var(--fig-h);
+  width: auto;
+  max-width: none;
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.55));
   -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
   mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
