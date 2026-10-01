@@ -6,6 +6,8 @@
 ------------------------------------------------------------------ */
 @theme {
   --font-sans: "Tajawal", "Segoe UI", system-ui, sans-serif;
+  /* عناوين الاحتفال: كوفي هندسي يشبه قمة شعار إيفرست — للأسماء والأرقام الكبيرة فقط */
+  --font-display: "Reem Kufi", "Tajawal", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
   /* Brand / accent */

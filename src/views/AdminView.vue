@@ -16,6 +16,7 @@ import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
 import QuarterCelebrateAdmin from '@/components/admin/QuarterCelebrateAdmin.vue'
 import DirectorsAdmin from '@/components/admin/DirectorsAdmin.vue'
+import ManagerCutoutsAdmin from '@/components/admin/ManagerCutoutsAdmin.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
@@ -239,6 +240,7 @@ const FIELD =
             <CelebrateAdmin />
             <QuarterCelebrateAdmin />
             <DirectorsAdmin />
+            <ManagerCutoutsAdmin />
             <CelebrationSettings />
           </div>
           <MediaLibrary />

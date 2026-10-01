@@ -101,6 +101,19 @@ export interface TeamEventLead {
   name: string
   name_ar: string | null
   photo_url: string | null
+  /** نفس الصورة بلا خلفية — تقف فوق صورة الفريق؛ null = لسه ما اتعزلتش. */
+  cutout_url: string | null
+}
+
+/** صف من public.lb_team_managers — مدير فريق وصورته المعزولة. */
+export interface TeamManagerRow {
+  id: string
+  name: string
+  name_ar: string | null
+  photo_url: string | null
+  cutout_url: string | null
+  team: string
+  team_ar: string | null
 }
 
 /** صف من public.lb_team_events — احتفال فريق بنهاية الربع. */

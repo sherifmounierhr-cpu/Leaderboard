@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, drivePhotoUrl, egp } from '@/lib/format'
-import { useBoardData, type BoardEntity } from '@/composables/useBoardData'
+import type { BoardEntity } from '@/composables/useBoardData'
 import { useSaleEvents } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
 import { useBoardMedia } from '@/composables/useBoardMedia'
@@ -17,7 +17,6 @@ const PIECES = 64
 
 const { t } = useI18n()
 const localName = useLocalName()
-const { teamsAll } = useBoardData()
 const { celebrations, dismissCelebration } = useSaleEvents()
 const { settings, urlOf } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
@@ -72,24 +71,28 @@ const team = computed<BoardEntity | null>(() => {
   }
 })
 
-/** مديرو الفريق — كل واحد على جنب، مش مجمّعين صغيرين تحت الاسم. */
-const teamManagers = computed<BoardEntity[]>(() => {
+/**
+ * مديرو الفريق واقفين فوق صورة فريقهم: الصورة المعزولة لو اتعملت من
+ * الإدارة، وإلا الصورة الأصلية في إطار (احتياطي لحد ما تتعزل).
+ */
+interface ManagerFigure extends BoardEntity { cutout: string }
+const teamManagers = computed<ManagerFigure[]>(() => {
   const c = current.value
   if (!c || c.scope !== 'team') return []
   return c.event.managers.map((m) => ({
     id: m.id,
     name: localName(m.name, m.name_ar),
     photo: drivePhotoUrl(m.photo_url),
+    cutout: m.cutout_url ?? '',
     deals: 0,
     target: 0,
     pct: 0,
   }))
 })
-/** أول مديرين بس ياخدوا جنب — الباقي (نادر) يفضلوا في صف صغير أسفل الاسم. */
-const sideManagers = computed(() => teamManagers.value.slice(0, 2))
-const extraManagers = computed(() => teamManagers.value.slice(2))
-/** الحالة الشائعة: مدير واحد فقط — صورته تاخد نص الشاشة بدل لوحة جانبية صغيرة. */
+/** مدير واحد ياخد نص الشاشة؛ اتنين ياخدوا الجنبين؛ الباقي (نادر) يقفوا جنبهم أصغر. */
 const heroManager = computed(() => (teamManagers.value.length === 1 ? teamManagers.value[0] : null))
+const sideManagers = computed(() => (heroManager.value ? [] : teamManagers.value.slice(0, 2)))
+const extraManagers = computed(() => teamManagers.value.slice(2))
 
 /** افتتاحية الاحتفال: كلمة الإدارة وصور المديرين — مرة واحدة قبل الفرق. */
 interface IntroPerson { id: string; name: string; title: string; photo: string }
@@ -104,13 +107,6 @@ const introDirectors = computed<IntroPerson[]>(() => {
   }))
 })
 const introMessage = computed(() => (current.value?.scope === 'intro' ? current.value.event.message : null))
-
-/** مدير فريق باع بنفسه — مبيعاته الشخصية لا تُعرض على بطاقة تهنئته، فهي بطاقة شكر لا تقرير مبيعات. */
-const isManagerAgent = computed(() => {
-  const c = current.value
-  if (!c || c.scope !== 'agent') return false
-  return teamsAll.value.some((t) => (t.leads ?? []).some((l) => l.role === 'manager' && l.id === c.event.agent_id))
-})
 
 /**
  * ترتيب الفرق والأفراد لربع الاحتفال نفسه — لا ربع اللوحة المعروض حالياً،
@@ -142,7 +138,8 @@ async function ensureStandings(y: number, q: number) {
       target: 0,
       pct: 0,
     }))
-  const agentRows = ((agentRes.data ?? []) as AgentStanding[]).map((row) => ({
+  // الجدول والترتيب للي حققوا مبيعات بس — اللي على صفر ما يظهروش
+  const agentRows = ((agentRes.data ?? []) as AgentStanding[]).filter((row) => Number(row.deals) > 0).map((row) => ({
     id: row.agent_id,
     rank: row.rank,
     name: localName(row.name, row.name_ar),
@@ -190,7 +187,7 @@ const rank = computed(() => {
   if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return 0
   const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
   if (!snap) return 0
-  if (c.scope === 'agent') return snap.agents.findIndex((a) => a.id === c.event.agent_id) + 1
+  if (c.scope === 'agent') return snap.agents.find((a) => a.id === c.event.agent_id)?.rank ?? 0
   return snap.teams.find((t) => t.id === c.event.team_id)?.rank ?? 0
 })
 /** الأول مميَّز — تاج بدل ميدالية، وتوهّج حوالين الشاشة. الاحتفالات بتتصاعد من الأقل للأعلى فيُختم به. */
@@ -200,25 +197,18 @@ const isChampion = computed(() => rank.value === 1)
 const photoUrl = computed(() => team.value?.photo || agent.value?.photo || '')
 const imgBroken = ref(false)
 
-/**
- * الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم
- * للافتتاحية أو البطاقات المحلية. ولا رقم لمدير فريق باع بنفسه: بطاقته شكر
- * لا تقرير مبيعات.
- */
+/** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم للافتتاحية أو البطاقات المحلية. */
 const headline = computed(() => {
   const c = current.value
   if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return null
-  if (isManagerAgent.value) return null
   const e = c.event
   if (c.scope === 'agent' && e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
   // التهنئة قد تُعاد لاحقاً من الإشعارات، فلا نقول «الآن» عن رقم وقت إرسالها
   return e.total_egp > 0 ? { label: t('celebrate.total'), value: e.total_egp } : null
 })
 
-/** زيادة مبيعات مكتشفة تلقائياً فقط — بخلاف اليدوي واحتفال نهاية الربع وبطاقة الفريق، ولا لمدير باع بنفسه. */
-const isSale = computed(
-  () => current.value?.scope === 'agent' && current.value.event.kind === 'sale' && !isManagerAgent.value,
-)
+/** زيادة مبيعات مكتشفة تلقائياً فقط — بخلاف اليدوي واحتفال نهاية الربع وبطاقة الفريق. */
+const isSale = computed(() => current.value?.scope === 'agent' && current.value.event.kind === 'sale')
 /** إجمالي مبيعات المستشار — لسطر "الإجمالي الآن" عند صفقة مكتشفة تلقائياً فقط. */
 const saleEventTotal = computed(() => {
   const c = current.value
@@ -395,76 +385,64 @@ onBeforeUnmount(() => {
         />
       </div>
 
-      <!--
-        مدير واحد (الحالة الشائعة): صورته الكاملة تاخد نص الشاشة، وخلفيتها
-        صورة الفريق خلف الكل — بدل لوحة جانبية صغيرة.
-      -->
-      <div v-if="heroManager" class="absolute inset-y-0 start-0 w-1/2 overflow-hidden">
-        <img
-          v-if="heroManager.photo"
-          :src="heroManager.photo"
-          alt=""
-          referrerpolicy="no-referrer"
-          class="celebrate-zoom absolute inset-0 size-full object-cover object-top"
-        />
-        <div v-else aria-hidden="true" class="absolute inset-0 bg-[linear-gradient(135deg,var(--color-accent-strong),var(--color-accent))]" />
-        <span aria-hidden="true" class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/5 to-transparent" />
-        <span aria-hidden="true" class="absolute inset-y-0 end-0 w-[16%] bg-[linear-gradient(to_right,transparent,rgba(10,14,18,0.7))] rtl:bg-[linear-gradient(to_left,transparent,rgba(10,14,18,0.7))]" />
-        <div class="absolute inset-x-0 bottom-0 flex flex-col items-center gap-[0.35em] px-[1vw] pb-[clamp(18px,3.4vh,36px)]">
-          <!-- ترتيب الفريق على صورة مديره نفسها -->
-          <span
-            v-if="rank > 0"
-            class="flex items-center gap-[0.4em] rounded-full bg-gold font-extrabold text-header shadow-[0_8px_24px_-6px_rgba(0,0,0,0.6)]"
-            :class="isChampion
-              ? 'celebrate-rank-pulse px-[1.1em] py-[0.5em] text-[clamp(16px,2.8vh,34px)]'
-              : 'px-[1em] py-[0.42em] text-[clamp(14px,2.2vh,28px)]'"
-          >
-            <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
-            {{ rank }}
-          </span>
-          <span class="max-w-[90%] truncate font-bold text-white text-[clamp(18px,2.8vh,32px)] drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
-            {{ heroManager.name }}
-          </span>
-        </div>
-      </div>
+      <!-- مدير واحد: الكلام في النص التاني، فنغمّق ناحيته شوية لوضوحه -->
+      <span
+        v-if="heroManager"
+        aria-hidden="true"
+        class="absolute inset-0 bg-[linear-gradient(to_left,rgba(10,14,18,0.78)_0%,rgba(10,14,18,0.35)_45%,transparent_65%)] rtl:bg-[linear-gradient(to_right,rgba(10,14,18,0.78)_0%,rgba(10,14,18,0.35)_45%,transparent_65%)]"
+      />
 
-      <!-- مديرا فريق اتنين: كل واحد على جنب، بحجم كبير -->
-      <template v-else>
+      <!--
+        مديرو الفريق واقفين على أرض صورة فريقهم (مقصوصين بلا خلفية): واحد ياخد
+        نص الشاشة، اتنين ياخدوا الجنبين. تحت كل واحد لوحة باسمه وترتيب فريقه.
+      -->
+      <div
+        v-for="(m, i) in heroManager ? [heroManager] : sideManagers"
+        :key="m.id"
+        class="pointer-events-none absolute bottom-0 flex items-end justify-center"
+        :class="heroManager
+          ? 'start-[2vw] h-[92vh] w-[46vw]'
+          : ['h-[80vh] w-[30vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
+      >
+        <img
+          v-if="m.cutout"
+          :src="m.cutout"
+          alt=""
+          class="celebrate-figure size-full object-contain object-bottom"
+        />
+        <!-- لسه ما اتعزلتش من الإدارة: الصورة الأصلية في إطار، مش مربع صغير -->
         <div
-          v-for="(m, i) in sideManagers"
-          :key="m.id"
-          class="absolute inset-y-0 flex w-[min(30vw,22rem)] flex-col items-center justify-center gap-[1em] px-[1.5vw]"
-          :class="i === 0 ? 'start-0' : 'end-0'"
-        >
-          <div class="relative">
-            <Avatar
-              :entity="m"
-              kind="agent"
-              class="size-[clamp(9rem,26vh,17rem)] rounded-[1.6rem] text-[clamp(2rem,5vh,3.6rem)] shadow-[0_18px_48px_-14px_rgba(0,0,0,0.7)] ring-[3px] ring-white/70"
-            />
-            <!-- ترتيب الفريق مكرر هنا على صورة كل مدير، بجانب شارة النص العلوية -->
+          v-else
+          class="ranking-face mb-[16vh] aspect-[4/5] rounded-[1.8rem] bg-avatar shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-[3px] ring-white/70"
+          :class="heroManager ? 'w-[min(32vw,34rem)]' : 'w-[min(22vw,24rem)]'"
+          :style="m.photo ? { backgroundImage: `url('${m.photo}')` } : undefined"
+        />
+
+        <div class="absolute inset-x-0 bottom-[4vh] flex justify-center">
+          <span
+            class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-black/55 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/15 backdrop-blur-md"
+            :class="heroManager ? 'text-[clamp(18px,3vh,36px)]' : 'text-[clamp(15px,2.4vh,28px)]'"
+          >
             <span
               v-if="rank > 0"
-              class="absolute -top-3 -end-3 flex items-center gap-[0.3em] rounded-full bg-gold font-extrabold text-header shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6)] px-[0.7em] py-[0.35em] text-[clamp(13px,2vh,22px)]"
+              class="flex shrink-0 items-center gap-[0.25em] rounded-full bg-gold px-[0.65em] py-[0.15em] font-display font-bold text-header"
+              :class="isChampion ? 'celebrate-rank-pulse' : ''"
             >
               <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
               {{ rank }}
             </span>
-          </div>
-          <span class="max-w-full truncate font-bold text-white text-[clamp(15px,2.3vh,26px)] drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
-            {{ m.name }}
+            <span class="truncate font-display font-bold">{{ m.name }}</span>
           </span>
         </div>
-      </template>
+      </div>
 
       <!--
-        الترتيب أعلى الشاشة في النص — للفريق بلا مدير واحد بارز، لأن مافيش وش
-        هناك يتغطّى. لو مدير واحد فشارته أصلاً على صورته فما نكررهاش.
-        للفرد الشارة بتتحط في عمود النص بدل ما تتحط فوق وشه في نص الشاشة.
+        ترتيب الفريق كبير أعلى الشاشة في النص — لما الكلام في النص (مديرين
+        على الجنبين أو مافيش مدير). مع مدير واحد بيتحط أعلى عمود الكلام.
       -->
       <div v-if="isTeam && !heroManager && rank > 0" class="absolute inset-x-0 top-[6vh] flex justify-center">
         <span
-          class="flex items-center gap-[0.45em] rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
+          class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
             ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,4.4vh,60px)]'
             : 'px-[1.3em] py-[0.55em] text-[clamp(18px,3.6vh,50px)]'"
@@ -481,7 +459,7 @@ onBeforeUnmount(() => {
       -->
       <div v-if="!isTeam && !isIntro && !isDivider && !isRanking && rank > 0" class="absolute top-[5vh] start-[6vw] z-10">
         <span
-          class="flex items-center gap-[0.45em] rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
+          class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
             ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,4.4vh,60px)]'
             : 'px-[1.3em] py-[0.55em] text-[clamp(18px,3.6vh,50px)]'"
@@ -504,6 +482,17 @@ onBeforeUnmount(() => {
           ? (heroManager ? 'w-1/2 ms-auto items-center justify-center px-[3vw] text-center' : 'w-full items-center justify-center px-[6vw] text-center')
           : 'w-[min(60vw,44rem)] items-start justify-end ps-[6vw] pe-[3vw] pb-[clamp(40px,8vh,100px)] text-start'"
       >
+        <span
+          v-if="isTeam && heroManager && rank > 0"
+          class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
+          :class="isChampion
+            ? 'celebrate-rank-pulse px-[1.5em] py-[0.6em] text-[clamp(22px,4.4vh,60px)]'
+            : 'px-[1.3em] py-[0.5em] text-[clamp(18px,3.6vh,50px)]'"
+        >
+          <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
+          {{ t('celebrate.rank', { n: rank }) }}
+        </span>
+
         <div
           class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
         >
@@ -516,7 +505,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          class="max-w-[22ch] font-extrabold leading-[1.05] tracking-[-0.01em] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(34px,8vh,100px)]"
+          class="max-w-[22ch] font-display font-bold leading-[1.1] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(38px,9vh,116px)]"
         >
           {{ team?.name ?? agent?.name }}
         </div>
@@ -554,7 +543,7 @@ onBeforeUnmount(() => {
             {{ headline.label }}
           </span>
           <span
-            class="font-extrabold leading-[0.9] tracking-[-0.02em] tabular-nums text-gold text-[clamp(3rem,13vh,10rem)]"
+            class="font-display font-bold leading-[0.95] tabular-nums text-gold drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(3rem,13vh,10rem)]"
           >
             {{ compact(headline.value) }}
           </span>
@@ -574,41 +563,76 @@ onBeforeUnmount(() => {
         v-else-if="isDivider"
         class="animate-celebrate-in relative flex h-full w-full flex-col items-center justify-center gap-[clamp(20px,3.4vh,40px)] px-[6vw] py-[6vh] text-center text-white"
       >
-        <img src="/logo.png" :alt="t('brand')" class="h-[clamp(64px,11vh,120px)] w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)]" draggable="false" />
-        <div class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.4em] py-[0.55em] font-extrabold tracking-[0.06em] text-[clamp(28px,6vh,72px)]">
-          <iconify-icon :icon="section === 'team' ? 'mdi:account-group' : 'mdi:star-four-points'" aria-hidden="true" class="text-gold text-[1.1em]" />
-          {{ t(section === 'team' ? 'celebrate.dividerTeamTitle' : 'celebrate.dividerAgentTitle') }}
+        <!-- الشعار على "لوح القمة" الأبيض: ألوانه الخضرا/التركوازي ما تبانش على الأخضر الغامق -->
+        <div class="rounded-[clamp(18px,3vh,36px)] bg-white px-[clamp(28px,4vw,72px)] py-[clamp(16px,2.6vh,40px)] shadow-[0_30px_80px_-24px_rgba(0,0,0,0.75)]">
+          <img src="/logo.png" :alt="t('brand')" class="h-[clamp(80px,17vh,190px)] w-auto" draggable="false" />
         </div>
+        <span aria-hidden="true" class="h-[3px] w-[clamp(60px,10vw,180px)] rounded-full bg-gold" />
+        <h2 class="m-0 font-display font-bold leading-[1.15] text-balance drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(36px,8.5vh,108px)]">
+          {{ t(section === 'team' ? 'celebrate.dividerTeamTitle' : 'celebrate.dividerAgentTitle') }}
+        </h2>
       </div>
 
-      <!-- جدول ترتيب بعد كل قسم: نفس الترتيب الحقيقي المعروض على اللوحة -->
+      <!-- جدول الترتيب بعد كل قسم: ترتيب ربع الاحتفال نفسه -->
       <div
         v-else-if="isRanking"
-        class="animate-celebrate-in relative flex h-full w-full flex-col items-center gap-[clamp(14px,2.4vh,28px)] px-[5vw] py-[5vh] text-white"
+        class="animate-celebrate-in relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] text-white"
       >
-        <div class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] text-[clamp(16px,2.6vh,30px)]">
-          <iconify-icon icon="mdi:format-list-numbered" aria-hidden="true" class="text-gold text-[1.2em]" />
+        <h2 class="m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,5.4vh,68px)]">
+          <iconify-icon icon="mdi:podium-gold" aria-hidden="true" class="text-gold" />
           {{ t(section === 'team' ? 'celebrate.rankingTeamTitle' : 'celebrate.rankingAgentTitle') }}
-        </div>
-        <div class="grid w-full flex-1 content-start gap-[clamp(6px,1vh,14px)] overflow-hidden" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr))">
-          <div
+        </h2>
+
+        <!-- الفرق قليلة: كروت كبيرة صورة الفريق فيها واضحة بعرضها، مش دواير صغيرة -->
+        <div v-if="section === 'team'" class="flex w-full flex-1 flex-wrap content-center items-center justify-center gap-[clamp(14px,2vw,36px)]">
+          <article
             v-for="row in rankingList"
             :key="row.id"
-            class="flex items-center gap-[0.7em] rounded-xl bg-black/35 px-[0.9em] py-[0.55em]"
-            :class="row.rank === 1 ? 'ring-2 ring-gold' : ''"
+            class="flex flex-col overflow-hidden rounded-[clamp(14px,2vh,26px)] bg-black/40 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.75)] ring-1 ring-white/10"
+            :class="row.rank === 1 ? 'ring-[3px] ring-gold scale-[1.04]' : ''"
+            :style="{ width: `min(34rem, 52vh, ${Math.floor(86 / Math.min(Math.max(rankingList.length, 1), 4))}vw)` }"
+          >
+            <!-- صور الفرق بوسترات طولية: إطار طولي يعرض البوستر كله بدل ما يتقص -->
+            <div class="relative aspect-[3/4] overflow-hidden bg-avatar">
+              <img v-if="row.photo" :src="row.photo" alt="" referrerpolicy="no-referrer" class="absolute inset-0 size-full object-cover object-top" />
+              <span
+                class="absolute top-[0.5em] start-[0.5em] flex items-center gap-[0.25em] rounded-full bg-gold px-[0.6em] py-[0.1em] font-display font-bold text-header shadow-[0_8px_20px_-6px_rgba(0,0,0,0.7)] text-[clamp(20px,4vh,52px)]"
+              >
+                <iconify-icon v-if="row.rank === 1" icon="mdi:crown" aria-hidden="true" />
+                {{ row.rank }}
+              </span>
+            </div>
+            <div class="flex items-baseline justify-between gap-[0.6em] px-[0.9em] py-[0.6em] text-[clamp(16px,3vh,38px)]">
+              <span class="min-w-0 truncate font-display font-bold">{{ row.name }}</span>
+              <span class="shrink-0 font-display font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
+            </div>
+          </article>
+        </div>
+
+        <!-- الأفراد: اللي حققوا مبيعات بس، صفوف بصورة مقرّبة على الوش -->
+        <ol
+          v-else
+          class="m-0 grid w-full flex-1 list-none content-center gap-[clamp(8px,1.4vh,18px)] p-0"
+          :class="rankingList.length > 10 ? 'grid-cols-3' : 'grid-cols-2'"
+        >
+          <li
+            v-for="row in rankingList"
+            :key="row.id"
+            class="flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em] text-[clamp(15px,2.5vh,30px)]"
+            :class="row.rank <= 3 ? 'bg-black/45 ring-1 ring-gold/60' : 'bg-black/30'"
           >
             <span
-              class="flex shrink-0 items-center justify-center rounded-full bg-gold font-extrabold text-header text-[clamp(13px,2vh,22px)] size-[clamp(1.8em,4vh,2.4em)]"
+              class="flex size-[1.9em] shrink-0 items-center justify-center rounded-full font-display font-bold"
+              :class="row.rank <= 3 ? 'bg-gold text-header' : 'bg-white/12 text-white'"
             >{{ row.rank }}</span>
-            <Avatar
-              :entity="row"
-              :kind="section === 'team' ? 'team' : 'agent'"
-              class="size-[clamp(2rem,4.4vh,3.2rem)] rounded-full shrink-0 text-[clamp(0.8rem,1.6vh,1.1rem)]"
+            <span
+              class="ranking-face size-[2.6em] shrink-0 rounded-[0.6em] bg-avatar ring-1 ring-white/20"
+              :style="row.photo ? { backgroundImage: `url('${row.photo}')` } : undefined"
             />
-            <span class="min-w-0 flex-1 truncate font-bold text-[clamp(14px,2vh,22px)]">{{ row.name }}</span>
-            <span class="shrink-0 font-extrabold tabular-nums text-gold text-[clamp(13px,2vh,22px)]">{{ compact(row.deals) }}</span>
-          </div>
-        </div>
+            <span class="min-w-0 flex-1 truncate font-bold">{{ row.name }}</span>
+            <span class="shrink-0 font-display font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
+          </li>
+        </ol>
       </div>
 
       <!-- افتتاحية الاحتفال: كلمة الإدارة وصور مديري الشركة، مرة قبل الفرق -->
@@ -673,6 +697,28 @@ onBeforeUnmount(() => {
   .celebrate-zoom { animation: none; }
 }
 
+/*
+ * المدير المقصوص "واقف" في صورة الفريق: ظل تحته، وأسفله يذوب في المشهد —
+ * صور البوستر بتحط اسم الموظف ولقبه على الجزء السفلي، والذوبان بيخفيهم.
+ */
+.celebrate-figure {
+  filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.55));
+  -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
+  mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
+  animation: celebrate-figure-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes celebrate-figure-rise {
+  from { opacity: 0; transform: translateY(6vh); }
+  to { opacity: 1; transform: none; }
+}
+
+/* صور الموظفين بوسترات والوش في أعلى تلتها — نقرّب عليه بدل البوستر كله */
+.ranking-face {
+  background-size: 175%;
+  background-position: 50% 12%;
+  background-repeat: no-repeat;
+}
+
 /* الأول: توهّج ذهبي نابض حوالين حواف الشاشة، وميدالية أكبر تنبض شوية. */
 .celebrate-champion-ring {
   box-shadow: inset 0 0 0 clamp(4px, 0.6vh, 10px) var(--color-gold);
@@ -690,6 +736,6 @@ onBeforeUnmount(() => {
   50% { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .celebrate-champion-ring, .celebrate-rank-pulse { animation: none; }
+  .celebrate-champion-ring, .celebrate-rank-pulse, .celebrate-figure { animation: none; }
 }
 </style>
