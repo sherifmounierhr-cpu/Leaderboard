@@ -31,10 +31,20 @@ const BATCH_MS = 600
 const FALLBACK_POLL_MS = 120_000
 const READ_KEY = 'everest-leaderboard:notifications-read'
 
+/** بطاقة فاصلة تُعلن القسم القادم (فرق أو أفراد) بلا أرقام، وجدول الترتيب بعده — كلاهما محلي، بلا صف في القاعدة. */
+export interface SectionEvent {
+  section: 'team' | 'agent'
+  duration_s: number
+  mute: boolean
+  song_id: string | null
+}
+
 export type Celebration =
   | { key: string; scope: 'agent'; event: SaleEventRow }
   | { key: string; scope: 'team'; event: TeamEventRow }
   | { key: string; scope: 'intro'; event: IntroEventRow }
+  | { key: string; scope: 'divider'; event: SectionEvent }
+  | { key: string; scope: 'ranking'; event: SectionEvent }
 
 // ------------------------------------------------------------------ state
 const events = ref<SaleEventRow[]>([])
@@ -139,7 +149,26 @@ function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = [], freshIn
   }))
 
   if (!introCelebrations.length && !teamCelebrations.length && !agentCelebrations.length) return
-  celebrations.value = [...celebrations.value, ...introCelebrations, ...teamCelebrations, ...agentCelebrations]
+
+  // كل قسم (فرق/أفراد) يُفتتح ببطاقة فاصلة بلا أرقام، ويُختم بجدول ترتيب — محلياً فقط، بلا صف في القاعدة
+  const teamIds = recentTeams.slice(0, MAX_QUARTER_CELEBRATIONS).map((e) => e.id)
+  const teamSection: Celebration[] = teamCelebrations.length
+    ? [
+        { key: `divider:team:${teamIds[0]}`, scope: 'divider', event: { section: 'team', duration_s: 5, mute: true, song_id: null } },
+        ...teamCelebrations,
+        { key: `ranking:team:${teamIds.at(-1)}`, scope: 'ranking', event: { section: 'team', duration_s: 12, mute: true, song_id: null } },
+      ]
+    : []
+  const agentIds = picked.map((e) => e.id)
+  const agentSection: Celebration[] = agentCelebrations.length
+    ? [
+        { key: `divider:agent:${agentIds[0]}`, scope: 'divider', event: { section: 'agent', duration_s: 5, mute: true, song_id: null } },
+        ...agentCelebrations,
+        { key: `ranking:agent:${agentIds.at(-1)}`, scope: 'ranking', event: { section: 'agent', duration_s: 15, mute: true, song_id: null } },
+      ]
+    : []
+
+  celebrations.value = [...celebrations.value, ...introCelebrations, ...teamSection, ...agentSection]
 }
 
 /** إعادة عرض إشعار قديم على هذه الشاشة وحدها. */

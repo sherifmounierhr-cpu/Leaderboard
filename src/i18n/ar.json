@@ -101,7 +101,15 @@
     "announceManual": "تهنئة خاصة لـ {name}",
     "announceTeam": "احتفال بفريق {name}",
     "introTitle": "كلمة الإدارة",
-    "announceIntro": "افتتاحية احتفال الربع — كلمة الإدارة"
+    "announceIntro": "افتتاحية احتفال الربع — كلمة الإدارة",
+    "dividerTeamTitle": "الآن: تتويج الفرق",
+    "dividerAgentTitle": "الآن: تتويج المستشارين",
+    "announceDividerTeam": "القسم القادم: تتويج الفرق",
+    "announceDividerAgent": "القسم القادم: تتويج المستشارين",
+    "rankingTeamTitle": "ترتيب الفرق",
+    "rankingAgentTitle": "ترتيب المستشارين",
+    "announceRankingTeam": "جدول ترتيب الفرق",
+    "announceRankingAgent": "جدول ترتيب المستشارين"
   },
   "notifications": {
     "title": "الإشعارات",

@@ -101,7 +101,15 @@
     "announceManual": "Special congratulations to {name}",
     "announceTeam": "Celebrating team {name}",
     "introTitle": "A word from management",
-    "announceIntro": "Quarter celebration opening — a word from management"
+    "announceIntro": "Quarter celebration opening — a word from management",
+    "dividerTeamTitle": "Now: celebrating teams",
+    "dividerAgentTitle": "Now: celebrating advisors",
+    "announceDividerTeam": "Up next: celebrating teams",
+    "announceDividerAgent": "Up next: celebrating advisors",
+    "rankingTeamTitle": "Team ranking",
+    "rankingAgentTitle": "Advisor ranking",
+    "announceRankingTeam": "Team ranking table",
+    "announceRankingAgent": "Advisor ranking table"
   },
   "notifications": {
     "title": "Notifications",

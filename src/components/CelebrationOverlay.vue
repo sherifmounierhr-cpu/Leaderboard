@@ -23,6 +23,13 @@ const { play, stop } = useAudioPlayer()
 const current = computed(() => celebrations.value[0] ?? null)
 const isTeam = computed(() => current.value?.scope === 'team')
 const isIntro = computed(() => current.value?.scope === 'intro')
+const isDivider = computed(() => current.value?.scope === 'divider')
+const isRanking = computed(() => current.value?.scope === 'ranking')
+/** قسم البطاقة الفاصلة أو جدول الترتيب الحالي: فرق أو أفراد. */
+const section = computed(() => {
+  const c = current.value
+  return c && (c.scope === 'divider' || c.scope === 'ranking') ? c.event.section : null
+})
 /** يدوي أو احتفال نهاية ربع — نفس شارة "الكأس"، بخلاف زيادة مبيعات مكتشفة تلقائياً. */
 const isManual = computed(() => {
   const c = current.value
@@ -94,16 +101,37 @@ const introDirectors = computed<IntroPerson[]>(() => {
 })
 const introMessage = computed(() => (current.value?.scope === 'intro' ? current.value.event.message : null))
 
+/** مدير فريق باع بنفسه — مبيعاته الشخصية لا تُعرض على بطاقة تهنئته، فهي بطاقة شكر لا تقرير مبيعات. */
+const isManagerAgent = computed(() => {
+  const c = current.value
+  if (!c || c.scope !== 'agent') return false
+  return teams.value.some((t) => (t.leads ?? []).some((l) => l.role === 'manager' && l.id === c.event.agent_id))
+})
+
+/** جدول الترتيب بعد كل قسم: الفرق أو الأفراد، من بيانات اللوحة الحيّة. */
+interface RankingRow { id: string; rank: number; name: string; photo: string; deals: number; target: number; pct: number }
+const rankingList = computed<RankingRow[]>(() => {
+  const c = current.value
+  if (!c || c.scope !== 'ranking') return []
+  if (c.event.section === 'team') {
+    return teams.value.map((t) => ({ id: t.id, rank: t.rank ?? 0, name: t.name, photo: t.photo, deals: t.deals, target: 0, pct: 0 }))
+  }
+  return agents.value.map((a, i) => ({ id: a.id, rank: i + 1, name: a.name, photo: a.photo, deals: a.deals, target: 0, pct: 0 }))
+})
+
 /*
  * الاحتفال أعلى الأولويات، فما بيستناش حد — بس بيسجّل دوره عشان الشاشات
  * التانية تعرف إنها تستنى وراه.
  */
-useOverlayLayer('celebration', computed(() => Boolean(current.value && (agent.value || team.value || isIntro.value))))
+useOverlayLayer(
+  'celebration',
+  computed(() => Boolean(current.value && (agent.value || team.value || isIntro.value || isDivider.value || isRanking.value))),
+)
 
-/** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. لا ترتيب للافتتاحية. */
+/** الترتيب يُذكر فقط لو الحدث من نفس الربع المعروض، وإلا لكان رقماً مضلِّلاً. لا ترتيب للافتتاحية أو البطاقات المحلية. */
 const rank = computed(() => {
   const c = current.value
-  if (!c || c.scope === 'intro') return 0
+  if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return 0
   if (c.event.year !== year.value || c.event.quarter !== quarter.value) return 0
   if (c.scope === 'agent') return agents.value.findIndex((a) => a.id === c.event.agent_id) + 1
   return teams.value.find((t) => t.id === c.event.team_id)?.rank ?? 0
@@ -115,34 +143,43 @@ const isChampion = computed(() => rank.value === 1)
 const photoUrl = computed(() => team.value?.photo || agent.value?.photo || '')
 const imgBroken = ref(false)
 
-/** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم للافتتاحية. */
+/**
+ * الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم
+ * للافتتاحية أو البطاقات المحلية. ولا رقم لمدير فريق باع بنفسه: بطاقته شكر
+ * لا تقرير مبيعات.
+ */
 const headline = computed(() => {
   const c = current.value
-  if (!c || c.scope === 'intro') return null
+  if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return null
+  if (isManagerAgent.value) return null
   const e = c.event
   if (c.scope === 'agent' && e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
   // التهنئة قد تُعاد لاحقاً من الإشعارات، فلا نقول «الآن» عن رقم وقت إرسالها
   return e.total_egp > 0 ? { label: t('celebrate.total'), value: e.total_egp } : null
 })
 
-/** زيادة مبيعات مكتشفة تلقائياً فقط — بخلاف اليدوي واحتفال نهاية الربع وبطاقة الفريق. */
-const isSale = computed(() => current.value?.scope === 'agent' && current.value.event.kind === 'sale')
+/** زيادة مبيعات مكتشفة تلقائياً فقط — بخلاف اليدوي واحتفال نهاية الربع وبطاقة الفريق، ولا لمدير باع بنفسه. */
+const isSale = computed(
+  () => current.value?.scope === 'agent' && current.value.event.kind === 'sale' && !isManagerAgent.value,
+)
 /** إجمالي مبيعات المستشار — لسطر "الإجمالي الآن" عند صفقة مكتشفة تلقائياً فقط. */
 const saleEventTotal = computed(() => {
   const c = current.value
   return c && c.scope === 'agent' ? c.event.total_egp : 0
 })
-/** الرسالة أو الملاحظة — note للفرد/الفريق، message للافتتاحية (مختلف الاسم بس نفس الفكرة). */
+/** الرسالة أو الملاحظة — note للفرد/الفريق فقط، لا شيء لباقي الأنواع. */
 const noteText = computed(() => {
   const c = current.value
-  if (!c) return null
-  return c.scope === 'intro' ? null : c.event.note
+  if (!c || (c.scope !== 'agent' && c.scope !== 'team')) return null
+  return c.event.note
 })
 
 const announceText = computed(() => {
   const c = current.value
   if (!c) return ''
   if (c.scope === 'intro') return t('celebrate.announceIntro')
+  if (c.scope === 'divider') return t(c.event.section === 'team' ? 'celebrate.announceDividerTeam' : 'celebrate.announceDividerAgent')
+  if (c.scope === 'ranking') return t(c.event.section === 'team' ? 'celebrate.announceRankingTeam' : 'celebrate.announceRankingAgent')
   if (c.scope === 'team') return t('celebrate.announceTeam', { name: team.value?.name ?? '' })
   if (isSale.value) return t('celebrate.announce', { name: agent.value?.name ?? '', amount: egp(c.event.amount_egp) })
   return t('celebrate.announceManual', { name: agent.value?.name ?? '' })
@@ -235,7 +272,7 @@ onBeforeUnmount(() => {
     <!-- data-export-hide: لا يظهر في صور PNG المصدَّرة -->
     <!-- النقر في أي مكان أو Esc يغلق الاحتفال مبكراً -->
     <div
-      v-if="current && (agent || team || isIntro)"
+      v-if="current && (agent || team || isIntro || isDivider || isRanking)"
       data-export-hide
       role="dialog"
       aria-modal="true"
@@ -271,7 +308,7 @@ onBeforeUnmount(() => {
         (الكلام في النص، مالياً عرض الشاشة).
       -->
       <span
-        v-if="!isTeam && !isIntro"
+        v-if="!isTeam && !isIntro && !isDivider && !isRanking"
         aria-hidden="true"
         class="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,14,18,0.95)_0%,rgba(10,14,18,0.86)_30%,rgba(10,14,18,0.4)_54%,rgba(10,14,18,0.08)_72%)] rtl:bg-[linear-gradient(to_left,rgba(10,14,18,0.95)_0%,rgba(10,14,18,0.86)_30%,rgba(10,14,18,0.4)_54%,rgba(10,14,18,0.08)_72%)]"
       />
@@ -281,7 +318,7 @@ onBeforeUnmount(() => {
         class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.94)_0%,rgba(10,14,18,0.78)_26%,rgba(10,14,18,0.25)_55%,rgba(10,14,18,0.45)_100%)]"
       />
       <!-- ظل سفلي خفيف يفضل حتى مع تدرّج الفرد الجانبي، لوضوح شريط الوقت -->
-      <span v-if="!isTeam && !isIntro" aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[26vh] bg-gradient-to-t from-black/75 to-transparent" />
+      <span v-if="!isTeam && !isIntro && !isDivider && !isRanking" aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[26vh] bg-gradient-to-t from-black/75 to-transparent" />
 
       <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0">
         <span
@@ -308,11 +345,21 @@ onBeforeUnmount(() => {
         class="absolute inset-y-0 flex w-[min(30vw,22rem)] flex-col items-center justify-center gap-[1em] px-[1.5vw]"
         :class="i === 0 ? 'start-0' : 'end-0'"
       >
-        <Avatar
-          :entity="m"
-          kind="agent"
-          class="size-[clamp(9rem,26vh,17rem)] rounded-[1.6rem] text-[clamp(2rem,5vh,3.6rem)] shadow-[0_18px_48px_-14px_rgba(0,0,0,0.7)] ring-[3px] ring-white/70"
-        />
+        <div class="relative">
+          <Avatar
+            :entity="m"
+            kind="agent"
+            class="size-[clamp(9rem,26vh,17rem)] rounded-[1.6rem] text-[clamp(2rem,5vh,3.6rem)] shadow-[0_18px_48px_-14px_rgba(0,0,0,0.7)] ring-[3px] ring-white/70"
+          />
+          <!-- ترتيب الفريق مكرر هنا على صورة كل مدير، بجانب شارة النص العلوية -->
+          <span
+            v-if="rank > 0"
+            class="absolute -top-3 -end-3 flex items-center gap-[0.3em] rounded-full bg-gold font-extrabold text-header shadow-[0_8px_20px_-6px_rgba(0,0,0,0.6)] px-[0.7em] py-[0.35em] text-[clamp(13px,2vh,22px)]"
+          >
+            <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
+            {{ rank }}
+          </span>
+        </div>
         <span class="max-w-full truncate font-bold text-white text-[clamp(15px,2.3vh,26px)] drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
           {{ m.name }}
         </span>
@@ -335,30 +382,35 @@ onBeforeUnmount(() => {
       </div>
 
       <!--
+        ترتيب الفرد: شارة ثابتة أعلى الجنب الغامق من التدرّج (بعيدة عن الوش
+        المقصوص من أعلى الصورة)، واضحة من أول لحظة بدل ما تُدفَن بين سطور
+        النص السفلية.
+      -->
+      <div v-if="!isTeam && !isIntro && !isDivider && !isRanking && rank > 0" class="absolute top-[5vh] start-[6vw] z-10">
+        <span
+          class="flex items-center gap-[0.45em] rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
+          :class="isChampion
+            ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,4.4vh,60px)]'
+            : 'px-[1.3em] py-[0.55em] text-[clamp(18px,3.6vh,50px)]'"
+        >
+          <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
+          {{ t('celebrate.rank', { n: rank }) }}
+        </span>
+      </div>
+
+      <!--
         المقاسات بـ vh: الاحتفال يُقرأ من آخر المكتب على التلفزيون، فيكبر مع
         ارتفاع الشاشة بدل أن يبقى بطاقة صغيرة وسط 1920 بكسل.
         الفرد: عمود في الجنب المناسب (يتبع اتجاه اللغة) بعرض محدود فما يغطّيش
         الوش. الفريق: في النص، لأن الجنبين محجوزين لمديريه.
       -->
       <div
-        v-if="!isIntro"
+        v-if="!isIntro && !isDivider && !isRanking"
         class="animate-celebrate-in relative flex h-full flex-col gap-[clamp(12px,2.2vh,26px)] py-[6vh] text-white"
         :class="isTeam
           ? 'w-full items-center justify-center px-[6vw] text-center'
           : 'w-[min(60vw,44rem)] items-start justify-end ps-[6vw] pe-[3vw] pb-[clamp(40px,8vh,100px)] text-start'"
       >
-        <!-- ترتيب الفرد هنا في عمود النص، لا فوق وشه في نص الشاشة -->
-        <span
-          v-if="!isTeam && rank > 0"
-          class="flex items-center gap-[0.45em] self-start rounded-full bg-gold font-extrabold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)]"
-          :class="isChampion
-            ? 'celebrate-rank-pulse px-[1.4em] py-[0.6em] text-[clamp(20px,3.4vh,46px)]'
-            : 'px-[1.2em] py-[0.5em] text-[clamp(16px,2.8vh,38px)]'"
-        >
-          <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
-          {{ t('celebrate.rank', { n: rank }) }}
-        </span>
-
         <div
           class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
         >
@@ -421,9 +473,54 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <!--
+        بطاقة فاصلة قبل كل قسم: شعار إيفرست واضح وعنوان القسم القادم بلا أي
+        أرقام أو تفاصيل — إعلان لا تهنئة.
+      -->
+      <div
+        v-else-if="isDivider"
+        class="animate-celebrate-in relative flex h-full w-full flex-col items-center justify-center gap-[clamp(20px,3.4vh,40px)] px-[6vw] py-[6vh] text-center text-white"
+      >
+        <img src="/logo.png" :alt="t('brand')" class="h-[clamp(64px,11vh,120px)] w-auto drop-shadow-[0_8px_30px_rgba(0,0,0,0.6)]" draggable="false" />
+        <div class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.4em] py-[0.55em] font-extrabold tracking-[0.06em] text-[clamp(28px,6vh,72px)]">
+          <iconify-icon :icon="section === 'team' ? 'mdi:account-group' : 'mdi:star-four-points'" aria-hidden="true" class="text-gold text-[1.1em]" />
+          {{ t(section === 'team' ? 'celebrate.dividerTeamTitle' : 'celebrate.dividerAgentTitle') }}
+        </div>
+      </div>
+
+      <!-- جدول ترتيب بعد كل قسم: نفس الترتيب الحقيقي المعروض على اللوحة -->
+      <div
+        v-else-if="isRanking"
+        class="animate-celebrate-in relative flex h-full w-full flex-col items-center gap-[clamp(14px,2.4vh,28px)] px-[5vw] py-[5vh] text-white"
+      >
+        <div class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] text-[clamp(16px,2.6vh,30px)]">
+          <iconify-icon icon="mdi:format-list-numbered" aria-hidden="true" class="text-gold text-[1.2em]" />
+          {{ t(section === 'team' ? 'celebrate.rankingTeamTitle' : 'celebrate.rankingAgentTitle') }}
+        </div>
+        <div class="grid w-full flex-1 content-start gap-[clamp(6px,1vh,14px)] overflow-hidden" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr))">
+          <div
+            v-for="row in rankingList"
+            :key="row.id"
+            class="flex items-center gap-[0.7em] rounded-xl bg-black/35 px-[0.9em] py-[0.55em]"
+            :class="row.rank === 1 ? 'ring-2 ring-gold' : ''"
+          >
+            <span
+              class="flex shrink-0 items-center justify-center rounded-full bg-gold font-extrabold text-header text-[clamp(13px,2vh,22px)] size-[clamp(1.8em,4vh,2.4em)]"
+            >{{ row.rank }}</span>
+            <Avatar
+              :entity="row"
+              :kind="section === 'team' ? 'team' : 'agent'"
+              class="size-[clamp(2rem,4.4vh,3.2rem)] rounded-full shrink-0 text-[clamp(0.8rem,1.6vh,1.1rem)]"
+            />
+            <span class="min-w-0 flex-1 truncate font-bold text-[clamp(14px,2vh,22px)]">{{ row.name }}</span>
+            <span class="shrink-0 font-extrabold tabular-nums text-gold text-[clamp(13px,2vh,22px)]">{{ compact(row.deals) }}</span>
+          </div>
+        </div>
+      </div>
+
       <!-- افتتاحية الاحتفال: كلمة الإدارة وصور مديري الشركة، مرة قبل الفرق -->
       <div
-        v-else
+        v-else-if="isIntro"
         class="animate-celebrate-in relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] text-center text-white"
       >
         <div
