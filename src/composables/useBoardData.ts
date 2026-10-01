@@ -113,6 +113,25 @@ const teams = computed<BoardEntity[]>(() => {
 })
 
 /**
+ * كل الفرق النشطة بغض النظر عن مبيعاتها — لمن يحتاج قيادة الفريق (مديريه)
+ * بمعزل عن فلترة "صفر مبيعات" في `teams`، مثل التعرّف على مدير فريق.
+ */
+const teamsAll = computed<BoardEntity[]>(() => {
+  if (!rawTeams.value) return showDemo.value ? DEMO_TEAMS : []
+  return rawTeams.value.map((t) => ({
+    id: t.team_id,
+    name: localName(t.name, t.name_ar),
+    photo: drivePhotoUrl(t.photo_url),
+    deals: Number(t.deals) || 0,
+    target: Number(t.target) || 0,
+    pct: t.pct,
+    members: t.members,
+    leads: teamLeads(t),
+    rank: t.rank,
+  }))
+})
+
+/**
  * إجمالي الشركة (الصورة الكبيرة في الأعلى) من كل الفرق بلا استثناء — حتى لو
  * فريق ما ظهرش على اللوحة (صفر مبيعات)، هدفه لسه جزء من المستهدف الكلي.
  */
@@ -299,6 +318,7 @@ export function useBoardData() {
   start()
   return {
     teams,
+    teamsAll,
     companyTotals,
     agents,
     history,

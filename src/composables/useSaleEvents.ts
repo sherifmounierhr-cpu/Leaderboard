@@ -34,6 +34,9 @@ const READ_KEY = 'everest-leaderboard:notifications-read'
 /** بطاقة فاصلة تُعلن القسم القادم (فرق أو أفراد) بلا أرقام، وجدول الترتيب بعده — كلاهما محلي، بلا صف في القاعدة. */
 export interface SectionEvent {
   section: 'team' | 'agent'
+  /** ربع الاحتفال نفسه — لا ربع اللوحة المعروض حالياً، فقد يختلفا. */
+  year: number
+  quarter: number
   duration_s: number
   mute: boolean
   song_id: string | null
@@ -151,20 +154,35 @@ function enqueue(fresh: SaleEventRow[], freshTeams: TeamEventRow[] = [], freshIn
   if (!introCelebrations.length && !teamCelebrations.length && !agentCelebrations.length) return
 
   // كل قسم (فرق/أفراد) يُفتتح ببطاقة فاصلة بلا أرقام، ويُختم بجدول ترتيب — محلياً فقط، بلا صف في القاعدة
-  const teamIds = recentTeams.slice(0, MAX_QUARTER_CELEBRATIONS).map((e) => e.id)
-  const teamSection: Celebration[] = teamCelebrations.length
+  const teamRows = recentTeams.slice(0, MAX_QUARTER_CELEBRATIONS)
+  const teamSection: Celebration[] = teamRows.length
     ? [
-        { key: `divider:team:${teamIds[0]}`, scope: 'divider', event: { section: 'team', duration_s: 5, mute: true, song_id: null } },
+        {
+          key: `divider:team:${teamRows[0].id}`,
+          scope: 'divider',
+          event: { section: 'team', year: teamRows[0].year, quarter: teamRows[0].quarter, duration_s: 5, mute: true, song_id: null },
+        },
         ...teamCelebrations,
-        { key: `ranking:team:${teamIds.at(-1)}`, scope: 'ranking', event: { section: 'team', duration_s: 12, mute: true, song_id: null } },
+        {
+          key: `ranking:team:${teamRows.at(-1)!.id}`,
+          scope: 'ranking',
+          event: { section: 'team', year: teamRows[0].year, quarter: teamRows[0].quarter, duration_s: 12, mute: true, song_id: null },
+        },
       ]
     : []
-  const agentIds = picked.map((e) => e.id)
-  const agentSection: Celebration[] = agentCelebrations.length
+  const agentSection: Celebration[] = picked.length
     ? [
-        { key: `divider:agent:${agentIds[0]}`, scope: 'divider', event: { section: 'agent', duration_s: 5, mute: true, song_id: null } },
+        {
+          key: `divider:agent:${picked[0].id}`,
+          scope: 'divider',
+          event: { section: 'agent', year: picked[0].year, quarter: picked[0].quarter, duration_s: 5, mute: true, song_id: null },
+        },
         ...agentCelebrations,
-        { key: `ranking:agent:${agentIds.at(-1)}`, scope: 'ranking', event: { section: 'agent', duration_s: 15, mute: true, song_id: null } },
+        {
+          key: `ranking:agent:${picked.at(-1)!.id}`,
+          scope: 'ranking',
+          event: { section: 'agent', year: picked[0].year, quarter: picked[0].quarter, duration_s: 15, mute: true, song_id: null },
+        },
       ]
     : []
 
@@ -257,7 +275,6 @@ async function celebrate(agentId: string, note: string, options: CelebrateOption
 
 export interface QuarterCelebrationCounts {
   teams: number
-  managers: number
   agents: number
 }
 

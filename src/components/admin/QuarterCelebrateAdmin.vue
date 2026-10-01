@@ -42,7 +42,7 @@ async function onSubmit() {
     )
     message.value = {
       ok: true,
-      text: t('admin.quarterCelebrateDone', { teams: counts.teams, managers: counts.managers, agents: counts.agents }),
+      text: t('admin.quarterCelebrateDone', { teams: counts.teams, agents: counts.agents }),
     }
   } catch (err) {
     message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
