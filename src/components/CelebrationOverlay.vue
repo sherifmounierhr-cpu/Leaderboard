@@ -13,7 +13,7 @@ import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
 import Avatar from './Avatar.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
-const PIECES = 64
+const PIECES = 44
 
 const { t } = useI18n()
 const localName = useLocalName()
@@ -96,71 +96,78 @@ const extraManagers = computed(() => teamManagers.value.slice(2))
 
 /**
  * صور معزولة كتير بتيجي بهوامش شفافة حوالين الشخص (مربعة والشخص في نصها)،
- * فلو اتحجّمت بمقاس الصورة كلها الشخص يطلع صغير. بنقصّ الهوامش الشفافة مرة
- * لكل صورة ونعرض النسخة المقصوصة؛ لو القراءة ممنوعة أو مفيش هوامش تفضل الأصلية.
+ * فلو اتحجّمت بمقاس الصورة كلها الشخص يطلع صغير. بنقيس حدود الشخص مرة على
+ * نسخة مصغّرة (رخيصة)، والقصّ نفسه بالـ CSS — من غير إعادة ترميز الصورة.
+ * `cutout`: أركان الصورة شفافة؟ `cors`: القراءة مسموحة (وإلا الصورة كلها كما هي).
  */
-const trimmedSrc = ref<Record<string, string>>({})
-const trimming = new Set<string>()
-function ensureTrimmed(url: string) {
-  if (!url || trimmedSrc.value[url] || trimming.has(url)) return
-  trimming.add(url)
-  const done = (out: string) => {
-    trimmedSrc.value = { ...trimmedSrc.value, [url]: out }
-  }
-  const img = new Image()
-  img.crossOrigin = 'anonymous'
-  img.onerror = () => done(url)
-  img.onload = () => {
-    try {
-      const W = img.naturalWidth
-      const H = img.naturalHeight
-      // حدود الشخص على نسخة مصغّرة (سريعة)، والقصّ نفسه بالدقة الكاملة
-      const s = Math.min(1, 256 / Math.max(W, H))
-      const w = Math.max(1, Math.round(W * s))
-      const h = Math.max(1, Math.round(H * s))
-      const probe = document.createElement('canvas')
-      probe.width = w
-      probe.height = h
-      const pctx = probe.getContext('2d')!
-      pctx.drawImage(img, 0, 0, w, h)
-      const d = pctx.getImageData(0, 0, w, h).data
-      let top = h, left = w, right = -1, bottom = -1
-      for (let y = 0; y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          if (d[(y * w + x) * 4 + 3] > 24) {
-            if (x < left) left = x
-            if (x > right) right = x
-            if (y < top) top = y
-            if (y > bottom) bottom = y
+interface FigureBox { x: number; y: number; w: number; h: number; ar: number; cutout: boolean; cors: boolean }
+const figureBox = ref<Record<string, FigureBox>>({})
+const probing = new Map<string, Promise<FigureBox>>()
+
+function probeFigure(url: string): Promise<FigureBox> {
+  let pending = probing.get(url)
+  if (pending) return pending
+  pending = new Promise<FigureBox>((resolve) => {
+    const whole = (ar: number, cors: boolean): FigureBox => ({ x: 0, y: 0, w: 1, h: 1, ar, cutout: false, cors })
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onerror = () => resolve(whole(0.62, false))
+    img.onload = () => {
+      const W = img.naturalWidth || 1
+      const H = img.naturalHeight || 1
+      try {
+        const s = Math.min(1, 256 / Math.max(W, H))
+        const w = Math.max(1, Math.round(W * s))
+        const h = Math.max(1, Math.round(H * s))
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+        ctx.drawImage(img, 0, 0, w, h)
+        const d = ctx.getImageData(0, 0, w, h).data
+        const alpha = (x: number, y: number) => d[(y * w + x) * 4 + 3]
+        const cutout = [alpha(0, 0), alpha(w - 1, 0), alpha(0, h - 1), alpha(w - 1, h - 1)].some((a) => a < 16)
+        let top = h, left = w, right = -1, bottom = -1
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (alpha(x, y) > 24) {
+              if (x < left) left = x
+              if (x > right) right = x
+              if (y < top) top = y
+              if (y > bottom) bottom = y
+            }
           }
         }
+        if (right < 0) return resolve({ ...whole(W / H, true), cutout })
+        const bx = Math.max(0, left - 1) / w
+        const by = Math.max(0, top - 1) / h
+        const bw = Math.min(w, right + 2) / w - bx
+        const bh = Math.min(h, bottom + 2) / h - by
+        resolve({ x: bx, y: by, w: bw, h: bh, ar: (bw * W) / (bh * H), cutout, cors: true })
+      } catch {
+        resolve(whole(W / H, false))
       }
-      if (right < 0) return done(url)
-      const x0 = Math.max(0, Math.floor((left - 1) / s))
-      const y0 = Math.max(0, Math.floor((top - 1) / s))
-      const x1 = Math.min(W, Math.ceil((right + 2) / s))
-      const y1 = Math.min(H, Math.ceil((bottom + 2) / s))
-      if ((x1 - x0) / W > 0.96 && (y1 - y0) / H > 0.96) return done(url)
-      const crop = document.createElement('canvas')
-      crop.width = x1 - x0
-      crop.height = y1 - y0
-      crop.getContext('2d')!.drawImage(img, x0, y0, crop.width, crop.height, 0, 0, crop.width, crop.height)
-      crop.toBlob((b) => done(b ? URL.createObjectURL(b) : url), 'image/png')
-    } catch {
-      done(url)
     }
+    img.src = url
+  }).then((box) => {
+    figureBox.value = { ...figureBox.value, [url]: box }
+    return box
+  })
+  probing.set(url, pending)
+  return pending
+}
+
+/** الصورة جوّه إطار الشخص: مكبّرة ومزاحة بحيث حدود الشخص تملا الإطار بالظبط. */
+function figureImgStyle(box: FigureBox) {
+  return {
+    width: `${100 / box.w}%`,
+    height: `${100 / box.h}%`,
+    left: `${(-box.x / box.w) * 100}%`,
+    top: `${(-box.y / box.h) * 100}%`,
   }
-  img.src = url
 }
 
-watch(teamManagers, (list) => list.forEach((m) => ensureTrimmed(m.cutout)), { immediate: true })
-
-/** نسبة عرض/طول كل صورة معزولة — عشان نحجّمها بالظبط وننزّل أسفلها تحت حافة الشاشة. */
-const figureRatio = ref<Record<string, number>>({})
-function onFigureLoad(id: string, ev: Event) {
-  const img = ev.target as HTMLImageElement
-  if (img.naturalHeight) figureRatio.value = { ...figureRatio.value, [id]: img.naturalWidth / img.naturalHeight }
-}
+watch(teamManagers, (list) => list.forEach((m) => m.cutout && void probeFigure(m.cutout)), { immediate: true })
 
 /** افتتاحية الاحتفال: كلمة الإدارة وصور المديرين — مرة واحدة قبل الفرق. */
 interface IntroPerson { id: string; name: string; title: string; photo: string }
@@ -294,24 +301,9 @@ watch(
   (src) => {
     agentCutout.value = false
     if (!src) return
-    const probe = new Image()
-    probe.crossOrigin = 'anonymous'
-    probe.onload = () => {
-      try {
-        const c = document.createElement('canvas')
-        c.width = c.height = 8
-        const ctx = c.getContext('2d')!
-        ctx.drawImage(probe, 0, 0, 8, 8)
-        const d = ctx.getImageData(0, 0, 8, 8).data
-        if (agent.value?.photo === src && [0, 7, 56, 63].some((p) => d[p * 4 + 3] < 16)) {
-          agentCutout.value = true
-          ensureTrimmed(src)
-        }
-      } catch {
-        /* canvas محجوب — صورة عادية */
-      }
-    }
-    probe.src = src
+    void probeFigure(src).then((box) => {
+      if (agent.value?.photo === src) agentCutout.value = box.cutout
+    })
   },
   { immediate: true },
 )
@@ -338,9 +330,43 @@ const agentTeamPhoto = computed(() => {
  */
 const photoUrl = computed(() => {
   if (team.value) return team.value.photo
-  if (agent.value) return agentCutout.value || !agent.value.photo ? agentTeamPhoto.value : agent.value.photo
+  if (agent.value) {
+    const photo = agent.value.photo
+    if (!photo) return agentTeamPhoto.value
+    // لسه بتتقاس: ما نعرضش خلفية هتتبدّل بعد لحظة
+    if (!figureBox.value[photo]) return ''
+    return agentCutout.value ? agentTeamPhoto.value : photo
+  }
   return ''
 })
+
+/**
+ * تجهيز صور البطاقة الجاية والبطاقة الحالية شغّالة: تحميل وفكّ ترميز وقياس
+ * مسبق، فالانتقال ما يتقطّعش على صورة كبيرة بتتفك لحظة ظهورها.
+ */
+function preload(url: string | null | undefined) {
+  if (!url) return
+  const img = new Image()
+  img.src = url
+  void img.decode?.().catch(() => {})
+}
+watch(
+  () => celebrations.value[1],
+  (next) => {
+    if (!next) return
+    if (next.scope === 'team') {
+      preload(drivePhotoUrl(next.event.photo_url))
+      for (const m of next.event.managers) if (m.cutout_url) void probeFigure(m.cutout_url)
+    } else if (next.scope === 'agent') {
+      const photo = drivePhotoUrl(next.event.photo_url)
+      if (photo) void probeFigure(photo)
+      const snap = standingsCache.value.get(standingsKey(next.event.year, next.event.quarter))
+      const teamName = snap?.soldFor.get(next.event.agent_id) ?? (next.event.team ? localName(next.event.team, next.event.team_ar) : '')
+      preload(snap?.teamPhotos.get(teamName))
+    }
+  },
+  { immediate: true },
+)
 const imgBroken = ref(false)
 
 /** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم للافتتاحية أو البطاقات المحلية. */
@@ -422,9 +448,6 @@ const pieces = computed(() => {
 })
 
 let timer: ReturnType<typeof setTimeout> | null = null
-const startedAt = ref(0)
-const now = ref(Date.now())
-let clock: ReturnType<typeof setInterval> | null = null
 
 function clear() {
   if (timer) clearTimeout(timer)
@@ -439,24 +462,19 @@ watch(
     stop()
     imgBroken.value = false
     if (!key) return
-    startedAt.value = Date.now()
     timer = setTimeout(close, holdSeconds.value * 1000)
     if (songUrl.value) void play(songUrl.value, settings.value.volume, holdSeconds.value)
   },
   { immediate: true },
 )
 
-/** الوقت الباقي كشريط تحت البطاقة. */
-const progress = computed(() => {
-  if (!current.value) return 0
-  return Math.min(100, ((now.value - startedAt.value) / (holdSeconds.value * 1000)) * 100)
-})
-
-onMounted(() => { clock = setInterval(() => { now.value = Date.now() }, 200) })
+/*
+ * شريط الوقت أنيميشن CSS (transform فقط) بمدة البطاقة — بدل مؤقّت جافاسكربت
+ * كان بيعيد رسم البطاقة كلها خمس مرات في الثانية ويقطّع الحركة.
+ */
 onBeforeUnmount(() => {
   clear()
   stop()
-  if (clock) clearInterval(clock)
 })
 </script>
 
@@ -552,18 +570,22 @@ onBeforeUnmount(() => {
           : ['w-[32vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
       >
         <template v-if="m.cutout">
-          <img
-            v-if="trimmedSrc[m.cutout]"
-            :src="trimmedSrc[m.cutout]"
-            alt=""
+          <div
+            v-if="figureBox[m.cutout]"
             class="celebrate-figure"
             :style="{
-              '--ar': figureRatio[m.id] ?? 0.62,
+              '--ar': figureBox[m.cutout].ar,
               '--max-h': heroManager ? '124vh' : '104vh',
               '--max-w': heroManager ? '44vw' : '31vw',
             }"
-            @load="onFigureLoad(m.id, $event)"
-          />
+          >
+            <img
+              :src="m.cutout"
+              alt=""
+              :crossorigin="figureBox[m.cutout].cors ? 'anonymous' : undefined"
+              :style="figureImgStyle(figureBox[m.cutout])"
+            />
+          </div>
         </template>
         <!-- لسه ما اتعزلتش من الإدارة: الصورة الأصلية في إطار، مش مربع صغير -->
         <div
@@ -575,7 +597,7 @@ onBeforeUnmount(() => {
 
         <div class="absolute inset-x-0 bottom-[4vh] flex justify-center">
           <span
-            class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-black/55 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/15 backdrop-blur-md"
+            class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-black/75 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/15"
             :class="heroManager ? 'text-[clamp(18px,3vh,36px)]' : 'text-[clamp(15px,2.4vh,28px)]'"
           >
             <span
@@ -612,7 +634,7 @@ onBeforeUnmount(() => {
         بالنص، وما تتقصّش على الوش بس (البوستر كله باين زي ما اتصمم).
       -->
       <div
-        v-if="agent?.photo && !agentCutout"
+        v-if="agent?.photo && figureBox[agent.photo] && !agentCutout"
         class="celebrate-portrait absolute end-[5vw] top-1/2 aspect-[4/5] h-[82vh] max-w-[38vw] overflow-hidden rounded-[clamp(18px,3vh,36px)] bg-avatar shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]"
         :class="isChampion ? 'ring-[4px] ring-gold' : 'ring-1 ring-white/20'"
       >
@@ -620,14 +642,18 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- صورة معزولة: المستشار واقف من أسفل الشاشة على الجنب التاني، زي مديري الفرق -->
-      <div v-if="agent?.photo && agentCutout && trimmedSrc[agent.photo]" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
-        <img
-          :src="trimmedSrc[agent.photo]"
-          alt=""
+      <div v-if="agent?.photo && agentCutout && figureBox[agent.photo]" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
+        <div
           class="celebrate-figure"
-          :style="{ '--ar': figureRatio[agent.id] ?? 0.62, '--max-h': '124vh', '--max-w': '40vw' }"
-          @load="onFigureLoad(agent.id, $event)"
-        />
+          :style="{ '--ar': figureBox[agent.photo].ar, '--max-h': '124vh', '--max-w': '40vw' }"
+        >
+          <img
+            :src="agent.photo"
+            alt=""
+            crossorigin="anonymous"
+            :style="figureImgStyle(figureBox[agent.photo])"
+          />
+        </div>
       </div>
 
       <!--
@@ -848,7 +874,11 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
-        <div class="h-full bg-gold transition-[width] duration-200 ease-linear" :style="{ width: `${progress}%` }" />
+        <div
+          :key="current.key"
+          class="celebrate-progress h-full w-full bg-gold"
+          :style="{ animationDuration: `${holdSeconds}s` }"
+        />
       </div>
     </div>
   </Transition>
@@ -903,12 +933,17 @@ onBeforeUnmount(() => {
   margin-inline: auto;
   bottom: calc(var(--fig-h) * -0.26);
   height: var(--fig-h);
-  width: auto;
-  max-width: none;
+  width: calc(var(--fig-h) * var(--ar));
+  overflow: hidden;
   filter: drop-shadow(0 24px 40px rgba(0, 0, 0, 0.55));
   -webkit-mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
   mask-image: linear-gradient(to bottom, #000 52%, transparent 74%);
   animation: celebrate-figure-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* الصورة جوّه الإطار مكبّرة ومزاحة (من figureImgStyle) بحيث الشخص يملا الإطار */
+.celebrate-figure > img {
+  position: absolute;
+  max-width: none;
 }
 @keyframes celebrate-figure-rise {
   from { opacity: 0; transform: translateY(6vh); }
@@ -923,13 +958,37 @@ onBeforeUnmount(() => {
 }
 
 /* الأول: توهّج ذهبي نابض حوالين حواف الشاشة، وميدالية أكبر تنبض شوية. */
-.celebrate-champion-ring {
-  box-shadow: inset 0 0 0 clamp(4px, 0.6vh, 10px) var(--color-gold);
+/*
+ * التوهّج ظل ثابت على طبقة لوحدها، والنبض بيغيّر شفافيتها بس — تحريك
+ * box-shadow نفسه بيعيد رسم الشاشة كلها كل فريم وبيقطّع الحركة.
+ */
+.celebrate-champion-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: inset 0 0 clamp(40px, 6vh, 100px) 0 color-mix(in oklab, var(--color-gold) 85%, transparent);
   animation: celebrate-champion-glow 2.4s ease-in-out infinite;
+  will-change: opacity;
 }
 @keyframes celebrate-champion-glow {
-  0%, 100% { box-shadow: inset 0 0 clamp(20px, 3vh, 50px) 0 color-mix(in oklab, var(--color-gold) 55%, transparent); }
-  50% { box-shadow: inset 0 0 clamp(40px, 6vh, 100px) 0 color-mix(in oklab, var(--color-gold) 85%, transparent); }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+/* شريط الوقت: تمدّد بالـ transform من بداية السطر لآخره على مدة البطاقة */
+.celebrate-progress {
+  transform-origin: left center;
+  animation: celebrate-progress linear both;
+  will-change: transform;
+}
+[dir='rtl'] .celebrate-progress {
+  transform-origin: right center;
+}
+@keyframes celebrate-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 .celebrate-rank-pulse {
   animation: celebrate-rank-pulse 1.8s ease-in-out infinite;
@@ -939,6 +998,6 @@ onBeforeUnmount(() => {
   50% { transform: scale(1.06); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .celebrate-champion-ring, .celebrate-rank-pulse, .celebrate-figure, .celebrate-portrait { animation: none; }
+  .celebrate-champion-ring::after, .celebrate-rank-pulse, .celebrate-figure, .celebrate-portrait { animation: none; }
 }
 </style>
