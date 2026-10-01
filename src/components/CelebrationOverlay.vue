@@ -9,7 +9,7 @@ import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { supabase } from '@/lib/supabase'
-import type { AgentStanding, TeamStanding } from '@/lib/types'
+import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
 import Avatar from './Avatar.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
@@ -121,7 +121,14 @@ const introMessage = computed(() => (current.value?.scope === 'intro' ? current.
  * مرة لكل ربع ويُحتفظ بها هنا طوال الدفعة.
  */
 interface RankingRow { id: string; rank: number; name: string; photo: string; deals: number; target: number; pct: number }
-const standingsCache = ref(new Map<string, { teams: RankingRow[]; agents: RankingRow[]; teamPhotos: Map<string, string> }>())
+interface StandingsSnapshot {
+  teams: RankingRow[]
+  agents: RankingRow[]
+  teamPhotos: Map<string, string>
+  /** الفريق اللي المستشار باع له أكتر في الربع ده — مش فريقه الحالي بالضرورة. */
+  soldFor: Map<string, string>
+}
+const standingsCache = ref(new Map<string, StandingsSnapshot>())
 
 function standingsKey(y: number, q: number) {
   return `${y}:${q}`
@@ -130,9 +137,10 @@ function standingsKey(y: number, q: number) {
 async function ensureStandings(y: number, q: number) {
   const key = standingsKey(y, q)
   if (standingsCache.value.has(key)) return
-  const [teamRes, agentRes] = await Promise.all([
+  const [teamRes, agentRes, contribRes] = await Promise.all([
     supabase.from('lb_team_standings').select('*').eq('year', y).eq('quarter', q).order('rank', { ascending: true }),
     supabase.from('lb_agent_standings').select('*').eq('year', y).eq('quarter', q).order('rank', { ascending: true }),
+    supabase.from('lb_team_contributions').select('agent_id, team, team_ar, deals').eq('year', y).eq('quarter', q),
   ])
   const teamRows = ((teamRes.data ?? []) as TeamStanding[])
     .filter((row) => Number(row.deals) > 0)
@@ -161,8 +169,17 @@ async function ensureStandings(y: number, q: number) {
     const photo = drivePhotoUrl(row.photo_url)
     if (photo) teamPhotos.set(localName(row.name, row.name_ar), photo)
   }
+  const soldFor = new Map<string, string>()
+  const best = new Map<string, number>()
+  for (const row of (contribRes.data ?? []) as Pick<TeamContribution, 'agent_id' | 'team' | 'team_ar' | 'deals'>[]) {
+    const deals = Number(row.deals) || 0
+    if (deals > 0 && deals > (best.get(row.agent_id) ?? 0)) {
+      best.set(row.agent_id, deals)
+      soldFor.set(row.agent_id, localName(row.team, row.team_ar))
+    }
+  }
   const next = new Map(standingsCache.value)
-  next.set(key, { teams: teamRows, agents: agentRows, teamPhotos })
+  next.set(key, { teams: teamRows, agents: agentRows, teamPhotos, soldFor })
   standingsCache.value = next
 }
 
@@ -235,12 +252,20 @@ watch(
   { immediate: true },
 )
 
+/** فريق المستشار في كارته: اللي باع له في الربع ده، وإلا فريقه الحالي. */
+const agentTeam = computed(() => {
+  const c = current.value
+  if (!c || c.scope !== 'agent') return ''
+  const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
+  return snap?.soldFor.get(c.event.agent_id) ?? agent.value?.team ?? ''
+})
+
 /** صورة فريق المستشار — خلفيته لما صورته معزولة، زي مديري الفرق. */
 const agentTeamPhoto = computed(() => {
   const c = current.value
-  if (!c || c.scope !== 'agent' || !agent.value?.team) return ''
+  if (!c || c.scope !== 'agent' || !agentTeam.value) return ''
   const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
-  return snap?.teamPhotos.get(agent.value.team) ?? ''
+  return snap?.teamPhotos.get(agentTeam.value) ?? ''
 })
 
 /**
@@ -596,8 +621,8 @@ onBeforeUnmount(() => {
         >
           {{ team?.name ?? agent?.name }}
         </div>
-        <div v-if="agent?.team" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
-          {{ t('spotlight.ofTeam', { team: agent.team }) }}
+        <div v-if="agentTeam" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
+          {{ t('spotlight.ofTeam', { team: agentTeam }) }}
         </div>
 
         <!-- مديرون إضافيون نادرون (أكتر من اتنين) — صف صغير بعد الاسم -->
