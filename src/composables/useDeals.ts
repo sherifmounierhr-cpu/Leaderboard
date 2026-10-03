@@ -47,7 +47,7 @@ export function useDeals() {
   const admin = useAdminData()
 
   async function addDeal(
-    agentId: string, date: string, amount: number, developer = '', project = '',
+    agentId: string, date: string, amount: number, developer = '', project = '', teamId = '',
   ): Promise<AddedDeal> {
     const { data, error } = await supabase.rpc('lb_admin_add_deal', {
       p_agent_id: agentId,
@@ -55,6 +55,8 @@ export function useDeals() {
       p_amount: amount,
       p_developer: developer.trim() || null,
       p_project: project.trim() || null,
+      // فاضي = فريق المستشار الحالي
+      p_team_id: teamId || null,
     })
     if (error) throw new Error(error.message)
     await Promise.all([load(), admin.loadPeriods()])

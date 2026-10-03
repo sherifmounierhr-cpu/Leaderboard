@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
 import { useDeals } from '@/composables/useDeals'
 import { useLocalName } from '@/composables/useLocalName'
 import type { DealRow } from '@/lib/types'
+import SearchSelect, { type SearchOption } from './SearchSelect.vue'
 import { dayKey, NUMBER_LOCALE } from '@/lib/region'
 
 /**
@@ -14,27 +15,46 @@ import { dayKey, NUMBER_LOCALE } from '@/lib/region'
  */
 const { t, locale } = useI18n()
 const localName = useLocalName()
-const { agents } = useAdminData()
+const { agents, teams } = useAdminData()
 const { deals, loading, load, addDeal, deleteDeal, developers, projects } = useDeals()
 
-const form = ref({ agentId: '', date: dayKey(), amount: '', developer: '', project: '' })
+const form = ref({ agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '' })
 const saving = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const search = ref('')
 
 onMounted(() => { void load() })
 
-const options = computed(() => {
+const options = computed<(SearchOption & { teamId: string })[]>(() => {
   const collator = new Intl.Collator(locale.value)
   return agents.value
     .filter((a) => a.active)
     .map((a) => ({
       id: a.id,
       label: localName(a.name, a.name_ar),
-      team: a.team_name ? localName(a.team_name, a.team_name_ar) : '',
+      hint: a.team_name ? localName(a.team_name, a.team_name_ar) : '',
+      // البحث يلاقي الاسم باللغتين مهما كانت لغة العرض
+      keywords: `${a.name} ${a.name_ar ?? ''}`,
+      teamId: a.team_id ?? '',
     }))
     .sort((a, b) => collator.compare(a.label, b.label))
 })
+
+const teamOptions = computed(() => {
+  const collator = new Intl.Collator(locale.value)
+  return teams.value
+    // الفريق الموقوف يظهر فقط لو هو المختار بالفعل
+    .filter((team) => team.active || team.id === form.value.teamId)
+    .map((team) => ({ id: team.id, label: localName(team.name, team.name_ar) }))
+    .sort((a, b) => collator.compare(a.label, b.label))
+})
+
+const agentTeamId = computed(() => options.value.find((o) => o.id === form.value.agentId)?.teamId ?? '')
+/** الصفقة هتتسجل لفريق غير فريق المستشار الحالي. */
+const teamDiffers = computed(() => Boolean(form.value.agentId) && form.value.teamId !== agentTeamId.value)
+
+// اختيار المستشار يملأ فريقه الحالي؛ وتقدر تغيّره قبل الإضافة
+watch(() => form.value.agentId, () => { form.value.teamId = agentTeamId.value })
 
 const amountValue = computed(() => Number(String(form.value.amount).replace(/[,\s]/g, '')) || 0)
 const valid = computed(() => Boolean(form.value.agentId) && amountValue.value > 0 && form.value.date <= dayKey())
@@ -46,6 +66,7 @@ async function submit() {
   try {
     const result = await addDeal(
       form.value.agentId, form.value.date, amountValue.value, form.value.developer, form.value.project,
+      form.value.teamId,
     )
     const name = options.value.find((o) => o.id === form.value.agentId)?.label ?? ''
     message.value = {
@@ -109,14 +130,24 @@ const FIELD =
 
     <!-- إضافة صفقة -->
     <form class="flex flex-col gap-4 rounded-xl border border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]" @submit.prevent="submit">
-      <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.6fr_.9fr_1.1fr_1.1fr_1fr_auto] xl:items-end">
+      <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_.9fr_1fr_1fr_1fr_auto] xl:items-end">
         <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('table.agent') }} *</span>
-          <select v-model="form.agentId" required :class="FIELD">
-            <option value="" disabled>{{ t('admin.celebratePick') }}</option>
-            <option v-for="o in options" :key="o.id" :value="o.id">
-              {{ o.team ? `${o.label} — ${o.team}` : o.label }}
-            </option>
+          <SearchSelect
+            v-model="form.agentId"
+            :options="options"
+            :placeholder="t('deals.agentSearch')"
+            :empty-text="t('deals.agentNone')"
+            :input-class="FIELD"
+            required
+          />
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.team') }}</span>
+          <select v-model="form.teamId" :class="[FIELD, teamDiffers ? 'border-gold' : '']">
+            <option value="">{{ t('deals.noTeam') }}</option>
+            <option v-for="o in teamOptions" :key="o.id" :value="o.id">{{ o.label }}</option>
           </select>
         </label>
 
@@ -180,6 +211,11 @@ const FIELD =
           {{ saving ? t('admin.saving') : t('deals.add') }}
         </button>
       </div>
+
+      <p v-if="teamDiffers" class="m-0 flex items-start gap-1.5 text-caption font-medium text-gold">
+        <iconify-icon icon="mdi:swap-horizontal" aria-hidden="true" class="mt-0.5 shrink-0" />
+        {{ t('deals.teamDiffers') }}
+      </p>
 
       <p class="m-0 flex items-start gap-1.5 text-caption text-mute">
         <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="mt-0.5 shrink-0 text-gold" />

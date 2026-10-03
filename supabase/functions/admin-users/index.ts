@@ -134,6 +134,12 @@ Deno.serve(async (req) => {
   const action = String(body.action ?? '')
   const userId = typeof body.user_id === 'string' ? body.user_id : ''
 
+  /** سجل المستخدمين — بتوكن المسؤول نفسه. فشل التسجيل لا يُفشل العملية. */
+  const audit = async (kind: string, target: string) => {
+    const { error } = await caller.rpc('lb_admin_log_user_action', { p_action: kind, p_user_id: target })
+    if (error) console.error('[admin-users] audit', error.message)
+  }
+
   // الحذف والإيقاف وكلمة المرور على حساب آخر فقط: المسؤول لا يقفل نفسه بالخطأ
   if (action !== 'create') {
     if (!userId) return fail('المستخدم مطلوب')
@@ -182,6 +188,7 @@ Deno.serve(async (req) => {
           await service.auth.admin.deleteUser(data.user.id)
           return fail(setErr.message)
         }
+        await audit('user_create', data.user.id)
         return json({ ok: true, id: data.user.id })
       }
 
@@ -190,6 +197,7 @@ Deno.serve(async (req) => {
         if (pwErr) return fail(pwErr)
         const { error } = await service.auth.admin.updateUserById(userId, { password: body.password as string })
         if (error) return fail(error.message)
+        await audit('user_password', userId)
         return json({ ok: true })
       }
 
@@ -199,11 +207,14 @@ Deno.serve(async (req) => {
           ban_duration: body.banned ? '876000h' : 'none',
         })
         if (error) return fail(error.message)
+        await audit(body.banned ? 'user_ban' : 'user_unban', userId)
         return json({ ok: true })
       }
 
       case 'delete': {
         // صفوف admins و user_access تُحذف معه (ON DELETE CASCADE)
+        // التسجيل قبل الحذف: بعده لا يبقى اسم يُقرأ
+        await audit('user_delete', userId)
         const { error } = await service.auth.admin.deleteUser(userId)
         if (error) return fail(error.message)
         return json({ ok: true })

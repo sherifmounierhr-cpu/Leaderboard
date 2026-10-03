@@ -21,7 +21,9 @@ import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
 import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
+import { supabase } from '@/lib/supabase'
 import UsersAdmin from '@/components/admin/UsersAdmin.vue'
+import AuditLogAdmin from '@/components/admin/AuditLogAdmin.vue'
 import { ADMIN_TABS, tabLabelKey, type AdminTab } from '@/lib/adminTabs'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
@@ -75,6 +77,8 @@ const { worst: storageWorst, start: startStorage, stop: stopStorage } = useStora
 let watchingStorage = false
 function onAllowed() {
   void reload()
+  // سجل المستخدمين: دخول لوحة الإدارة (القاعدة تكتفي بمرة كل نصف ساعة)
+  void supabase.rpc('lb_log_admin_visit').then(() => undefined, () => undefined)
   if (!watchingStorage) {
     watchingStorage = true
     startStorage()
@@ -272,7 +276,10 @@ const FIELD =
         <MarketRatesAdmin v-else-if="tab === 'rates'" />
         <DevicesAdmin v-else-if="tab === 'devices'" />
         <StorageAdmin v-else-if="tab === 'storage'" @goto="goto($event)" />
-        <UsersAdmin v-else-if="tab === 'users'" />
+        <div v-else-if="tab === 'users'" class="flex flex-col gap-8">
+          <UsersAdmin />
+          <AuditLogAdmin />
+        </div>
         <DataTransfer v-else-if="tab === 'data'" />
       </div>
     </main>
