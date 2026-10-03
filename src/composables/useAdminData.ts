@@ -280,8 +280,13 @@ export function useAdminData() {
 
     await reload()
     // الخادم هو اللي يعرف أنهي صفقة جديدة وأنهي كانت موجودة
-    const result = (data ?? {}) as { deals?: number; deals_skipped?: number }
-    return { ...summary, deals: Number(result.deals) || 0, dealsSkipped: Number(result.deals_skipped) || 0 }
+    const result = (data ?? {}) as { deals?: number; deals_skipped?: number; deals_moved?: number }
+    return {
+      ...summary,
+      deals: Number(result.deals) || 0,
+      dealsSkipped: Number(result.deals_skipped) || 0,
+      dealsMoved: Number(result.deals_moved) || 0,
+    }
   }
 
   /**
