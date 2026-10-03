@@ -109,7 +109,10 @@
     "rankingTeamTitle": "Team ranking",
     "rankingAgentTitle": "Advisor ranking",
     "announceRankingTeam": "Team ranking table",
-    "announceRankingAgent": "Advisor ranking table"
+    "announceRankingAgent": "Advisor ranking table",
+    "sharedTitle": "Shared deal",
+    "and": "&",
+    "announceShared": "{name} and {partner} closed a shared deal worth {amount}"
   },
   "notifications": {
     "title": "Notifications",
@@ -118,7 +121,8 @@
     "empty": "No notifications yet. Every new deal and congratulation shows up here.",
     "sale": "{name} closed a new deal worth {amount}",
     "manual": "Special congratulations to {name}",
-    "replay": "Replay the celebration on this screen"
+    "replay": "Replay the celebration on this screen",
+    "saleShared": "{name} and {partner} closed a shared deal worth {amount}"
   },
   "spotlight": {
     "topAgent": "Top performer",

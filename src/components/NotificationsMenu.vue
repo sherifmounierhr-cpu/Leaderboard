@@ -92,7 +92,9 @@ const items = computed(() => {
       text:
         e.kind === 'manual'
           ? t('notifications.manual', { name })
-          : t('notifications.sale', { name, amount: compact(e.amount_egp) }),
+          : (e.partner_name
+            ? t('notifications.saleShared', { name, partner: localName(e.partner_name, e.partner_name_ar), amount: compact(e.amount_egp) })
+            : t('notifications.sale', { name, amount: compact(e.amount_egp) })),
       when: relativeTime(new Date(e.created_at), now.value),
       title: new Date(e.created_at).toLocaleString(),
     }

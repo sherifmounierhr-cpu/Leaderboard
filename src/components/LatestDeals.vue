@@ -50,7 +50,9 @@ const items = computed(() => {
       id: e.id,
       kind: e.kind,
       entity: { id: e.agent_id, name, photo: drivePhotoUrl(e.photo_url), deals: e.total_egp, target: 0, pct: 0 },
-      text: e.kind === 'manual' ? t('notifications.manual', { name }) : t('notifications.sale', { name, amount: compact(e.amount_egp) }),
+      text: e.kind === 'manual' ? t('notifications.manual', { name }) : (e.partner_name
+            ? t('notifications.saleShared', { name, partner: localName(e.partner_name, e.partner_name_ar), amount: compact(e.amount_egp) })
+            : t('notifications.sale', { name, amount: compact(e.amount_egp) })),
       team: e.team ? localName(e.team, e.team_ar) : '',
       when: relativeTime(new Date(e.created_at), now.value),
     }

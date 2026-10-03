@@ -109,7 +109,10 @@
     "rankingTeamTitle": "ترتيب الفرق",
     "rankingAgentTitle": "ترتيب المستشارين",
     "announceRankingTeam": "جدول ترتيب الفرق",
-    "announceRankingAgent": "جدول ترتيب المستشارين"
+    "announceRankingAgent": "جدول ترتيب المستشارين",
+    "sharedTitle": "صفقة مشتركة",
+    "and": "و",
+    "announceShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}"
   },
   "notifications": {
     "title": "الإشعارات",
@@ -118,7 +121,8 @@
     "empty": "لا إشعارات بعد. تظهر هنا كل صفقة جديدة وكل تهنئة.",
     "sale": "صفقة جديدة لـ {name} بقيمة {amount}",
     "manual": "تهنئة خاصة لـ {name}",
-    "replay": "إعادة عرض الاحتفال على هذه الشاشة"
+    "replay": "إعادة عرض الاحتفال على هذه الشاشة",
+    "saleShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}"
   },
   "spotlight": {
     "topAgent": "متصدّر المبيعات",

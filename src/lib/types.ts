@@ -93,6 +93,14 @@ export interface SaleEventRow {
   mute: boolean
   /** مدة خاصة بالثواني؛ null = مدة الإعدادات. */
   duration_s: number | null
+  /** صفقة مشتركة: المستشار المشارك. amount_egp مبلغ الصفقة كله، وهذا نصيبه منه. */
+  partner_id?: string | null
+  partner_name?: string | null
+  partner_name_ar?: string | null
+  partner_photo_url?: string | null
+  partner_amount_egp?: number | null
+  /** نسبة المستشار الأول من الصفقة المشتركة. */
+  share_pct?: number | null
 }
 
 /** مدير فريق داخل صف public.lb_team_events. */

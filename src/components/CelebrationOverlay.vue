@@ -68,6 +68,32 @@ const agent = computed<BoardEntity | null>(() => {
   }
 })
 
+/** صفقة مشتركة: المستشار الثاني في نفس البطاقة — احتفال واحد يجمع الاتنين. */
+const partner = computed<BoardEntity | null>(() => {
+  const c = current.value
+  if (!c || c.scope !== 'agent' || !c.event.partner_id || !c.event.partner_name) return null
+  const e = c.event
+  return {
+    id: e.partner_id as string,
+    name: localName(e.partner_name as string, e.partner_name_ar),
+    photo: drivePhotoUrl(e.partner_photo_url ?? null),
+    deals: Number(e.partner_amount_egp) || 0,
+    target: 0,
+    pct: 0,
+  }
+})
+/** نصيب كل مستشار من الصفقة المشتركة — للسطر تحت الرقم الكبير. */
+const shares = computed(() => {
+  const c = current.value
+  if (!c || c.scope !== 'agent' || !partner.value || !agent.value) return []
+  const pct = Number(c.event.share_pct) || 0
+  const second = Number(c.event.partner_amount_egp) || 0
+  return [
+    { name: agent.value.name, pct, amount: c.event.amount_egp - second },
+    { name: partner.value.name, pct: Math.round((100 - pct) * 100) / 100, amount: second },
+  ]
+})
+
 /** بطاقة الفريق: اسمه وصورته، لاحتفال نهاية الربع. */
 const team = computed<BoardEntity | null>(() => {
   const c = current.value
@@ -298,6 +324,8 @@ const rank = computed(() => {
   if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return 0
   const snap = standingsCache.value.get(standingsKey(c.event.year, c.event.quarter))
   if (!snap) return 0
+  // الصفقة المشتركة لاتنين — مفيش مركز واحد يتحط عليها
+  if (c.scope === 'agent' && c.event.partner_id) return 0
   if (c.scope === 'agent') return snap.agents.find((a) => a.id === c.event.agent_id)?.rank ?? 0
   return snap.teams.find((t) => t.id === c.event.team_id)?.rank ?? 0
 })
@@ -344,6 +372,8 @@ const agentTeamPhoto = computed(() => {
 const photoUrl = computed(() => {
   if (team.value) return team.value.photo
   if (agent.value) {
+    // الصفقة المشتركة: الصورتان في إطارين، والخلفية صورة الفريق
+    if (partner.value) return agentTeamPhoto.value
     const photo = agent.value.photo
     if (!photo) return agentTeamPhoto.value
     // لسه بتتقاس: ما نعرضش خلفية هتتبدّل بعد لحظة
@@ -373,6 +403,7 @@ watch(
     } else if (next.scope === 'agent') {
       const photo = drivePhotoUrl(next.event.photo_url)
       if (photo) void probeFigure(photo)
+      if (next.event.partner_photo_url) preload(drivePhotoUrl(next.event.partner_photo_url))
       const snap = standingsCache.value.get(standingsKey(next.event.year, next.event.quarter))
       const teamName = snap?.soldFor.get(next.event.agent_id) ?? (next.event.team ? localName(next.event.team, next.event.team_ar) : '')
       preload(snap?.teamPhotos.get(teamName))
@@ -413,6 +444,11 @@ const announceText = computed(() => {
   if (c.scope === 'divider') return t(c.event.section === 'team' ? 'celebrate.announceDividerTeam' : 'celebrate.announceDividerAgent')
   if (c.scope === 'ranking') return t(c.event.section === 'team' ? 'celebrate.announceRankingTeam' : 'celebrate.announceRankingAgent')
   if (c.scope === 'team') return t('celebrate.announceTeam', { name: team.value?.name ?? '' })
+  if (isSale.value && partner.value) {
+    return t('celebrate.announceShared', {
+      name: agent.value?.name ?? '', partner: partner.value.name, amount: egp(c.event.amount_egp),
+    })
+  }
   if (isSale.value) return t('celebrate.announce', { name: agent.value?.name ?? '', amount: egp(c.event.amount_egp) })
   return t('celebrate.announceManual', { name: agent.value?.name ?? '' })
 })
@@ -520,7 +556,7 @@ onBeforeUnmount(() => {
         alt=""
         referrerpolicy="no-referrer"
         class="absolute inset-0 size-full object-cover"
-        :class="agent?.photo && !agentCutout ? 'celebrate-ambient' : 'celebrate-zoom object-center'"
+        :class="agent?.photo && !agentCutout && !partner ? 'celebrate-ambient' : 'celebrate-zoom object-center'"
         @error="imgBroken = true"
       />
       <div
@@ -649,7 +685,7 @@ onBeforeUnmount(() => {
         بالنص، وما تتقصّش على الوش بس (البوستر كله باين زي ما اتصمم).
       -->
       <div
-        v-if="agent?.photo && figureBox[agent.photo] && !agentCutout"
+        v-if="agent?.photo && figureBox[agent.photo] && !agentCutout && !partner"
         class="celebrate-portrait absolute end-[5vw] top-1/2 aspect-[4/5] h-[82vh] max-w-[38vw] overflow-hidden rounded-[clamp(18px,3vh,36px)] bg-avatar shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]"
         :class="isChampion ? 'ring-[4px] ring-gold' : 'ring-1 ring-white/20'"
       >
@@ -657,7 +693,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- صورة معزولة: المستشار واقف من أسفل الشاشة على الجنب التاني، زي مديري الفرق -->
-      <div v-if="agent?.photo && agentCutout && figureBox[agent.photo]" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
+      <div v-if="agent?.photo && agentCutout && figureBox[agent.photo] && !partner" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
         <div
           class="celebrate-figure"
           :style="{ '--ar': figureBox[agent.photo].ar, '--max-h': '124vh', '--max-w': '40vw' }"
@@ -669,6 +705,36 @@ onBeforeUnmount(() => {
             :style="figureImgStyle(figureBox[agent.photo])"
           />
         </div>
+      </div>
+
+      <!-- صفقة مشتركة: المستشاران جنب بعض في إطارين متساويين، وتحت كل واحد اسمه ونسبته -->
+      <div
+        v-if="agent && partner"
+        class="animate-celebrate-in absolute inset-y-0 end-[3vw] flex w-[42vw] items-center justify-center gap-[1.6vw]"
+      >
+        <figure
+          v-for="(p, i) in [agent, partner]"
+          :key="p.id"
+          class="m-0 flex w-[19.5vw] flex-col items-center gap-[1.6vh]"
+        >
+          <div class="aspect-[4/5] w-full overflow-hidden rounded-[clamp(16px,2.6vh,32px)] bg-avatar ring-[3px] ring-gold shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
+            <img
+              v-if="p.photo"
+              :src="p.photo"
+              alt=""
+              referrerpolicy="no-referrer"
+              class="size-full object-cover object-top"
+            />
+            <Avatar v-else :entity="p" kind="agent" class="size-full rounded-none text-[clamp(2rem,8vh,6rem)]" />
+          </div>
+          <figcaption class="flex flex-col items-center gap-[0.2em] text-center text-white">
+            <span class="font-display font-bold leading-tight text-balance text-[clamp(16px,3vh,36px)]">{{ p.name }}</span>
+            <span
+              v-if="shares[i]"
+              class="rounded-full bg-gold px-[0.9em] py-[0.2em] font-bold tabular-nums text-header text-[clamp(14px,2.4vh,28px)]"
+            >{{ shares[i].pct }}%</span>
+          </figcaption>
+        </figure>
       </div>
 
       <!--
@@ -720,15 +786,19 @@ onBeforeUnmount(() => {
             aria-hidden="true"
             class="text-gold text-[1.3em]"
           />
-          {{ isTeam ? t('celebrate.teamTitle') : isManual ? t('celebrate.manualTitle') : t('celebrate.title') }}
+          {{ isTeam ? t('celebrate.teamTitle') : isManual ? t('celebrate.manualTitle') : partner ? t('celebrate.sharedTitle') : t('celebrate.title') }}
         </div>
 
         <div
-          class="max-w-[22ch] font-display font-bold leading-[1.1] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(38px,9vh,116px)]"
+          class="max-w-[22ch] font-display font-bold leading-[1.1] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)]"
+          :class="partner ? 'text-[clamp(30px,6.6vh,84px)]' : 'text-[clamp(38px,9vh,116px)]'"
         >
-          {{ team?.name ?? agent?.name }}
+          <template v-if="partner">
+            {{ agent?.name }} <span class="text-gold">{{ t('celebrate.and') }}</span> {{ partner.name }}
+          </template>
+          <template v-else>{{ team?.name ?? agent?.name }}</template>
         </div>
-        <div v-if="agentTeam" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
+        <div v-if="agentTeam && !partner" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
           {{ t('spotlight.ofTeam', { team: agentTeam }) }}
         </div>
 
@@ -768,7 +838,13 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div v-if="isSale" class="font-medium text-white/70 text-[clamp(15px,2.4vh,28px)]" :title="egp(saleEventTotal)">
+        <div v-if="isSale && partner" class="flex flex-wrap gap-x-[1.4em] gap-y-[0.2em] font-medium text-white/75 text-[clamp(15px,2.4vh,28px)]">
+          <span v-for="s in shares" :key="s.name" :title="egp(s.amount)">
+            {{ s.name }}
+            <b class="font-bold tabular-nums text-white">{{ compact(s.amount) }}</b>
+          </span>
+        </div>
+        <div v-else-if="isSale" class="font-medium text-white/70 text-[clamp(15px,2.4vh,28px)]" :title="egp(saleEventTotal)">
           {{ t('celebrate.newTotal') }}
           <b class="font-bold tabular-nums text-white">{{ compact(saleEventTotal) }}</b>
         </div>
