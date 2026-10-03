@@ -573,7 +573,13 @@
     "sharedBadge": "مشتركة · {pct}%",
     "confirmDeleteShared": "الصفقة دي مشتركة، وحذفها هيحذف نصيب المستشارَين الاتنين ويخصمه من إجمالي كل واحد. تحذف نصيب {name} ({amount}) ونصيب شريكه؟",
     "addedSharedCelebrated": "تمت إضافة صفقة {amount} مشتركة في {quarter}: {name} {first} و{partner} {second}. الاحتفال ظهر على الشاشات 🎉",
-    "addedSharedQuiet": "تمت إضافة صفقة {amount} مشتركة في {quarter}: {name} {first} و{partner} {second}. (ربع سابق، فمفيش احتفال)"
+    "addedSharedQuiet": "تمت إضافة صفقة {amount} مشتركة في {quarter}: {name} {first} و{partner} {second}. (ربع سابق، فمفيش احتفال)",
+    "edit": "تعديل الصفقة",
+    "saveEdit": "حفظ التعديل",
+    "cancelEdit": "إلغاء التعديل",
+    "editing": "بتعدّل صفقة {name} — {amount}",
+    "editNote": "التعديل بيصحّح أرقام المستشار والفريق في الربع فوراً، ومن غير احتفال على الشاشات.",
+    "updated": "تم تعديل الصفقة: {amount} لـ {name}، والإجماليات اتحدّثت."
   },
   "devices": {
     "tab": "الأجهزة",

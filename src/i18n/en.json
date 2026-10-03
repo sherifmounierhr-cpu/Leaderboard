@@ -573,7 +573,13 @@
     "sharedBadge": "Shared · {pct}%",
     "confirmDeleteShared": "This is a shared deal. Deleting it removes both shares and deducts each from that consultant’s total. Delete the share of {name} ({amount}) and the partner’s share?",
     "addedSharedCelebrated": "Added a shared {amount} deal in {quarter}: {name} {first} and {partner} {second}. The celebration is on the screens 🎉",
-    "addedSharedQuiet": "Added a shared {amount} deal in {quarter}: {name} {first} and {partner} {second}. (Past quarter, so no celebration)"
+    "addedSharedQuiet": "Added a shared {amount} deal in {quarter}: {name} {first} and {partner} {second}. (Past quarter, so no celebration)",
+    "edit": "Edit deal",
+    "saveEdit": "Save changes",
+    "cancelEdit": "Cancel edit",
+    "editing": "Editing the deal of {name} — {amount}",
+    "editNote": "Editing corrects the consultant and team totals for the quarter right away, with no celebration on the screens.",
+    "updated": "Deal updated: {amount} for {name}. Totals have been refreshed."
   },
   "devices": {
     "tab": "Devices",

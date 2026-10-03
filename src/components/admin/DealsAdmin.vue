@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
@@ -16,13 +16,16 @@ import { dayKey, NUMBER_LOCALE } from '@/lib/region'
 const { t, locale } = useI18n()
 const localName = useLocalName()
 const { agents, teams } = useAdminData()
-const { deals, loading, load, addDeal, deleteDeal, developers, projects } = useDeals()
+const { deals, loading, load, addDeal, deleteDeal, sharedParts, developers, projects } = useDeals()
 
 const form = ref({
   agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '',
   shared: false, partnerId: '', partnerTeamId: '', share: 50,
 })
 const saving = ref(false)
+/** الصفقة اللي بتتعدّل دلوقتي في النموذج — null = إضافة جديدة. */
+const editing = ref<{ id: string; name: string; amount: number } | null>(null)
+const formEl = ref<HTMLFormElement | null>(null)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const search = ref('')
 
@@ -90,9 +93,15 @@ async function submit() {
       form.value.shared
         ? { partnerId: form.value.partnerId, partnerTeamId: form.value.partnerTeamId, share: shareValue.value }
         : null,
+      editing.value?.id ?? '',
     )
     const name = options.value.find((o) => o.id === form.value.agentId)?.label ?? ''
     const quarter = `Q${result.quarter} ${result.year}`
+    if (editing.value) {
+      message.value = { ok: true, text: t('deals.updated', { amount: compact(amountValue.value), name }) }
+      resetForm()
+      return
+    }
     message.value = {
       ok: true,
       text: form.value.shared
@@ -120,6 +129,44 @@ async function submit() {
   }
 }
 
+function resetForm() {
+  editing.value = null
+  form.value = {
+    agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '',
+    shared: false, partnerId: '', partnerTeamId: '', share: 50,
+  }
+}
+
+/** يحمّل الصفقة في النموذج للتعديل. المشتركة تتحمّل بنصفيها ومبلغها الكامل. */
+async function startEdit(deal: DealRow) {
+  message.value = null
+  try {
+    const parts = deal.shared_id ? await sharedParts(deal.shared_id) : [deal]
+    const first = parts.find((d) => d.id === deal.id) ?? deal
+    const second = parts.find((d) => d.id !== deal.id) ?? null
+    const total = Math.round(parts.reduce((s, d) => s + d.amount_egp, 0) * 100) / 100
+    editing.value = { id: first.id, name: localName(first.name, first.name_ar), amount: total }
+    form.value = {
+      ...form.value,
+      agentId: first.agent_id,
+      date: first.deal_date,
+      amount: String(total),
+      developer: first.developer ?? '',
+      project: first.project ?? '',
+      shared: Boolean(second),
+      partnerId: second?.agent_id ?? '',
+      share: second ? Number(first.share_pct) || 50 : 50,
+    }
+    // اختيار المستشار بيملأ فريقه الحالي؛ فريق الصفقة المسجَّل يتحط بعده
+    await nextTick()
+    form.value.teamId = first.team_id ?? ''
+    form.value.partnerTeamId = second?.team_id ?? ''
+    formEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } catch (err) {
+    message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 async function remove(deal: DealRow) {
   const name = localName(deal.name, deal.name_ar)
   const question = deal.shared_id ? 'deals.confirmDeleteShared' : 'deals.confirmDelete'
@@ -127,6 +174,7 @@ async function remove(deal: DealRow) {
   message.value = null
   try {
     await deleteDeal(deal.id)
+    if (editing.value) resetForm()
     message.value = { ok: true, text: t('deals.deleted', { amount: compact(deal.amount_egp), name }) }
   } catch (err) {
     message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
@@ -170,7 +218,27 @@ const FIELD =
     </header>
 
     <!-- إضافة صفقة -->
-    <form class="flex flex-col gap-4 rounded-xl border border-accent/40 bg-card p-5 shadow-[var(--shadow-card)]" @submit.prevent="submit">
+    <form
+      ref="formEl"
+      class="flex scroll-mt-4 flex-col gap-4 rounded-xl border bg-card p-5 shadow-[var(--shadow-card)]"
+      :class="editing ? 'border-gold' : 'border-accent/40'"
+      @submit.prevent="submit"
+    >
+      <div
+        v-if="editing"
+        class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gold/15 px-4 py-2.5 text-sm font-semibold text-strong"
+      >
+        <span class="flex items-center gap-2">
+          <iconify-icon icon="mdi:pencil-outline" aria-hidden="true" class="text-lg text-gold" />
+          {{ t('deals.editing', { name: editing.name, amount: compact(editing.amount) }) }}
+        </span>
+        <button
+          type="button"
+          class="rounded-lg border border-card-border bg-card px-3 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong"
+          @click="resetForm"
+        >{{ t('deals.cancelEdit') }}</button>
+      </div>
+
       <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_.9fr_1fr_1fr_1fr_auto] xl:items-end">
         <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('table.agent') }} *</span>
@@ -248,8 +316,8 @@ const FIELD =
           class="inline-flex h-[42px] items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
           :disabled="!valid || saving"
         >
-          <iconify-icon icon="mdi:plus-circle-outline" aria-hidden="true" class="text-lg" />
-          {{ saving ? t('admin.saving') : t('deals.add') }}
+          <iconify-icon :icon="editing ? 'mdi:content-save-outline' : 'mdi:plus-circle-outline'" aria-hidden="true" class="text-lg" />
+          {{ saving ? t('admin.saving') : editing ? t('deals.saveEdit') : t('deals.add') }}
         </button>
       </div>
 
@@ -322,7 +390,7 @@ const FIELD =
 
       <p class="m-0 flex items-start gap-1.5 text-caption text-mute">
         <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="mt-0.5 shrink-0 text-gold" />
-        {{ t('deals.celebrateNote') }}
+        {{ editing ? t('deals.editNote') : t('deals.celebrateNote') }}
       </p>
 
       <p
@@ -386,6 +454,16 @@ const FIELD =
         <b class="shrink-0 font-bold tabular-nums text-strong text-lg" :title="egp(r.deal.amount_egp)">
           {{ compact(r.deal.amount_egp) }}
         </b>
+        <button
+          type="button"
+          class="shrink-0 rounded-lg border border-card-border px-2.5 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong"
+          :class="editing?.id === r.deal.id ? 'border-gold text-gold' : ''"
+          :aria-label="t('deals.edit')"
+          :title="t('deals.edit')"
+          @click="startEdit(r.deal)"
+        >
+          <iconify-icon icon="mdi:pencil-outline" aria-hidden="true" />
+        </button>
         <button
           type="button"
           class="shrink-0 rounded-lg border border-card-border px-2.5 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-down"

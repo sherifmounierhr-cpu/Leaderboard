@@ -50,11 +50,17 @@ async function load() {
 export function useDeals() {
   const admin = useAdminData()
 
+  /**
+   * إضافة صفقة، أو تعديل صفقة موجودة لو اتبعت editId. التعديل بيعكس القديمة
+   * ويسجّلها من جديد على الخادم في عملية واحدة، ومن غير احتفال.
+   */
   async function addDeal(
     agentId: string, date: string, amount: number, developer = '', project = '', teamId = '',
     shared: { partnerId: string; partnerTeamId: string; share: number } | null = null,
+    editId = '',
   ): Promise<AddedDeal> {
-    const { data, error } = await supabase.rpc('lb_admin_add_deal', {
+    const { data, error } = await supabase.rpc(editId ? 'lb_admin_update_deal' : 'lb_admin_add_deal', {
+      ...(editId ? { p_id: editId } : {}),
       p_agent_id: agentId,
       p_date: date,
       p_amount: amount,
@@ -78,9 +84,17 @@ export function useDeals() {
     await Promise.all([load(), admin.loadPeriods()])
   }
 
+  /** نصفا الصفقة المشتركة — من القاعدة، لأن الشريك قد يكون خارج القائمة المعروضة. */
+  async function sharedParts(sharedId: string): Promise<DealRow[]> {
+    const { data, error } = await supabase.from('lb_deals').select('*').eq('shared_id', sharedId)
+    if (error) throw new Error(error.message)
+    return ((data ?? []) as DealRow[]).map((d) => ({ ...d, amount_egp: Number(d.amount_egp) || 0 }))
+  }
+
   return {
     deals,
     loading,
+    sharedParts,
     load,
     addDeal,
     deleteDeal,
