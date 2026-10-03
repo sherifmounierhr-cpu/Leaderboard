@@ -557,7 +557,19 @@
     "noTeam": "No team",
     "agentSearch": "Type a consultant's name to search",
     "agentNone": "No consultant matches that name",
-    "teamDiffers": "This deal will be recorded for a team other than the consultant's current one, and will count toward the team you picked."
+    "teamDiffers": "This deal will be recorded for a team other than the consultant's current one, and will count toward the team you picked.",
+    "shared": "Shared deal between two consultants",
+    "partner": "Co-consultant",
+    "partnerTeam": "Co-consultant team",
+    "share": "First consultant share %",
+    "shareFirst": "First {pct}%",
+    "shareSecond": "Co-consultant {pct}%",
+    "shareRule": "The share must be between 1 and 99.",
+    "sharedWith": "Shared with {name} · this share {pct}%",
+    "sharedBadge": "Shared · {pct}%",
+    "confirmDeleteShared": "This is a shared deal. Deleting it removes both shares and deducts each from that consultant’s total. Delete the share of {name} ({amount}) and the partner’s share?",
+    "addedSharedCelebrated": "Added a shared {amount} deal in {quarter}: {name} {first} and {partner} {second}. The celebration is on the screens 🎉",
+    "addedSharedQuiet": "Added a shared {amount} deal in {quarter}: {name} {first} and {partner} {second}. (Past quarter, so no celebration)"
   },
   "devices": {
     "tab": "Devices",

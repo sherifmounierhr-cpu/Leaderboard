@@ -19,6 +19,10 @@ export interface AddedDeal {
   year: number
   quarter: number
   total_egp: number
+  /** نصيب المستشار الأول (= المبلغ كله لو الصفقة غير مشتركة). */
+  amount_egp: number
+  /** نصيب المستشار المشارك — null لو الصفقة غير مشتركة. */
+  partner_amount_egp: number | null
   /** هل ظهر الاحتفال على الشاشات؟ (الربع الجاري فقط) */
   celebrated: boolean
 }
@@ -48,6 +52,7 @@ export function useDeals() {
 
   async function addDeal(
     agentId: string, date: string, amount: number, developer = '', project = '', teamId = '',
+    shared: { partnerId: string; partnerTeamId: string; share: number } | null = null,
   ): Promise<AddedDeal> {
     const { data, error } = await supabase.rpc('lb_admin_add_deal', {
       p_agent_id: agentId,
@@ -57,6 +62,10 @@ export function useDeals() {
       p_project: project.trim() || null,
       // فاضي = فريق المستشار الحالي
       p_team_id: teamId || null,
+      p_partner_id: shared?.partnerId || null,
+      p_partner_team_id: shared?.partnerTeamId || null,
+      // نسبة المستشار الأول؛ الباقي للمشارك
+      p_share_pct: shared ? shared.share : null,
     })
     if (error) throw new Error(error.message)
     await Promise.all([load(), admin.loadPeriods()])

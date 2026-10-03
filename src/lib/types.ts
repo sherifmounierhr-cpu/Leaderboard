@@ -217,6 +217,10 @@ export interface DealRow {
   developer: string | null
   /** اسم المشروع — اختياري. */
   project: string | null
+  /** صفقة مشتركة: الصفّان (صف لكل مستشار بنصيبه) يحملان نفس المعرّف. */
+  shared_id: string | null
+  /** نسبة هذا المستشار من الصفقة المشتركة. */
+  share_pct: number | null
 }
 
 /** صف من public.lb_media_files */

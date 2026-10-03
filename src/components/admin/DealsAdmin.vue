@@ -18,7 +18,10 @@ const localName = useLocalName()
 const { agents, teams } = useAdminData()
 const { deals, loading, load, addDeal, deleteDeal, developers, projects } = useDeals()
 
-const form = ref({ agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '' })
+const form = ref({
+  agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '',
+  shared: false, partnerId: '', partnerTeamId: '', share: 50,
+})
 const saving = ref(false)
 const message = ref<{ ok: boolean; text: string } | null>(null)
 const search = ref('')
@@ -44,7 +47,7 @@ const teamOptions = computed(() => {
   const collator = new Intl.Collator(locale.value)
   return teams.value
     // الفريق الموقوف يظهر فقط لو هو المختار بالفعل
-    .filter((team) => team.active || team.id === form.value.teamId)
+    .filter((team) => team.active || team.id === form.value.teamId || team.id === form.value.partnerTeamId)
     .map((team) => ({ id: team.id, label: localName(team.name, team.name_ar) }))
     .sort((a, b) => collator.compare(a.label, b.label))
 })
@@ -56,8 +59,25 @@ const teamDiffers = computed(() => Boolean(form.value.agentId) && form.value.tea
 // اختيار المستشار يملأ فريقه الحالي؛ وتقدر تغيّره قبل الإضافة
 watch(() => form.value.agentId, () => { form.value.teamId = agentTeamId.value })
 
+// الصفقة المشتركة: المستشار الثاني من غير الأول، وفريقه يتملى زي الأول
+const partnerOptions = computed(() => options.value.filter((o) => o.id !== form.value.agentId))
+watch(() => form.value.partnerId, (id) => {
+  form.value.partnerTeamId = options.value.find((o) => o.id === id)?.teamId ?? ''
+})
+watch(() => form.value.agentId, (id) => { if (id && id === form.value.partnerId) form.value.partnerId = '' })
+
 const amountValue = computed(() => Number(String(form.value.amount).replace(/[,\s]/g, '')) || 0)
-const valid = computed(() => Boolean(form.value.agentId) && amountValue.value > 0 && form.value.date <= dayKey())
+const shareValue = computed(() => Math.round((Number(form.value.share) || 0) * 100) / 100)
+const shareValid = computed(() => shareValue.value >= 1 && shareValue.value <= 99)
+/** نفس تقريب القاعدة: نصيب الأول يتقرّب والباقي للثاني، فالمجموع = المبلغ بالضبط. */
+const firstAmount = computed(() => Math.round(amountValue.value * shareValue.value) / 100)
+const secondAmount = computed(() => Math.round((amountValue.value - firstAmount.value) * 100) / 100)
+const partnerShare = computed(() => Math.round((100 - shareValue.value) * 100) / 100)
+
+const valid = computed(() =>
+  Boolean(form.value.agentId) && amountValue.value > 0 && form.value.date <= dayKey() &&
+  (!form.value.shared || (Boolean(form.value.partnerId) && shareValid.value)),
+)
 
 async function submit() {
   if (!valid.value || saving.value) return
@@ -67,16 +87,29 @@ async function submit() {
     const result = await addDeal(
       form.value.agentId, form.value.date, amountValue.value, form.value.developer, form.value.project,
       form.value.teamId,
+      form.value.shared
+        ? { partnerId: form.value.partnerId, partnerTeamId: form.value.partnerTeamId, share: shareValue.value }
+        : null,
     )
     const name = options.value.find((o) => o.id === form.value.agentId)?.label ?? ''
+    const quarter = `Q${result.quarter} ${result.year}`
     message.value = {
       ok: true,
-      text: t(result.celebrated ? 'deals.addedCelebrated' : 'deals.addedQuiet', {
-        amount: compact(amountValue.value),
-        name,
-        total: compact(result.total_egp),
-        quarter: `Q${result.quarter} ${result.year}`,
-      }),
+      text: form.value.shared
+        ? t(result.celebrated ? 'deals.addedSharedCelebrated' : 'deals.addedSharedQuiet', {
+            amount: compact(amountValue.value),
+            name,
+            first: compact(result.amount_egp),
+            partner: options.value.find((o) => o.id === form.value.partnerId)?.label ?? '',
+            second: compact(result.partner_amount_egp ?? 0),
+            quarter,
+          })
+        : t(result.celebrated ? 'deals.addedCelebrated' : 'deals.addedQuiet', {
+            amount: compact(amountValue.value),
+            name,
+            total: compact(result.total_egp),
+            quarter,
+          }),
     }
     // المبلغ بس اللي بيتفضّى: الإدخال عادةً بيكمّل على نفس المشروع
     form.value.amount = ''
@@ -89,7 +122,8 @@ async function submit() {
 
 async function remove(deal: DealRow) {
   const name = localName(deal.name, deal.name_ar)
-  if (!confirm(t('deals.confirmDelete', { amount: compact(deal.amount_egp), name }))) return
+  const question = deal.shared_id ? 'deals.confirmDeleteShared' : 'deals.confirmDelete'
+  if (!confirm(t(question, { amount: compact(deal.amount_egp), name }))) return
   message.value = null
   try {
     await deleteDeal(deal.id)
@@ -101,6 +135,12 @@ async function remove(deal: DealRow) {
 
 const rows = computed(() => {
   const q = search.value.trim().toLowerCase()
+  // شريك كل صفقة مشتركة: الصف الآخر بنفس shared_id
+  const partnerOf = (d: DealRow) => {
+    if (!d.shared_id) return ''
+    const other = deals.value.find((x) => x.shared_id === d.shared_id && x.id !== d.id)
+    return other ? localName(other.name, other.name_ar) : ''
+  }
   return deals.value
     .filter((d) => !q || d.name.toLowerCase().includes(q) || (d.name_ar ?? '').includes(q) ||
       (d.team ?? '').toLowerCase().includes(q) || (d.team_ar ?? '').includes(q) ||
@@ -109,6 +149,7 @@ const rows = computed(() => {
       deal: d,
       name: localName(d.name, d.name_ar),
       team: d.team ? localName(d.team, d.team_ar) : '',
+      partner: partnerOf(d),
       date: new Intl.DateTimeFormat(locale.value === 'ar' ? NUMBER_LOCALE.ar : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
         .format(new Date(`${d.deal_date}T12:00:00`)),
       period: `Q${d.quarter} ${d.year}`,
@@ -212,6 +253,68 @@ const FIELD =
         </button>
       </div>
 
+      <label class="flex w-fit cursor-pointer items-center gap-2 text-sm font-semibold text-strong">
+        <input v-model="form.shared" type="checkbox" class="size-4 accent-[var(--color-accent)]" />
+        <iconify-icon icon="mdi:account-multiple-outline" aria-hidden="true" class="text-lg text-mute" />
+        {{ t('deals.shared') }}
+      </label>
+
+      <div
+        v-if="form.shared"
+        class="grid gap-4 rounded-lg border border-card-border bg-page/60 p-4 lg:grid-cols-2 xl:grid-cols-[1.5fr_1fr_.8fr_1.6fr] xl:items-end"
+      >
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.partner') }} *</span>
+          <SearchSelect
+            v-model="form.partnerId"
+            :options="partnerOptions"
+            :placeholder="t('deals.agentSearch')"
+            :empty-text="t('deals.agentNone')"
+            :input-class="FIELD"
+            required
+          />
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.partnerTeam') }}</span>
+          <select v-model="form.partnerTeamId" :class="FIELD">
+            <option value="">{{ t('deals.noTeam') }}</option>
+            <option v-for="o in teamOptions" :key="o.id" :value="o.id">{{ o.label }}</option>
+          </select>
+        </label>
+
+        <label class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('deals.share') }} *</span>
+          <input
+            v-model.number="form.share"
+            type="number"
+            min="1"
+            max="99"
+            step="any"
+            required
+            dir="ltr"
+            :class="[FIELD, 'text-end tabular-nums', shareValid ? '' : 'border-down']"
+          />
+        </label>
+
+        <div class="flex flex-col gap-1.5">
+          <input
+            v-model.number="form.share"
+            type="range"
+            min="1"
+            max="99"
+            step="1"
+            :aria-label="t('deals.share')"
+            class="w-full accent-[var(--color-accent)]"
+          />
+          <p v-if="shareValid" class="m-0 flex flex-wrap justify-between gap-x-4 text-caption text-mute tabular-nums">
+            <span>{{ t('deals.shareFirst', { pct: shareValue }) }}<b v-if="amountValue > 0" class="font-semibold text-strong"> · {{ egp(firstAmount) }}</b></span>
+            <span>{{ t('deals.shareSecond', { pct: partnerShare }) }}<b v-if="amountValue > 0" class="font-semibold text-strong"> · {{ egp(secondAmount) }}</b></span>
+          </p>
+          <p v-else class="m-0 text-caption text-down">{{ t('deals.shareRule') }}</p>
+        </div>
+      </div>
+
       <p v-if="teamDiffers" class="m-0 flex items-start gap-1.5 text-caption font-medium text-gold">
         <iconify-icon icon="mdi:swap-horizontal" aria-hidden="true" class="mt-0.5 shrink-0" />
         {{ t('deals.teamDiffers') }}
@@ -260,7 +363,18 @@ const FIELD =
           <iconify-icon icon="mdi:cash-plus" class="text-xl" />
         </span>
         <div class="flex min-w-0 flex-1 flex-col">
-          <p class="m-0 truncate font-semibold text-strong">{{ r.name }}</p>
+          <p class="m-0 flex flex-wrap items-center gap-2 font-semibold text-strong">
+            <span class="truncate">{{ r.name }}</span>
+            <span
+              v-if="r.deal.shared_id"
+              class="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-caption font-semibold text-gold"
+            >
+              <iconify-icon icon="mdi:account-multiple-outline" aria-hidden="true" />
+              {{ r.partner
+                ? t('deals.sharedWith', { name: r.partner, pct: Number(r.deal.share_pct) })
+                : t('deals.sharedBadge', { pct: Number(r.deal.share_pct) }) }}
+            </span>
+          </p>
           <p class="m-0 truncate text-caption text-mute">
             <template v-if="r.deal.project">
               <b class="font-semibold text-strong">{{ r.deal.project }}</b><template v-if="r.deal.developer"> — {{ r.deal.developer }}</template> ·
