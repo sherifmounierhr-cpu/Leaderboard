@@ -426,7 +426,8 @@
       "confirmAll": "Permanently delete everything, including teams and agents? A backup downloads first.",
       "done": "Cleared: {deals} deals, {sales} sales rows, {targets} targets, {agents} agents, {teams} teams. Upload the new data file now."
     },
-    "importDealsMoved": "Deals moved to a new team: {n}."
+    "importDealsMoved": "Deals moved to a new team: {n}.",
+    "importDealsUpdated": "Deals updated: {n}."
   },
   "kpi": {
     "label": "Company quarter summary",

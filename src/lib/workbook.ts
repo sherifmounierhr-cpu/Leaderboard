@@ -28,6 +28,8 @@ export interface WorkbookTeam {
   photo_url: string | null
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 export interface WorkbookDeal {
   /** اسم المستشار كما في ورقة Agents (الإنجليزي أو العربي). */
   agent: string
@@ -40,6 +42,8 @@ export interface WorkbookDeal {
   row?: number
   /** الفريق وقت الصفقة؛ فاضي = فريق المستشار الحالي. */
   team?: string | null
+  /** معرّف الصفقة في اللوحة (من ملف مُصدَّر): الصف يعدّل هذه الصفقة بدل أن يضيف واحدة. */
+  id?: string | null
 }
 
 export interface WorkbookPayload {
@@ -119,7 +123,9 @@ function instructionRows(year: number) {
     L('• developer / project: المطوّر والمشروع (اختياري).'),
     L('• team: فريق المستشار وقت الصفقة (من القائمة) — اختياري. لو فاضي بيتاخد فريقه الحالي. مفيد للصفقات القديمة لو المستشار اتنقل بعدها.'),
     L('• صفقة موجودة بالفعل (نفس المستشار والتاريخ والمبلغ والمطوّر والمشروع) لا تتكرر لو رفعت نفس الملف مرة تانية.'),
-    L('• لتعديل فريق صفقة موجودة: صدّر الملف، غيّر عمود team في صف الصفقة، وارفعه. الصفقة بتتنقل للفريق الجديد ومبلغها بيتنقل معاها من غير تكرار. غيّر الفريق بس — لو غيّرت المبلغ أو التاريخ أو المطوّر أو المشروع كمان، الصف هيتسجّل كصفقة جديدة.'),
+    L('• id: معرّف الصفقة في اللوحة، بيتكتب لوحده في الملف المصدَّر. ما تعدّلوش وما تنسخوش لصف تاني. الصفقة الجديدة اللي بتضيفها بإيدك سيب خانته فاضية.'),
+    L('• لتعديل صفقة موجودة: صدّر الملف، غيّر في صفها المبلغ أو التاريخ أو الفريق أو المستشار أو المطوّر أو المشروع، وسيب id زي ما هو، وارفعه. الصفقة نفسها بتتعدّل وأرقام الربع بتتصحّح من غير تكرار — ولو التاريخ الجديد في ربع تاني، المبلغ بيتنقل له.'),
+    L('• مسح صف من الملف لا يحذف الصفقة من اللوحة — الحذف من صفحة الصفقات.'),
     blank,
     H('لو ظهر خطأ عند الرفع'),
     L('• الرسالة بتذكر اسم الورقة ورقم الصف. صحّحه في الملف وارفعه تاني — لا شيء يتكتب لو فيه خطأ.'),
@@ -216,9 +222,9 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number): Pro
   ]
 
   const dealRows: Cell[][] = [
-    ['agent', 'date', 'amount_egp', 'developer', 'project', 'team'],
+    ['agent', 'date', 'amount_egp', 'developer', 'project', 'team', 'id'],
     ...payload.deals.map((d) => [
-      d.agent, isoToDate(d.date), d.amount, d.developer ?? '', d.project ?? '', d.team ?? '',
+      d.agent, isoToDate(d.date), d.amount, d.developer ?? '', d.project ?? '', d.team ?? '', d.id ?? '',
     ]),
   ]
 
@@ -249,7 +255,7 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number): Pro
     {
       sheet: 'Deals',
       data: toCells(dealRows),
-      columns: [{ width: 24 }, { width: 14 }, { width: 16 }, { width: 22 }, { width: 22 }, { width: 20 }],
+      columns: [{ width: 24 }, { width: 14 }, { width: 16 }, { width: 22 }, { width: 22 }, { width: 20 }, { width: 38 }],
     },
   ])
 
@@ -325,6 +331,8 @@ export interface ImportSummary {
   dealsSkipped: number
   /** صفقات موجودة اتغيّر فريقها في الملف فاتنقلت للفريق الجديد. */
   dealsMoved?: number
+  /** صفقات موجودة اتعدّلت بياناتها (مبلغ، تاريخ…) عن طريق عمود id. */
+  dealsUpdated?: number
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -453,6 +461,8 @@ export async function parseWorkbook(
           developer: toText(pick(row, index, 'developer')) || null,
           project: toText(pick(row, index, 'project')) || null,
           team: toText(pick(row, index, 'team')) || null,
+          // معرّف غير صالح يتجاهل: الصف يمر كصفقة عادية بدل أن يُرفض الملف
+          id: UUID_RE.test(toText(pick(row, index, 'id'))) ? toText(pick(row, index, 'id')).toLowerCase() : null,
           row: rowNo,
         })
       }
