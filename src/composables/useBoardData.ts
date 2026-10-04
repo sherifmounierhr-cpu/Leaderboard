@@ -98,7 +98,6 @@ const showDemo = computed(() => !hasSupabaseConfig || (Boolean(error.value) && !
 const teams = computed<BoardEntity[]>(() => {
   if (!rawTeams.value) return showDemo.value ? DEMO_TEAMS : []
   return rawTeams.value
-    .filter((t) => Number(t.deals) > 0)
     .map((t) => ({
       id: t.team_id,
       name: localName(t.name, t.name_ar),
@@ -112,10 +111,7 @@ const teams = computed<BoardEntity[]>(() => {
     }))
 })
 
-/**
- * إجمالي الشركة (الصورة الكبيرة في الأعلى) من كل الفرق بلا استثناء — حتى لو
- * فريق ما ظهرش على اللوحة (صفر مبيعات)، هدفه لسه جزء من المستهدف الكلي.
- */
+/** إجمالي الشركة (الصورة الكبيرة في الأعلى) من كل الفرق. */
 const companyTotals = computed(() => {
   const list = rawTeams.value ?? (showDemo.value ? DEMO_TEAMS : [])
   const deals = list.reduce((s, t) => s + (Number(t.deals) || 0), 0)
