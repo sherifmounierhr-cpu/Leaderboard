@@ -149,13 +149,15 @@ export function useAdminData() {
     await reload()
   }
 
-  async function savePeriod(agentId: string, target: number, deals: number) {
+  /** حفظ الهدف فقط — المبيعات بتتسجّل من الصفقات، والخادم بيتجاهلها هنا. */
+  async function savePeriod(agentId: string, target: number) {
+    const current = periods.value.get(agentId)
     const { error } = await supabase.rpc('lb_admin_save_period', {
       p_agent_id: agentId,
       p_year: year.value,
       p_quarter: quarter.value,
       p_target: target,
-      p_deals: deals,
+      p_deals: current?.amount_egp ?? 0,
     })
     if (error) fail(error)
     periods.value = new Map(periods.value).set(agentId, {
@@ -163,7 +165,7 @@ export function useAdminData() {
       year: year.value,
       quarter: quarter.value,
       target_egp: target,
-      amount_egp: deals,
+      amount_egp: current?.amount_egp ?? 0,
     })
   }
 

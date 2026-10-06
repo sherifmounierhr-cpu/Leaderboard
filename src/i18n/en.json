@@ -427,7 +427,8 @@
       "done": "Cleared: {deals} deals, {sales} sales rows, {targets} targets, {agents} agents, {teams} teams. Upload the new data file now."
     },
     "importDealsMoved": "Deals moved to a new team: {n}.",
-    "importDealsUpdated": "Deals updated: {n}."
+    "importDealsUpdated": "Deals updated: {n}.",
+    "periodsSalesLocked": "Sales are read-only here. Record and edit them from the Deals tab."
   },
   "kpi": {
     "label": "Company quarter summary",

@@ -11,10 +11,12 @@ const localName = useLocalName()
 
 interface Draft {
   target: number
-  deals: number
 }
 
-/** مسودّات محلية: لا شيء يُكتب حتى يضغط المستخدم حفظ — أرقام مال لا تُحفظ بالخطأ. */
+/**
+ * مسودّات محلية: لا شيء يُكتب حتى يضغط المستخدم حفظ — أرقام مال لا تُحفظ بالخطأ.
+ * الهدف بس هو اللي بيتعدّل هنا؛ المبيعات للعرض وبتتسجّل من صفحة الصفقات.
+ */
 const drafts = reactive<Record<string, Draft>>({})
 const savingId = ref<string | null>(null)
 const rowError = reactive<Record<string, string>>({})
@@ -24,7 +26,7 @@ function seed() {
   for (const key of Object.keys(drafts)) delete drafts[key]
   for (const agent of agents.value) {
     const row = periods.value.get(agent.id)
-    drafts[agent.id] = { target: row?.target_egp ?? 0, deals: row?.amount_egp ?? 0 }
+    drafts[agent.id] = { target: row?.target_egp ?? 0 }
   }
 }
 
@@ -48,7 +50,7 @@ function isDirty(id: string) {
   const row = periods.value.get(id)
   const draft = drafts[id]
   if (!draft) return false
-  return draft.target !== (row?.target_egp ?? 0) || draft.deals !== (row?.amount_egp ?? 0)
+  return draft.target !== (row?.target_egp ?? 0)
 }
 
 const dirtyIds = computed(() => rows.value.filter((a) => isDirty(a.id)).map((a) => a.id))
@@ -59,7 +61,7 @@ async function save(id: string) {
   savingId.value = id
   delete rowError[id]
   try {
-    await savePeriod(id, Number(draft.target) || 0, Number(draft.deals) || 0)
+    await savePeriod(id, Number(draft.target) || 0)
   } catch (err) {
     rowError[id] = err instanceof Error ? err.message : String(err)
   } finally {
@@ -88,6 +90,10 @@ const NUM =
       <div>
         <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.periods') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('admin.periodsHint') }}</p>
+        <p class="m-0 mt-1 flex items-center gap-1.5 text-caption text-mute">
+          <iconify-icon icon="mdi:lock-outline" aria-hidden="true" />
+          {{ t('admin.periodsSalesLocked') }}
+        </p>
       </div>
 
       <div class="flex flex-wrap items-end gap-2">
@@ -188,17 +194,15 @@ const NUM =
               </span>
             </td>
             <td class="px-4 py-2.5 text-end">
-              <input
-                v-if="drafts[agent.id]"
-                v-model.number="drafts[agent.id].deals"
-                type="number"
-                min="0"
-                step="1000"
-                :class="NUM"
-                :aria-label="`${t('table.sales')} — ${agent.name}`"
-              />
+              <span
+                class="inline-flex items-center justify-end gap-1.5 font-semibold text-strong tabular-nums"
+                :title="t('admin.periodsSalesLocked')"
+              >
+                <iconify-icon icon="mdi:lock-outline" aria-hidden="true" class="text-dim" />
+                {{ egp(periods.get(agent.id)?.amount_egp ?? 0) }}
+              </span>
               <span class="block mt-0.5 text-eyebrow text-dim tabular-nums">
-                {{ compact(drafts[agent.id]?.deals ?? 0) }}
+                {{ compact(periods.get(agent.id)?.amount_egp ?? 0) }}
               </span>
             </td>
             <td class="px-4 py-2.5 text-end whitespace-nowrap">
