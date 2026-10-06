@@ -583,7 +583,17 @@
     "cancelEdit": "Cancel edit",
     "editing": "Editing the deal of {name} — {amount}",
     "editNote": "Editing corrects the consultant and team totals for the quarter right away, with no celebration on the screens.",
-    "updated": "Deal updated: {amount} for {name}. Totals have been refreshed."
+    "updated": "Deal updated: {amount} for {name}. Totals have been refreshed.",
+    "totalTitle": "Edit a consultant’s total sales",
+    "totalHint": "Sets a consultant’s total sales for a whole quarter. The difference from their recorded deals counts as unitemized sales. The total can’t go below the recorded deals, and no celebration is shown on the screens.",
+    "totalNew": "New total (EGP)",
+    "totalSave": "Save total",
+    "totalCurrent": "Current total",
+    "totalDealsSum": "Recorded deals",
+    "totalLoose": "Unitemized after edit",
+    "totalTooLow": "The total can’t be less than the recorded deals ({sum}). Edit the deals themselves to lower it.",
+    "totalFuture": "That quarter hasn’t started yet.",
+    "totalSaved": "Set {name}’s total for {quarter} to {total}."
   },
   "devices": {
     "tab": "Devices",

@@ -91,9 +91,36 @@ export function useDeals() {
     return ((data ?? []) as DealRow[]).map((d) => ({ ...d, amount_egp: Number(d.amount_egp) || 0 }))
   }
 
+  /** إجمالي مبيعات المستشار في ربع، ومجموع صفقاته المسجّلة فيه (الفرق = مبيعات غير مفصّلة). */
+  async function quarterTotals(agentId: string, year: number, quarter: number) {
+    const [period, rows] = await Promise.all([
+      supabase.from('lb_periods').select('amount_egp').eq('agent_id', agentId).eq('year', year).eq('quarter', quarter),
+      supabase.from('lb_deals').select('amount_egp').eq('agent_id', agentId).eq('year', year).eq('quarter', quarter),
+    ])
+    if (period.error) throw new Error(period.error.message)
+    if (rows.error) throw new Error(rows.error.message)
+    const sum = (list: { amount_egp: number }[] | null) =>
+      Math.round((list ?? []).reduce((s, r) => s + (Number(r.amount_egp) || 0), 0) * 100) / 100
+    return { total: sum(period.data), dealsSum: sum(rows.data) }
+  }
+
+  /** ضبط إجمالي ربع المستشار — الخادم بيرفض أقل من مجموع صفقاته، ومن غير احتفال. */
+  async function setTotal(agentId: string, year: number, quarter: number, total: number) {
+    const { error } = await supabase.rpc('lb_admin_set_total', {
+      p_agent_id: agentId,
+      p_year: year,
+      p_quarter: quarter,
+      p_total: total,
+    })
+    if (error) throw new Error(error.message)
+    await admin.loadPeriods()
+  }
+
   return {
     deals,
     loading,
+    quarterTotals,
+    setTotal,
     sharedParts,
     load,
     addDeal,

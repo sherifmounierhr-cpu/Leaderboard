@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { compact, egp } from '@/lib/format'
+import { compact, currentQuarter, egp } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
 import { useDeals } from '@/composables/useDeals'
 import { useLocalName } from '@/composables/useLocalName'
@@ -16,7 +16,7 @@ import { dayKey, NUMBER_LOCALE } from '@/lib/region'
 const { t, locale } = useI18n()
 const localName = useLocalName()
 const { agents, teams } = useAdminData()
-const { deals, loading, load, addDeal, deleteDeal, sharedParts, developers, projects } = useDeals()
+const { deals, loading, load, addDeal, deleteDeal, sharedParts, quarterTotals, setTotal, developers, projects } = useDeals()
 
 const form = ref({
   agentId: '', teamId: '', date: dayKey(), amount: '', developer: '', project: '',
@@ -126,6 +126,63 @@ async function submit() {
     message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
   } finally {
     saving.value = false
+  }
+}
+
+// ---------------------------------------------------------- إجمالي المبيعات
+const totalOpen = ref(false)
+const totalForm = ref({ agentId: '', year: new Date().getFullYear(), quarter: currentQuarter(), total: '' })
+const totalInfo = ref<{ total: number; dealsSum: number } | null>(null)
+const totalSaving = ref(false)
+const totalMessage = ref<{ ok: boolean; text: string } | null>(null)
+let totalToken = 0
+
+const totalValue = computed(() => Math.round((Number(String(totalForm.value.total).replace(/[,\s]/g, '')) || 0) * 100) / 100)
+const quarterStarted = computed(() =>
+  totalForm.value.year * 4 + totalForm.value.quarter <= new Date().getFullYear() * 4 + currentQuarter(),
+)
+const totalTooLow = computed(() => Boolean(totalInfo.value) && totalValue.value < (totalInfo.value?.dealsSum ?? 0))
+const totalValid = computed(() =>
+  Boolean(totalInfo.value) && quarterStarted.value && !totalTooLow.value && totalForm.value.total !== '' &&
+  totalValue.value !== totalInfo.value?.total,
+)
+const totalAgentName = computed(() => options.value.find((o) => o.id === totalForm.value.agentId)?.label ?? '')
+
+async function refreshTotal(fill = true) {
+  const f = totalForm.value
+  const token = ++totalToken
+  totalInfo.value = null
+  if (!f.agentId || !quarterStarted.value) return
+  try {
+    const info = await quarterTotals(f.agentId, f.year, f.quarter)
+    if (token !== totalToken) return
+    totalInfo.value = info
+    if (fill) totalForm.value.total = String(info.total)
+  } catch (err) {
+    if (token === totalToken) totalMessage.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
+  }
+}
+watch(() => [totalForm.value.agentId, totalForm.value.year, totalForm.value.quarter], () => {
+  totalMessage.value = null
+  void refreshTotal()
+})
+
+async function submitTotal() {
+  if (!totalValid.value || totalSaving.value) return
+  const f = totalForm.value
+  totalSaving.value = true
+  totalMessage.value = null
+  try {
+    await setTotal(f.agentId, f.year, f.quarter, totalValue.value)
+    totalMessage.value = {
+      ok: true,
+      text: t('deals.totalSaved', { name: totalAgentName.value, quarter: `Q${f.quarter} ${f.year}`, total: compact(totalValue.value) }),
+    }
+    await refreshTotal(false)
+  } catch (err) {
+    totalMessage.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
+  } finally {
+    totalSaving.value = false
   }
 }
 
@@ -400,6 +457,93 @@ const FIELD =
         :class="message.ok ? 'text-accent-text' : 'text-down'"
       >{{ message.text }}</p>
     </form>
+
+    <!-- تعديل إجمالي المبيعات: لمبيعات غير مسجّلة كصفقات -->
+    <section class="rounded-xl border border-card-border bg-card shadow-[var(--shadow-card)]">
+      <button
+        type="button"
+        class="flex w-full items-center justify-between gap-3 px-5 py-3.5 text-start"
+        :aria-expanded="totalOpen"
+        @click="totalOpen = !totalOpen"
+      >
+        <span class="flex items-center gap-2 font-semibold text-strong">
+          <iconify-icon icon="mdi:calculator-variant-outline" aria-hidden="true" class="text-xl text-mute" />
+          {{ t('deals.totalTitle') }}
+        </span>
+        <iconify-icon :icon="totalOpen ? 'mdi:chevron-up' : 'mdi:chevron-down'" aria-hidden="true" class="text-xl text-mute" />
+      </button>
+
+      <form v-if="totalOpen" class="flex flex-col gap-4 border-t border-card-border px-5 pb-5 pt-4" @submit.prevent="submitTotal">
+        <p class="m-0 text-caption text-mute">{{ t('deals.totalHint') }}</p>
+
+        <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.6fr_.7fr_.7fr_1.2fr_auto] xl:items-end">
+          <label class="flex flex-col gap-1.5">
+            <span class="font-semibold text-caption text-mute">{{ t('table.agent') }} *</span>
+            <SearchSelect
+              v-model="totalForm.agentId"
+              :options="options"
+              :placeholder="t('deals.agentSearch')"
+              :empty-text="t('deals.agentNone')"
+              :input-class="FIELD"
+              required
+            />
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="font-semibold text-caption text-mute">{{ t('admin.year') }}</span>
+            <input v-model.number="totalForm.year" type="number" min="2020" max="2100" dir="ltr" :class="[FIELD, 'tabular-nums']" />
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="font-semibold text-caption text-mute">{{ t('quarter.label') }}</span>
+            <select v-model.number="totalForm.quarter" :class="FIELD">
+              <option v-for="q in [1, 2, 3, 4]" :key="q" :value="q">{{ t('quarter.short', { n: q }) }}</option>
+            </select>
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="flex items-center justify-between font-semibold text-caption text-mute">
+              <span>{{ t('deals.totalNew') }} *</span>
+              <b v-if="totalValue > 0" class="font-semibold tabular-nums text-accent-text">{{ egp(totalValue) }}</b>
+            </span>
+            <input
+              v-model="totalForm.total"
+              type="text"
+              inputmode="numeric"
+              dir="ltr"
+              :disabled="!totalInfo"
+              :class="[FIELD, 'text-end tabular-nums', totalTooLow ? 'border-down' : '']"
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="inline-flex h-[42px] items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
+            :disabled="!totalValid || totalSaving"
+          >
+            <iconify-icon icon="mdi:content-save-outline" aria-hidden="true" class="text-lg" />
+            {{ totalSaving ? t('admin.saving') : t('deals.totalSave') }}
+          </button>
+        </div>
+
+        <p v-if="!quarterStarted" class="m-0 text-caption font-medium text-down">{{ t('deals.totalFuture') }}</p>
+        <dl v-else-if="totalInfo" class="m-0 flex flex-wrap gap-x-8 gap-y-1 text-caption text-mute tabular-nums">
+          <div class="flex gap-1.5"><dt>{{ t('deals.totalCurrent') }}:</dt><dd class="m-0 font-semibold text-strong">{{ egp(totalInfo.total) }}</dd></div>
+          <div class="flex gap-1.5"><dt>{{ t('deals.totalDealsSum') }}:</dt><dd class="m-0 font-semibold text-strong">{{ egp(totalInfo.dealsSum) }}</dd></div>
+          <div class="flex gap-1.5"><dt>{{ t('deals.totalLoose') }}:</dt><dd class="m-0 font-semibold text-strong">{{ egp(Math.max(totalValue - totalInfo.dealsSum, 0)) }}</dd></div>
+        </dl>
+        <p v-if="totalTooLow && totalInfo" class="m-0 text-caption font-medium text-down">
+          {{ t('deals.totalTooLow', { sum: egp(totalInfo.dealsSum) }) }}
+        </p>
+
+        <p
+          v-if="totalMessage"
+          :role="totalMessage.ok ? 'status' : 'alert'"
+          class="m-0 text-sm font-medium"
+          :class="totalMessage.ok ? 'text-accent-text' : 'text-down'"
+        >{{ totalMessage.text }}</p>
+      </form>
+    </section>
 
     <!-- آخر الصفقات -->
     <header class="flex flex-wrap items-center justify-between gap-3">
