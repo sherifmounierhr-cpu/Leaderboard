@@ -82,6 +82,22 @@ export function drivePhotoUrl(value: unknown): string {
   return m ? `https://lh3.googleusercontent.com/d/${m[1]}` : raw
 }
 
+/** عرض (بكسل) الصورة المصغّرة: small للصفوف والدوائر الصغيرة، large للبطاقات الكبيرة. */
+export const THUMB_WIDTH = { small: 192, large: 448 } as const
+
+/**
+ * صور المستشارين والفرق مرفوعة بحجمها الكامل (PNG بأبعاد ~1250 ومن 0.4 لـ 1.2
+ * ميجا) وبتتعرض في دوائر 40–70 بكسل. فك ترميز 40 صورة منهم مع كل انتقال
+ * لصفحة المستشارين هو اللي بيعمل اللاج على التلفزيون. تخزين Supabase بيقدّم
+ * نسخة مصغّرة من نفس الرابط (~30 كيلو بدل ميجا) — أي رابط تاني يرجع كما هو.
+ */
+export function thumbUrl(url: string, size: keyof typeof THUMB_WIDTH = 'small'): string {
+  const marker = '/storage/v1/object/public/'
+  if (!url || !url.includes('.supabase.co') || !url.includes(marker)) return url
+  const resized = url.replace(marker, '/storage/v1/render/image/public/')
+  return `${resized}${resized.includes('?') ? '&' : '?'}width=${THUMB_WIDTH[size]}&quality=80`
+}
+
 /** الساعة والدقيقة بمحلية العرض — أرقام لاتينية في العربية كبقية اللوحة. */
 export function clockTime(date: Date): string {
   const tag = LOCALE_TAG[activeLocale]

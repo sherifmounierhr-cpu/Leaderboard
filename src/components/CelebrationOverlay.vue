@@ -956,6 +956,7 @@ onBeforeUnmount(() => {
             <Avatar
               :entity="{ id: d.id, name: d.name, photo: d.photo, deals: 0, target: 0, pct: 0 }"
               kind="agent"
+              size="large"
               class="size-[clamp(5.5rem,14vh,9rem)] rounded-[1.4rem] text-[clamp(1.4rem,3.4vh,2.4rem)] shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] ring-2 ring-white/60"
             />
             <span class="max-w-[14ch] truncate font-bold text-white text-[clamp(15px,2.2vh,24px)]">{{ d.name }}</span>

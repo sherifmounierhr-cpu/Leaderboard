@@ -36,6 +36,7 @@ const medal = computed(() =>
     <Avatar
       :entity="team"
       kind="team"
+      size="large"
       class="size-20 rounded-2xl ring-2 text-2xl"
       :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(56px,8.6vh,104px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
     />

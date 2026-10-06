@@ -46,6 +46,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
     <Avatar
       :entity="entity"
       :kind="kind"
+      size="large"
       class="size-24 rounded-3xl ring-2 ring-accent/80 text-3xl"
       :class="entity.leads?.length ? 'lg:size-[clamp(72px,11.5vh,140px)]' : 'lg:size-[clamp(72px,11vh,128px)]'"
     />

@@ -1,7 +1,7 @@
 import { computed, ref, watch } from 'vue'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { hasSupabaseConfig, supabase } from '@/lib/supabase'
-import { currentQuarter, drivePhotoUrl } from '@/lib/format'
+import { currentQuarter, drivePhotoUrl, thumbUrl } from '@/lib/format'
 import { i18n } from '@/i18n'
 import type {
   AgentStanding,
@@ -166,6 +166,31 @@ const status = computed<FeedStatus>(() => {
 })
 
 // ------------------------------------------------------------------- loading
+/**
+ * الصور المصغّرة تتحمّل والشاشة التانية مش مفتوحة: التبديل التلقائي لصفحة
+ * المستشارين يلاقيها في الكاش بدل ما يحمّل 40 صورة لحظة الانتقال. تُحمَّل
+ * على دفعات صغيرة في وقت فراغ المتصفح، ومرة واحدة لكل رابط.
+ */
+const prefetched = new Set<string>()
+function prefetchThumbs(urls: (string | null)[]) {
+  const pending = urls
+    .map((u) => thumbUrl(drivePhotoUrl(u), 'small'))
+    .filter((u) => u && !prefetched.has(u))
+  if (!pending.length) return
+  for (const u of pending) prefetched.add(u)
+  const idle = (cb: () => void) =>
+    typeof requestIdleCallback === 'function' ? requestIdleCallback(cb, { timeout: 4000 }) : setTimeout(cb, 1500)
+  const next = () => {
+    for (const u of pending.splice(0, 4)) {
+      const img = new Image()
+      img.decoding = 'async'
+      img.src = u
+    }
+    if (pending.length) idle(next)
+  }
+  idle(next)
+}
+
 async function load() {
   if (!hasSupabaseConfig) {
     error.value = 'Supabase غير مضبوط'
@@ -205,6 +230,10 @@ async function load() {
 
     rawTeams.value = (teamRes.data ?? []) as TeamStanding[]
     rawAgents.value = (agentRes.data ?? []) as AgentStanding[]
+    prefetchThumbs([
+      ...rawTeams.value.map((t) => t.photo_url),
+      ...rawAgents.value.map((a) => a.photo_url),
+    ])
 
     const prev = new Map<string, number>()
     for (const row of prevRes.data ?? []) {

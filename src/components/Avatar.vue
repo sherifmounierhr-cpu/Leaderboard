@@ -2,11 +2,15 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { BoardEntity } from '@/composables/useBoardData'
+import { thumbUrl } from '@/lib/format'
 
 const props = withDefaults(
-  defineProps<{ entity: BoardEntity; kind?: 'agent' | 'team' }>(),
-  { kind: 'agent' },
+  defineProps<{ entity: BoardEntity; kind?: 'agent' | 'team'; size?: 'small' | 'large' }>(),
+  { kind: 'agent', size: 'small' },
 )
+
+/** نسخة مصغّرة بحجم العرض — الأصل ميجا كامل لدايرة 60 بكسل. */
+const photoSrc = computed(() => thumbUrl(props.entity.photo, props.size))
 
 const { t, locale } = useI18n()
 
@@ -83,7 +87,7 @@ const label = computed(() =>
         aria-hidden="true"
         data-avatar-photo
         class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url('${entity.photo}')` }"
+        :style="{ backgroundImage: `url('${photoSrc}')` }"
       />
     </template>
   </div>

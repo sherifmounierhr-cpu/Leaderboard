@@ -9,6 +9,7 @@ import {
   percent,
   relativeTime,
   setNumberLocale,
+  thumbUrl,
 } from '@/lib/format'
 
 /**
@@ -121,5 +122,22 @@ describe('pctOf', () => {
 
   it('يسمح بتجاوز المئة لمن فاق هدفه', () => {
     expect(pctOf(15_000_000, 10_000_000)).toBe(150)
+  })
+})
+
+describe('thumbUrl', () => {
+  const stored = 'https://abc.supabase.co/storage/v1/object/public/avatars/agents/x.png'
+
+  it('serves Supabase storage photos as a resized copy', () => {
+    expect(thumbUrl(stored)).toBe(
+      'https://abc.supabase.co/storage/v1/render/image/public/avatars/agents/x.png?width=192&quality=80',
+    )
+    expect(thumbUrl(stored, 'large')).toContain('width=448')
+  })
+
+  it('leaves other photos and empty values alone', () => {
+    expect(thumbUrl('')).toBe('')
+    expect(thumbUrl('https://lh3.googleusercontent.com/d/abc')).toBe('https://lh3.googleusercontent.com/d/abc')
+    expect(thumbUrl('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA')
   })
 })
