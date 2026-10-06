@@ -87,7 +87,7 @@ const label = computed(() =>
         aria-hidden="true"
         data-avatar-photo
         class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url('${photoSrc}')` }"
+        :style="{ backgroundImage: `url('${photoSrc}')`, backgroundPosition: kind === 'agent' ? '50% 12%' : 'center' }"
       />
     </template>
   </div>

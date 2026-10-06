@@ -130,7 +130,7 @@ describe('thumbUrl', () => {
 
   it('serves Supabase storage photos as a resized copy', () => {
     expect(thumbUrl(stored)).toBe(
-      'https://abc.supabase.co/storage/v1/render/image/public/avatars/agents/x.png?width=192&quality=80',
+      'https://abc.supabase.co/storage/v1/render/image/public/avatars/agents/x.png?width=192&height=192&resize=contain&quality=80',
     )
     expect(thumbUrl(stored, 'large')).toContain('width=448')
   })

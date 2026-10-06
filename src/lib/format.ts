@@ -95,7 +95,10 @@ export function thumbUrl(url: string, size: keyof typeof THUMB_WIDTH = 'small'):
   const marker = '/storage/v1/object/public/'
   if (!url || !url.includes('.supabase.co') || !url.includes(marker)) return url
   const resized = url.replace(marker, '/storage/v1/render/image/public/')
-  return `${resized}${resized.includes('?') ? '&' : '?'}width=${THUMB_WIDTH[size]}&quality=80`
+  // width وحدها بتقصّ شريطاً رأسياً من النص وتسيب الارتفاع كاملاً (وش مقطوع/صورة سودا)؛
+  // contain جوه مربع بيصغّر مع الحفاظ على النسبة من غير قص — والقص بيعمله CSS (cover)
+  const w = THUMB_WIDTH[size]
+  return `${resized}${resized.includes('?') ? '&' : '?'}width=${w}&height=${w}&resize=contain&quality=80`
 }
 
 /** الساعة والدقيقة بمحلية العرض — أرقام لاتينية في العربية كبقية اللوحة. */
