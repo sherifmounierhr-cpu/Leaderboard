@@ -34,7 +34,7 @@ interface Group {
 const PAGE = 60
 const KNOWN_ACTIONS = [
   'login', 'insert', 'update', 'delete',
-  'user_create', 'user_password', 'user_ban', 'user_unban', 'user_delete',
+  'user_create', 'user_email', 'user_password', 'user_ban', 'user_unban', 'user_delete',
 ]
 const KNOWN_ENTITIES = [
   'agents', 'teams', 'team_leads', 'deals', 'sales', 'targets', 'announcements', 'board_settings',
@@ -165,6 +165,7 @@ const ICON: Record<string, string> = {
   delete: 'mdi:trash-can-outline',
   user_create: 'mdi:account-plus-outline',
   user_password: 'mdi:lock-reset',
+  user_email: 'mdi:email-edit-outline',
   user_ban: 'mdi:account-cancel-outline',
   user_unban: 'mdi:account-check-outline',
   user_delete: 'mdi:account-remove-outline',

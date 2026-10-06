@@ -10,6 +10,8 @@
 //   POST /functions/v1/admin-users
 //   { action: 'create', email?, username?, password, role, permissions }
 //     (واحد منهما على الأقل؛ بلا بريد يُعطى بريداً داخلياً لا يستقبل رسائل)
+//   { action: 'email', user_id, email, username? }
+//     (email فاضي = حساب بلا بريد حقيقي، ويلزم username)
 //   { action: 'password', user_id, password }
 //   { action: 'ban', user_id, banned }
 //   { action: 'delete', user_id }
@@ -140,10 +142,11 @@ Deno.serve(async (req) => {
     if (error) console.error('[admin-users] audit', error.message)
   }
 
-  // الحذف والإيقاف وكلمة المرور على حساب آخر فقط: المسؤول لا يقفل نفسه بالخطأ
+  // الحذف والإيقاف وكلمة المرور على حساب آخر فقط: المسؤول لا يقفل نفسه بالخطأ.
+  // تغيير البريد مسموح على حسابه هو كمان — لا يقفله ولا يغيّر صلاحياته.
   if (action !== 'create') {
     if (!userId) return fail('المستخدم مطلوب')
-    if (userId === me.user.id) return fail('لا يمكنك تنفيذ هذا على حسابك — استخدم «تغيير كلمة المرور»')
+    if (action !== 'email' && userId === me.user.id) return fail('لا يمكنك تنفيذ هذا على حسابك — استخدم «تغيير كلمة المرور»')
   }
 
   try {
@@ -190,6 +193,25 @@ Deno.serve(async (req) => {
         }
         await audit('user_create', data.user.id)
         return json({ ok: true, id: data.user.id })
+      }
+
+      case 'email': {
+        let email = String(body.email ?? '').trim().toLowerCase()
+        if (!email) {
+          // بلا بريد حقيقي: يدخل باسمه فقط، فنحتاج اسم المستخدم لبريده الداخلي
+          const username = String(body.username ?? '').trim().toLowerCase()
+          if (!USERNAME_RE.test(username)) return fail('اكتب اسم مستخدم صالح قبل ما تمسح البريد — الحساب لازم له بريد أو اسم مستخدم')
+          email = `${username}@${NO_EMAIL_DOMAIN}`
+        } else if (!EMAIL_RE.test(email) || email.endsWith(`@${NO_EMAIL_DOMAIN}`)) {
+          return fail('البريد الإلكتروني غير صالح')
+        }
+        const { error } = await service.auth.admin.updateUserById(userId, { email, email_confirm: true })
+        if (error) {
+          if (!/already|registered|exists/i.test(error.message)) return fail(error.message)
+          return fail('هذا البريد مسجَّل بالفعل')
+        }
+        await audit('user_email', userId)
+        return json({ ok: true })
       }
 
       case 'password': {

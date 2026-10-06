@@ -29,6 +29,7 @@ interface UserRow {
 const MIN_PASSWORD = 10
 /** نفس قيد القاعدة: 3–30، حروف إنجليزية صغيرة وأرقام و . _ - */
 const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,29}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const ROLES: Exclude<Role, 'demo'>[] = ['admin', 'editor', 'readonly', 'viewer']
 
 const { t, locale } = useI18n()
@@ -41,7 +42,7 @@ const busy = ref(false)
 const notice = ref<{ ok: boolean; text: string } | null>(null)
 
 /** null = مغلق؛ id فاضي = مستخدم جديد. accessLocked: حسابك أو حساب العرض — الاسم فقط. */
-const editing = ref<{ id: string; name: string; username: string; accessLocked: boolean } | null>(null)
+const editing = ref<{ id: string; name: string; username: string; email: string; accessLocked: boolean; self: boolean } | null>(null)
 const form = ref({
   email: '',
   username: '',
@@ -118,7 +119,7 @@ async function passwordProblem(password: string) {
 }
 
 function openNew() {
-  editing.value = { id: '', name: '', username: '', accessLocked: false }
+  editing.value = { id: '', name: '', username: '', email: '', accessLocked: false, self: false }
   form.value = { email: '', username: '', password: generatePassword(), role: 'editor', permissions: [] }
   shownPassword.value = null
   notice.value = null
@@ -129,7 +130,9 @@ function openEdit(u: UserRow) {
     id: u.id,
     name: displayName(u),
     username: u.username ?? '',
+    email: u.email ?? '',
     accessLocked: u.id === myId.value || u.role === 'demo',
+    self: u.id === myId.value,
   }
   form.value = {
     email: u.email ?? '',
@@ -150,7 +153,9 @@ function togglePerm(p: AdminSection) {
 const formError = computed(() => {
   const username = form.value.username.trim().toLowerCase()
   if (username && !USERNAME_RE.test(username)) return t('users.usernameRule')
-  if (editing.value && !editing.value.id && !username && !form.value.email.trim()) return t('users.needOne')
+  const email = form.value.email.trim()
+  if (email && !EMAIL_RE.test(email)) return t('users.emailInvalid')
+  if (editing.value && !username && !email) return t('users.needOne')
   if (!editing.value?.accessLocked && form.value.role === 'editor' && !form.value.permissions.length) {
     return t('users.pickOne')
   }
@@ -186,10 +191,27 @@ async function save() {
   }
 
   const target = editing.value
+  const newEmail = form.value.email.trim().toLowerCase()
+  const newPassword = form.value.password
+  if (newPassword && !target.self) {
+    const problem = await passwordProblem(newPassword)
+    if (problem) {
+      notice.value = { ok: false, text: problem }
+      return
+    }
+  }
+  let passwordChanged = false
   const ok = await run(async () => {
     if (username !== target.username) {
       const { error } = await supabase.rpc('lb_admin_set_username', { p_user_id: target.id, p_username: username })
       if (error) throw new Error(error.message)
+    }
+    if (newEmail !== target.email.toLowerCase()) {
+      await invoke({ action: 'email', user_id: target.id, email: newEmail, username })
+    }
+    if (newPassword && !target.self) {
+      await invoke({ action: 'password', user_id: target.id, password: newPassword })
+      passwordChanged = true
     }
     if (target.accessLocked) return
     const { error } = await supabase.rpc('lb_admin_set_access', {
@@ -198,8 +220,12 @@ async function save() {
       p_permissions: perms,
     })
     if (error) throw new Error(error.message)
-  }, t('users.saved', { email: username || target.name }))
-  if (ok) editing.value = null
+  }, t('users.saved', { email: username || newEmail || target.name }))
+  if (ok) {
+    // كلمة المرور اللي اتحطّت تظهر مرة واحدة ليسلّمها المسؤول لصاحب الحساب
+    if (passwordChanged) shownPassword.value = newPassword
+    editing.value = null
+  }
 }
 
 async function resetPassword(u: UserRow) {
@@ -340,10 +366,34 @@ const ICON_BTN =
           />
           <span class="text-caption text-dim">{{ t('users.usernameHint') }}</span>
         </label>
-        <label v-if="!editing.id" class="flex flex-col gap-1.5">
+        <label class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('users.emailOptional') }}</span>
           <input v-model="form.email" type="email" autocomplete="off" dir="ltr" :class="FIELD" />
-          <span class="text-caption text-dim">{{ t('users.emailHint') }}</span>
+          <span class="text-caption text-dim">{{ editing.id ? t('users.emailEditHint') : t('users.emailHint') }}</span>
+        </label>
+        <label v-if="editing.id && !editing.self" class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t('users.newPassword') }}</span>
+          <div class="flex gap-2">
+            <input
+              v-model="form.password"
+              type="text"
+              :minlength="MIN_PASSWORD"
+              autocomplete="new-password"
+              spellcheck="false"
+              dir="ltr"
+              :class="[FIELD, 'font-mono']"
+            />
+            <button
+              type="button"
+              :class="ICON_BTN"
+              :title="t('users.generate')"
+              :aria-label="t('users.generate')"
+              @click="form.password = generatePassword()"
+            >
+              <iconify-icon icon="mdi:dice-multiple-outline" aria-hidden="true" />
+            </button>
+          </div>
+          <span class="text-caption text-dim">{{ t('users.newPasswordHint', { n: MIN_PASSWORD }) }}</span>
         </label>
         <label v-if="!editing.id" class="flex flex-col gap-1.5">
           <span class="font-semibold text-caption text-mute">{{ t('admin.password') }}</span>

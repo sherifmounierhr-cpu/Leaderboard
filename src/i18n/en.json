@@ -789,7 +789,11 @@
     "needOne": "Enter an email or a username — at least one",
     "noEmail": "No email",
     "accessLocked": "You can change the username here. Permissions can’t be changed for your own account or the demo account.",
-    "sessionExpired": "Your session ended (you were signed out on another device). Sign in again and continue."
+    "sessionExpired": "Your session ended (you were signed out on another device). Sign in again and continue.",
+    "emailEditHint": "Change it, or clear it (a username must remain) so the account signs in with the username only",
+    "emailInvalid": "That email address isn’t valid",
+    "newPassword": "New password (optional)",
+    "newPasswordHint": "Leave it empty to keep the current one. If you set one (at least {n} characters) it shows once after saving so you can hand it over."
   },
   "audit": {
     "title": "User activity log",
@@ -820,7 +824,8 @@
       "user_password": "Reset password of",
       "user_ban": "Suspended account",
       "user_unban": "Reactivated account",
-      "user_delete": "Deleted account"
+      "user_delete": "Deleted account",
+      "user_email": "Changed the email of"
     },
     "entity": {
       "agents": "consultant",
