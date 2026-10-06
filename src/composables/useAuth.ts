@@ -14,6 +14,19 @@ const authError = ref<string | null>(null)
 
 let started = false
 
+const EXPIRED = 'انتهت جلستك (اتسجّل خروج من جهاز تاني) — ادخل من جديد'
+
+/**
+ * هل الخادم ألغى الجلسة دي؟ انقطاع الشبكة أو عطل مؤقت لا يُعتبر إلغاء — الشاشة
+ * المفتوحة طول الوقت ما تتطردش بسبب إنترنت قطع.
+ */
+async function sessionRevoked(): Promise<boolean> {
+  const { error } = await supabase.auth.getUser()
+  if (!error) return false
+  const { status, code } = error as { status?: number; code?: string }
+  return (status === 401 || status === 403) && (code === 'session_not_found' || code === 'user_not_found' || code === 'bad_jwt')
+}
+
 /**
  * الدور يُقرأ من الخادم لا من الـ JWT: صلاحية المسؤول تُفرض داخل دوال قاعدة
  * البيانات، وهذه القراءة تُستخدم لعرض الواجهة الصحيحة فقط.
@@ -42,6 +55,13 @@ function start() {
 
   void supabase.auth.getSession().then(async ({ data }) => {
     session.value = data.session
+    // جلسة محفوظة قد تكون اتلغت من الخادم (خروج من جهاز تاني): التوكن لسه صالح
+    // لقاعدة البيانات لحد ما ينتهي، بس دوال الحافة بترفضه — فنتحقق منها هنا
+    if (data.session && (await sessionRevoked())) {
+      authError.value = EXPIRED
+      await supabase.auth.signOut({ scope: 'local' })
+      session.value = null
+    }
     await loadRole()
     ready.value = true
   })
@@ -106,12 +126,23 @@ export function useAuth() {
     }
   }
 
+  /**
+   * الخروج من الجهاز ده بس. الافتراضي في supabase-js «global» وبيلغي جلسات الحساب
+   * على كل الأجهزة (صفحات إدارة مفتوحة، الموبايل…) فتفضل شكلها شغّالة وهي مرفوضة.
+   * قطع جهاز بعينه من صفحة «الأجهزة».
+   */
   async function signOut() {
-    await supabase.auth.signOut()
+    await supabase.auth.signOut({ scope: 'local' })
     session.value = null
     role.value = null
     permissions.value = []
     isDemo.value = false
+  }
+
+  /** الخادم رفض الجلسة: نرجع لشاشة الدخول برسالة بدل صفحة شكلها شغّال. */
+  async function expireSession() {
+    authError.value = EXPIRED
+    await signOut()
   }
 
   async function changePassword(newPassword: string) {
@@ -139,6 +170,7 @@ export function useAuth() {
     email: computed(() => (session.value?.user.email ?? '').replace(/@noemail\.everest-leaderboard\.app$/, '')),
     signIn,
     signOut,
+    expireSession,
     changePassword,
   }
 }

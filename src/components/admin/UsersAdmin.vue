@@ -32,7 +32,7 @@ const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,29}$/
 const ROLES: Exclude<Role, 'demo'>[] = ['admin', 'editor', 'readonly', 'viewer']
 
 const { t, locale } = useI18n()
-const { session } = useAuth()
+const { session, expireSession } = useAuth()
 const myId = computed(() => session.value?.user.id ?? null)
 
 const users = ref<UserRow[]>([])
@@ -71,6 +71,11 @@ onMounted(load)
 async function invoke(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke('admin-users', { body })
   if (error) {
+    // 401 = الجلسة اتلغت من الخادم (خروج من جهاز تاني)، مش مشكلة في البيانات
+    if ((error as { context?: Response }).context?.status === 401) {
+      void expireSession()
+      throw new Error(t('users.sessionExpired'))
+    }
     let message = error.message
     try {
       const payload = await (error as { context?: Response }).context?.json()

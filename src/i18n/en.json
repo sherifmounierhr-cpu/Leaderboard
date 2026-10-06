@@ -788,7 +788,8 @@
     "emailHint": "Leave it empty and the account signs in with the username only",
     "needOne": "Enter an email or a username — at least one",
     "noEmail": "No email",
-    "accessLocked": "You can change the username here. Permissions can’t be changed for your own account or the demo account."
+    "accessLocked": "You can change the username here. Permissions can’t be changed for your own account or the demo account.",
+    "sessionExpired": "Your session ended (you were signed out on another device). Sign in again and continue."
   },
   "audit": {
     "title": "User activity log",
