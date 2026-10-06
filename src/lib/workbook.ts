@@ -11,7 +11,10 @@ import { dayKey } from './region'
 export interface WorkbookPeriod {
   quarter: number
   target: number
+  /** مبيعات الربع غير المسجّلة كصفقات (q_deals). */
   deals: number
+  /** إجمالي الربع كما على اللوحة (q_total). في الملف المقروء: null = الخانة فاضية. */
+  total?: number | null
 }
 
 export interface WorkbookAgent {
@@ -115,6 +118,7 @@ function instructionRows(year: number) {
     L('• q1_target … q4_target: مستهدف كل ربع بالجنيه.'),
     L('• q1_deals … q4_deals: مبيعات الربع «غير المسجّلة» كصفقات في ورقة Deals. لو هتسجّل كل الصفقات بالتفصيل، اكتب 0.'),
     L('• إجمالي الربع على اللوحة = q_deals + مجموع صفقات الربع في ورقة Deals.'),
+    L('• q1_total … q4_total: إجمالي مبيعات الربع كما هو على اللوحة (بيتكتب لوحده في الملف المصدَّر). لتعديل الإجمالي غيّر الرقم ده وارفع الملف — الإجمالي بيتضبط على الرقم ده بالظبط. سيبه من غير تغيير (أو فاضي) لو مش عايز تعدّل. ما ينفعش يكون أقل من مجموع صفقات المستشار المسجّلة في الربع.'),
     blank,
     H('ورقة Deals — الصفقات'),
     L('• agent: اختر المستشار من القائمة (أسماء ورقة Agents) — إلزامي. الاسم العربي مقبول كمان لو كتبته.'),
@@ -208,6 +212,8 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number): Pro
 
   const agentHeader = ['name', 'name_ar', 'team', 'photo']
   for (const q of QUARTERS) agentHeader.push(`q${q}_target`, `q${q}_deals`)
+  // الإجمالي في آخر الورقة: تعديله بيضبط إجمالي الربع، وفاضي = بلا تغيير
+  for (const q of QUARTERS) agentHeader.push(`q${q}_total`)
 
   const agentRows: (string | number)[][] = [
     agentHeader,
@@ -217,6 +223,7 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number): Pro
         const p = a.periods.find((x) => x.quarter === q)
         row.push(p?.target ?? 0, p?.deals ?? 0)
       }
+      for (const q of QUARTERS) row.push(a.periods.find((x) => x.quarter === q)?.total ?? '')
       return row
     }),
   ]
@@ -250,6 +257,7 @@ export async function buildWorkbook(payload: WorkbookPayload, year: number): Pro
         { width: 20 },
         { width: 34 },
         ...QUARTERS.flatMap(() => [{ width: 14 }, { width: 14 }]),
+        ...QUARTERS.map(() => ({ width: 16 })),
       ],
     },
     {
@@ -333,6 +341,8 @@ export interface ImportSummary {
   dealsMoved?: number
   /** صفقات موجودة اتعدّلت بياناتها (مبلغ، تاريخ…) عن طريق عمود id. */
   dealsUpdated?: number
+  /** إجماليات أرباع اتعدّلت عن طريق q_total. */
+  totalsSet?: number
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -413,9 +423,11 @@ export async function parseWorkbook(
     for (const q of QUARTERS) {
       const target = toNumber(pick(row, aIndex, `q${q}target`))
       const deals = toNumber(pick(row, aIndex, `q${q}deals`))
+      const rawTotal = pick(row, aIndex, `q${q}total`)
+      const total = toText(rawTotal) === '' ? null : toNumber(rawTotal)
       // ربع بلا هدف ولا مبيعات لا يُكتب له صف — نفس قاعدة مزامنة جوجل شيت
-      if (target === 0 && deals === 0) continue
-      list.push({ quarter: q, target, deals })
+      if (target === 0 && deals === 0 && total === null) continue
+      list.push({ quarter: q, target, deals, total })
     }
     periods += list.length
 

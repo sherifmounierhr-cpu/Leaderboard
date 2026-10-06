@@ -227,7 +227,7 @@ export function useAdminData() {
       dealSum.set(key, (dealSum.get(key) ?? 0) + (Number(d.amount_egp) || 0))
     }
 
-    const byAgent = new Map<string, { quarter: number; target: number; deals: number }[]>()
+    const byAgent = new Map<string, { quarter: number; target: number; deals: number; total: number }[]>()
     for (const row of (data ?? []) as AdminPeriod[]) {
       const list = byAgent.get(row.agent_id) ?? []
       const total = Number(row.amount_egp) || 0
@@ -235,6 +235,7 @@ export function useAdminData() {
         quarter: Number(row.quarter),
         target: Number(row.target_egp) || 0,
         deals: Math.max(total - (dealSum.get(`${row.agent_id}:${row.quarter}`) ?? 0), 0),
+        total,
       })
       byAgent.set(row.agent_id, list)
     }
@@ -268,12 +269,42 @@ export function useAdminData() {
   }
 
   /**
+   * q_total في الملف بيضبط إجمالي الربع، فبيتبعت للخادم بس لو اتغيّر عن الموجود
+   * في اللوحة — ملف مصدَّر ومرفوع من غير تعديل ما يغيّرش حاجة. ربع ما بقاش فيه
+   * غير إجمالي ما اتغيّرش بيتشال بالكامل.
+   */
+  async function dropUnchangedTotals(payload: { agents: { name: string; periods: { quarter: number; target: number; deals: number; total?: number | null }[] }[] }) {
+    if (!payload.agents.some((a) => a.periods.some((p) => p.total != null))) return
+    const { data, error } = await supabase
+      .from('lb_periods')
+      .select('agent_id, quarter, amount_egp')
+      .eq('year', year.value)
+    if (error) fail(error)
+    const idByName = new Map(agents.value.map((a) => [a.name, a.id]))
+    const current = new Map<string, number>()
+    for (const row of (data ?? []) as { agent_id: string; quarter: number; amount_egp: number }[]) {
+      current.set(`${row.agent_id}:${row.quarter}`, Number(row.amount_egp) || 0)
+    }
+    for (const agent of payload.agents) {
+      const id = idByName.get(agent.name)
+      for (const p of agent.periods) {
+        if (p.total == null) continue
+        const now = id ? current.get(`${id}:${p.quarter}`) ?? 0 : 0
+        if (Math.abs(p.total - now) < 0.005) p.total = null
+      }
+      agent.periods = agent.periods.filter((p) => p.target !== 0 || p.deals !== 0 || p.total != null)
+    }
+  }
+
+  /**
    * الاستيراد يحدّث ويضيف فقط — لا يحذف أحداً. يمر عبر lb_admin_import
    * المحروسة، وهي نفس منطق مزامنة جوجل شيت، في نداء واحد.
    */
   async function importFile(file: File): Promise<ImportSummary> {
     saveError.value = null
     const { payload, summary } = await parseWorkbook(file)
+    await dropUnchangedTotals(payload)
+    summary.periods = payload.agents.reduce((n, a) => n + a.periods.length, 0)
 
     const { data, error } = await supabase.rpc('lb_admin_import', {
       p_year: year.value,
@@ -284,7 +315,7 @@ export function useAdminData() {
     await reload()
     // الخادم هو اللي يعرف أنهي صفقة جديدة وأنهي كانت موجودة
     const result = (data ?? {}) as {
-      deals?: number; deals_skipped?: number; deals_moved?: number; deals_updated?: number
+      deals?: number; deals_skipped?: number; deals_moved?: number; deals_updated?: number; totals_set?: number
     }
     return {
       ...summary,
@@ -292,6 +323,7 @@ export function useAdminData() {
       dealsSkipped: Number(result.deals_skipped) || 0,
       dealsMoved: Number(result.deals_moved) || 0,
       dealsUpdated: Number(result.deals_updated) || 0,
+      totalsSet: Number(result.totals_set) || 0,
     }
   }
 

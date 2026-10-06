@@ -428,7 +428,8 @@
     },
     "importDealsMoved": "Deals moved to a new team: {n}.",
     "importDealsUpdated": "Deals updated: {n}.",
-    "periodsSalesLocked": "Sales are read-only here. Record and edit them from the Deals tab."
+    "periodsSalesLocked": "Sales are read-only here. Record and edit them from the Deals tab.",
+    "importTotalsSet": "Quarter totals updated: {n}."
   },
   "kpi": {
     "label": "Company quarter summary",

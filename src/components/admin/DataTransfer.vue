@@ -139,6 +139,9 @@ const BTN =
     >
       {{ t('admin.importDone', { teams: result.teams, agents: result.agents, periods: result.periods }) }}
       {{ t('admin.importDeals', { n: result.deals }) }}
+      <span v-if="result.totalsSet">
+        {{ t('admin.importTotalsSet', { n: result.totalsSet }) }}
+      </span>
       <span v-if="result.dealsUpdated">
         {{ t('admin.importDealsUpdated', { n: result.dealsUpdated }) }}
       </span>
