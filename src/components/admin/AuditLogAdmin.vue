@@ -48,7 +48,7 @@ const KNOWN_FIELDS = [
   'deal_date', 'developer', 'project', 'celebration_seconds', 'celebration_song_id', 'volume',
   'celebration_lang', 'cbe_deposit', 'cbe_lending', 'cbe_rates_at', 'news_enabled', 'news_slide_s',
   'news_repeats', 'news_gap_min', 'news_chime', 'news_volume', 'news_sound_id', 'alerts_enabled',
-  'alert_email', 'alert_after_min',
+  'alert_email', 'alert_after_min', 'news_screen_s', 'insights_in_rotation', 'insights_screen_s',
 ]
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-/i
 

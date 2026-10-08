@@ -271,6 +271,12 @@ export interface BoardSettings {
   alert_email?: string | null
   /** الشاشة تسكت كام دقيقة قبل الإيميل. */
   alert_after_min?: number
+  /** مدة شاشة الأخبار كلها بالثواني؛ null = تلقائي (عدد الأخبار × مدة الخبر). */
+  news_screen_s?: number | null
+  /** التحليلات تدخل التبديل التلقائي. */
+  insights_in_rotation?: boolean
+  /** كم ثانية تبقى شاشة التحليلات في التبديل. */
+  insights_screen_s?: number
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number

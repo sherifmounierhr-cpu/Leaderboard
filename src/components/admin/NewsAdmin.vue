@@ -25,7 +25,7 @@ const { t, locale } = useI18n()
 const { isDemo } = useAuth()
 const { items, fetchedAt, stale, lastError, refresh } = useNews()
 const { hiddenIds, hide, show, cast, loaded: controlsLoaded } = useNewsControls()
-const { settings, songs, clips, urlOf, reload: reloadMedia } = useBoardMedia()
+const { settings, songs, clips, urlOf, loaded: mediaLoaded, reload: reloadMedia } = useBoardMedia()
 const { play, stop } = useAudioPlayer()
 
 const now = ref(Date.now())
@@ -71,10 +71,11 @@ const form = ref({
 })
 
 let filled = false
+// بعد أول تحميل فعلي: قبله `settings` قيم افتراضية، وحفظها كان هيكتب فوق الإعدادات الحقيقية
 watch(
-  settings,
-  (value) => {
-    if (filled || value.news_slide_s === undefined) return
+  [settings, mediaLoaded],
+  ([value]) => {
+    if (filled || !mediaLoaded.value) return
     filled = true
     form.value = {
       enabled: value.news_enabled !== false,
@@ -88,6 +89,43 @@ watch(
   },
   { immediate: true, deep: true },
 )
+
+// ------------------------------------------------- مدة الشاشات في التبديل
+const screens = ref({ newsFixed: false, newsSeconds: 60, insightsOn: false, insightsSeconds: 30 })
+let screensFilled = false
+watch(
+  [settings, mediaLoaded],
+  ([value]) => {
+    if (screensFilled || !mediaLoaded.value) return
+    screensFilled = true
+    screens.value = {
+      newsFixed: Boolean(value.news_screen_s),
+      newsSeconds: value.news_screen_s ?? 60,
+      insightsOn: value.insights_in_rotation === true,
+      insightsSeconds: value.insights_screen_s ?? 30,
+    }
+  },
+  { immediate: true, deep: true },
+)
+
+async function saveScreens() {
+  busy.value = 'screens'
+  notice.value = null
+  try {
+    const { error } = await supabase.rpc('lb_admin_save_screen_durations', {
+      p_news_screen_s: screens.value.newsFixed ? Math.round(screens.value.newsSeconds) : null,
+      p_insights_on: screens.value.insightsOn,
+      p_insights_s: Math.round(screens.value.insightsSeconds),
+    })
+    if (error) throw new Error(error.message)
+    await reloadMedia()
+    notice.value = { ok: true, text: t('newsAdmin.screensSaved') }
+  } catch (err) {
+    notice.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
+  } finally {
+    busy.value = null
+  }
+}
 
 /** كل الصوتيات المرفوعة صالحة كتنبيه — المكتبة واحدة. */
 const sounds = computed(() => [...clips.value, ...songs.value])
@@ -258,6 +296,74 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
           class="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
           :disabled="busy === 'settings' || isDemo"
         >{{ busy === 'settings' ? t('admin.saving') : t('admin.save') }}</button>
+      </div>
+    </form>
+
+    <!-- ----------------------------------------- مدة الشاشات في التبديل التلقائي -->
+    <form class="flex flex-col gap-4 rounded-xl border border-card-border bg-card p-5" @submit.prevent="saveScreens">
+      <div>
+        <h3 class="m-0 font-semibold text-strong">{{ t('newsAdmin.screensTitle') }}</h3>
+        <p class="m-0 mt-1 text-caption text-mute">{{ t('newsAdmin.screensHint') }}</p>
+      </div>
+
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="flex flex-col gap-2.5 rounded-lg border border-card-border p-4">
+          <p class="m-0 flex items-center gap-2 font-semibold text-strong">
+            <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-lg text-mute" />
+            {{ t('newsAdmin.screensNews') }}
+          </p>
+          <label class="flex items-center gap-2 text-sm font-semibold text-strong">
+            <input v-model="screens.newsFixed" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
+            {{ t('newsAdmin.screensFixed') }}
+          </label>
+          <label class="flex flex-col gap-1.5" :class="screens.newsFixed ? '' : 'opacity-50'">
+            <span class="font-semibold text-caption text-mute">
+              {{ t('newsAdmin.screensSeconds') }} ·
+              <span class="tabular-nums text-strong">{{ screens.newsSeconds }}{{ t('newsAdmin.s') }}</span>
+            </span>
+            <input
+              v-model.number="screens.newsSeconds"
+              type="range" min="10" max="300" step="5"
+              :disabled="!screens.newsFixed"
+              class="accent-[var(--color-accent)]"
+            />
+          </label>
+          <p class="m-0 text-caption text-dim">
+            {{ screens.newsFixed ? t('newsAdmin.screensNewsFixedHint') : t('newsAdmin.screensNewsAutoHint', { n: slotSeconds }) }}
+          </p>
+        </div>
+
+        <div class="flex flex-col gap-2.5 rounded-lg border border-card-border p-4">
+          <p class="m-0 flex items-center gap-2 font-semibold text-strong">
+            <iconify-icon icon="mdi:chart-line" aria-hidden="true" class="text-lg text-mute" />
+            {{ t('newsAdmin.screensInsights') }}
+          </p>
+          <label class="flex items-center gap-2 text-sm font-semibold text-strong">
+            <input v-model="screens.insightsOn" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
+            {{ t('newsAdmin.screensInsightsOn') }}
+          </label>
+          <label class="flex flex-col gap-1.5" :class="screens.insightsOn ? '' : 'opacity-50'">
+            <span class="font-semibold text-caption text-mute">
+              {{ t('newsAdmin.screensSeconds') }} ·
+              <span class="tabular-nums text-strong">{{ screens.insightsSeconds }}{{ t('newsAdmin.s') }}</span>
+            </span>
+            <input
+              v-model.number="screens.insightsSeconds"
+              type="range" min="10" max="300" step="5"
+              :disabled="!screens.insightsOn"
+              class="accent-[var(--color-accent)]"
+            />
+          </label>
+          <p class="m-0 text-caption text-dim">{{ t('newsAdmin.screensInsightsHint') }}</p>
+        </div>
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          class="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
+          :disabled="busy === 'screens' || isDemo"
+        >{{ busy === 'screens' ? t('admin.saving') : t('admin.save') }}</button>
       </div>
     </form>
 

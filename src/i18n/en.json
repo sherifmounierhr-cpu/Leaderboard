@@ -732,7 +732,18 @@
     "saved": "Saved. Screens pick this up within seconds.",
     "hiddenOk": "Hidden from every screen.",
     "shownOk": "Visible again.",
-    "casted": "Sent to every screen."
+    "casted": "Sent to every screen.",
+    "screensTitle": "Screen durations in auto-rotation",
+    "screensHint": "Applies to every screen that has auto-rotation on. The Teams and Agents interval is set from each screen’s own settings menu.",
+    "screensNews": "News screen",
+    "screensFixed": "Fixed time for the whole screen",
+    "screensSeconds": "Stays on screen",
+    "screensNewsFixedHint": "The screen hands over exactly on time, and repeats the news if it runs out sooner.",
+    "screensNewsAutoHint": "Automatic: stays until every article has been shown (about {n} seconds right now).",
+    "screensInsights": "Insights screen",
+    "screensInsightsOn": "Include in auto-rotation",
+    "screensInsightsHint": "When off, Insights opens by hand only, as before.",
+    "screensSaved": "Screen durations saved. Screens pick them up within moments."
   },
   "users": {
     "tab": "Users",
@@ -893,7 +904,10 @@
       "news_sound_id": "News sound",
       "alerts_enabled": "Screen alerts",
       "alert_email": "Alert email",
-      "alert_after_min": "Alert after (min)"
+      "alert_after_min": "Alert after (min)",
+      "news_screen_s": "News screen time (s)",
+      "insights_in_rotation": "Insights in rotation",
+      "insights_screen_s": "Insights screen time (s)"
     }
   }
 }

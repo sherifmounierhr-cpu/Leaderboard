@@ -28,6 +28,8 @@ const { hiddenIds } = useNewsControls()
 
 /** مدة الخبر الواحد — بتتظبط من صفحة الإدارة. */
 const slideMs = computed(() => (settings.value.news_slide_s ?? 9) * 1000)
+/** مدة الشاشة كلها لو اتحددت من الإدارة؛ فاضية = لحد ما الأخبار تخلص. */
+const screenMs = computed(() => (settings.value.news_screen_s ? settings.value.news_screen_s * 1000 : 0))
 
 const index = ref(0)
 const startedAt = ref(Date.now())
@@ -63,8 +65,14 @@ function step() {
     if (now.value - mountedAt >= WAIT_MS) finish()
     return
   }
+  // مدة ثابتة: تخلص عند موعدها بالظبط، حتى لو الأخبار أكتر أو أقل
+  if (screenMs.value && now.value - mountedAt >= screenMs.value) {
+    finish()
+    return
+  }
   if (now.value - startedAt.value < slideMs.value) return
   if (index.value + 1 < slides.value.length) show(index.value + 1)
+  else if (screenMs.value) show(0)
   else finish()
 }
 

@@ -12,6 +12,7 @@ export const DEFAULT_SETTINGS: BoardSettings = {
   celebration_seconds: 8, celebration_song_id: null, volume: 80,
   news_enabled: true, news_slide_s: 9, news_repeats: 3, news_gap_min: 5,
   news_chime: true, news_volume: 70, news_sound_id: null,
+  news_screen_s: null, insights_in_rotation: false, insights_screen_s: 30,
 }
 export const MEDIA_BUCKET = 'media'
 const FALLBACK_POLL_MS = 5 * 60_000
@@ -45,6 +46,9 @@ async function load() {
       news_chime: row.news_chime ?? true,
       news_volume: Number(row.news_volume ?? 70),
       news_sound_id: row.news_sound_id ?? null,
+      news_screen_s: row.news_screen_s ? Number(row.news_screen_s) : null,
+      insights_in_rotation: row.insights_in_rotation === true,
+      insights_screen_s: Number(row.insights_screen_s) || 30,
     }
   }
   if (!m.error) {

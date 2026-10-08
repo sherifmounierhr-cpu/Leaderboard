@@ -18,6 +18,7 @@ import NewsCastOverlay from '@/components/NewsCastOverlay.vue'
 import MarketsView from '@/views/MarketsView.vue'
 import MarketAlertOverlay from '@/components/MarketAlertOverlay.vue'
 import { settings } from '@/composables/useSettings'
+import { secondsFor } from '@/composables/useBoardControls'
 import { useDevice } from '@/composables/useDevice'
 
 /*
@@ -63,9 +64,9 @@ const board = ref<HTMLElement | null>(null)
     <!-- الوقت الباقي قبل الانتقال للشاشة التالية في التبديل التلقائي -->
     <div v-if="settings.rotate" class="h-1 bg-header" aria-hidden="true" data-export-hide>
       <div
-        :key="`${view}-${settings.rotateSeconds}`"
+        :key="`${view}-${secondsFor(view)}`"
         class="h-full bg-accent-live/80 animate-rotate-progress"
-        :style="{ animationDuration: `${settings.rotateSeconds}s` }"
+        :style="{ animationDuration: `${secondsFor(view)}s` }"
       />
     </div>
     <main class="flex-1 flex flex-col min-h-0">

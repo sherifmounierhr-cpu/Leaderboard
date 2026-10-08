@@ -27,15 +27,27 @@ const { hasQuotes } = useMarkets()
 const { settings: boardSettings } = useBoardMedia()
 
 /**
- * التدوير: الفرق ← المستشارون ← الأخبار ← الأسواق. شاشة التحليلات تُفتح
- * يدوياً كما كانت، وأي شاشة مصدرها واقع تُتخطّى فلا تظهر شاشة فاضية.
+ * التدوير: الفرق ← المستشارون ← (التحليلات لو متفعّلة من الإدارة) ← الأخبار ←
+ * الأسواق. التحليلات كانت تُفتح يدوياً فقط، وأي شاشة مصدرها واقع تُتخطّى فلا
+ * تظهر شاشة فاضية.
  */
 export function advanceView() {
   const cycle: BoardView[] = ['teams', 'agents']
+  if (boardSettings.value.insights_in_rotation === true) cycle.push('insights')
   if (hasNews.value && boardSettings.value.news_enabled !== false) cycle.push('news')
   if (hasQuotes.value) cycle.push('markets')
   const at = cycle.indexOf(view.value)
   view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
+}
+
+/**
+ * كم ثانية تبقى الشاشة قبل التبديل: التحليلات والأخبار (لو ليها مدة ثابتة) من
+ * إعدادات الإدارة المشتركة بين الشاشات، والباقي من فترة التبديل المحلية.
+ */
+export function secondsFor(name: BoardView): number {
+  if (name === 'insights') return boardSettings.value.insights_screen_s ?? 30
+  if (name === 'news' && boardSettings.value.news_screen_s) return boardSettings.value.news_screen_s
+  return settings.rotateSeconds
 }
 
 /** إعادة تحميل يومية تمنع تراكم الذاكرة على شاشة تعمل بلا انقطاع. */
@@ -48,13 +60,17 @@ export function useBoardControls() {
 
   const toggleView = advanceView
 
-  let rotateTimer: ReturnType<typeof setInterval> | null = null
+  let rotateTimer: ReturnType<typeof setTimeout> | null = null
 
+  /** مؤقّت لكل شاشة بمدتها هي — بدل فترة واحدة ثابتة لكل الشاشات. */
   function restartRotation() {
-    if (rotateTimer) clearInterval(rotateTimer)
+    if (rotateTimer) clearTimeout(rotateTimer)
     rotateTimer = null
     if (settings.rotate && !SEQUENCE_VIEWS.includes(view.value)) {
-      rotateTimer = setInterval(toggleView, settings.rotateSeconds * 1000)
+      rotateTimer = setTimeout(() => {
+        toggleView()
+        restartRotation()
+      }, secondsFor(view.value) * 1000)
     }
   }
 
@@ -106,12 +122,15 @@ export function useBoardControls() {
   onBeforeUnmount(() => {
     document.removeEventListener('keydown', onKeydown)
     document.removeEventListener('fullscreenchange', onFullscreenChange)
-    if (rotateTimer) clearInterval(rotateTimer)
+    if (rotateTimer) clearTimeout(rotateTimer)
     if (reloadTimer) clearTimeout(reloadTimer)
     mounted = false
   })
 
-  watch(() => [settings.rotate, settings.rotateSeconds], restartRotation)
+  watch(
+    () => [settings.rotate, settings.rotateSeconds, boardSettings.value.insights_screen_s],
+    restartRotation,
+  )
   // تبديل يدوي يبدأ العدّ من الأول، فمؤشر التقدم يفضل مطابق للتبديل الفعلي
   watch(view, restartRotation)
 
