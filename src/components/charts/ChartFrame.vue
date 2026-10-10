@@ -48,7 +48,7 @@ const showTable = ref(false)
           type="button"
           data-export-hide
           data-kiosk-hide
-          class="shrink-0 inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors duration-200 hover:border-accent/50 hover:text-strong"
+          class="shrink-0 inline-flex min-h-11 sm:min-h-10 items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors duration-200 hover:border-accent/50 hover:text-strong"
           :aria-pressed="showTable"
           @click="showTable = !showTable"
         >

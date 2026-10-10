@@ -21,12 +21,20 @@ const rtl = computed(() => locale.value === 'ar')
  * بالبكسل الحقيقي داخل SVG، فلا يكبر وحده مع الشاشة.
  */
 const wide = computed(() => width.value >= 720)
+/**
+ * موبايل: عمود الأسماء على قدّ أطول اسم (تقديراً) بدل عرض ثابت — الأسماء قصيرة
+ * غالباً، والعرض الثابت كان بياكل نص الرسم ويسيب القضبان قزمة.
+ */
+const narrowLabel = computed(() => {
+  const longest = teams.value.reduce((n, team) => Math.max(n, team.name.length), 0)
+  return Math.min(132, Math.max(64, Math.round(longest * 8 + 22)))
+})
 const base = computed(() =>
   width.value >= 820
     ? { label: 190, value: 110, bar: 18, rowPad: 26, name: 19, num: 17 }
     : wide.value
       ? { label: 160, value: 88, bar: 18, rowPad: 26, name: 16, num: 14 }
-      : { label: 132, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
+      : { label: narrowLabel.value, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
 )
 const MAX_BAR = 34
 /** أصغر مقاس مقبول لما البطاقة أقصر من الحاجة (تلفزيون 720): القضبان تنحف بدل ما الصفحة تتمرّر. */
@@ -129,7 +137,7 @@ const stat = computed(() => {
 })
 
 const plot = computed(() => {
-  const w = Math.max(width.value, 320)
+  const w = Math.max(width.value, 240)
   const h = TOP + teams.value.length * groupHeight.value + X_BAND
   // القضبان تنمو من جهة بداية القراءة، كما تفعل أشرطة التقدّم في اللوحة
   const start = rtl.value ? w - size.value.label : size.value.label

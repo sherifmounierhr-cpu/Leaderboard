@@ -33,7 +33,8 @@ const size = computed(() =>
     ? { tick: 15, label: 17, axis: 76, endBand: 170, xBand: 42 }
     : wide.value
       ? { tick: 13, label: 14, axis: 64, endBand: width.value >= 720 ? 150 : 120, xBand: 36 }
-      : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
+      // «80 مليون» أعرض من «80M»: عمود المحور بالعربي أوسع حتى لا تخرج الأرقام عن الرسم
+      : { tick: 12, label: 12, axis: rtl.value ? 64 : 46, endBand: 26, xBand: 30 },
 )
 
 /** التواريخ المتاحة مرتبة تصاعدياً. */
@@ -71,6 +72,9 @@ const series = computed<TrendSeries[]>(() => {
     .sort((a, b) => Number(a.isLeader) - Number(b.isLeader))
 })
 
+/** الجدول يبدأ بالمتصدّر: على الموبايل الأعمدة الأخيرة بتطلع برّه العرض وتحتاج تمرير جانبي. */
+const tableSeries = computed(() => [...series.value].reverse())
+
 const maxValue = computed(() => {
   let max = 0
   for (const s of series.value) {
@@ -80,7 +84,7 @@ const maxValue = computed(() => {
 })
 
 const plot = computed(() => {
-  const w = Math.max(width.value, 320)
+  const w = Math.max(width.value, 240)
   // الرسم يملأ ارتفاع البطاقة (الـ svg موضوع absolute فلا يدفع الحاوية هو نفسه)
   const h = Math.round(Math.max(height.value, 300))
   // الطرف المقابل للمحور يحمل نهايات الخطوط وأسماءها، فيحتاج هامشاً لا يقصّها
@@ -108,6 +112,10 @@ const ticks = computed(() => scale.value.ticks)
 const dateTicks = computed(() => {
   const n = dates.value.length
   if (!n) return []
+  // موبايل: التاريخ العربي («24 سبتمبر») عريض، فثلاثة تواريخ متباعدة بالتساوي بدل خمسة متراكبة
+  if (!wide.value) {
+    return n < 3 ? Array.from({ length: n }, (_, i) => i) : [0, Math.round((n - 1) / 2), n - 1]
+  }
   const step = Math.max(1, Math.ceil(n / 5))
   const out: number[] = []
   for (let i = 0; i < n; i += step) out.push(i)
@@ -431,7 +439,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
               {{ t('chart.date') }}
             </th>
             <th
-              v-for="s in series"
+              v-for="s in tableSeries"
               :key="s.id"
               class="py-2 px-3 text-end font-medium text-mute whitespace-nowrap"
             >{{ s.name }}</th>
@@ -443,7 +451,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
               {{ formatDate(date) }}
             </td>
             <td
-              v-for="s in series"
+              v-for="s in tableSeries"
               :key="s.id"
               class="py-2 px-3 text-end tabular-nums whitespace-nowrap"
               :class="s.isLeader ? 'text-strong font-semibold' : 'text-mute'"
