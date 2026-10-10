@@ -21,7 +21,8 @@ const showTable = ref(false)
   <section
     class="rise flex flex-col gap-4 lg:gap-[clamp(10px,1.8vh,20px)] rounded-2xl border border-card-border bg-card p-5 lg:p-[clamp(18px,2.6vh,30px)] shadow-[var(--shadow-panel)] min-w-0 min-h-0"
   >
-    <header class="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+    <!-- من sm العنوان يتقصّ بدل ما الرقم وزرار الجدول ينزلوا سطر تاني وياكلوا من ارتفاع الرسم -->
+    <header class="flex flex-wrap sm:flex-nowrap items-start justify-between gap-x-4 gap-y-3">
       <div class="flex min-w-0 items-center gap-3 lg:gap-4">
         <span
           v-if="icon"
@@ -31,15 +32,15 @@ const showTable = ref(false)
           <iconify-icon :icon="icon" />
         </span>
         <div class="min-w-0">
-          <h2 class="m-0 font-extrabold tracking-[-0.01em] text-strong text-lg lg:text-[clamp(20px,2.7vh,30px)]">{{ title }}</h2>
-          <p v-if="subtitle" class="m-0 mt-1 font-medium text-mute text-caption lg:text-[clamp(13px,1.6vh,17px)]">
+          <h2 class="m-0 font-extrabold tracking-[-0.01em] text-strong text-lg lg:text-[clamp(20px,2.7vh,30px)] sm:truncate" :title="title">{{ title }}</h2>
+          <p v-if="subtitle" class="m-0 mt-1 font-medium text-mute text-caption lg:text-[clamp(13px,1.6vh,17px)] sm:truncate">
             {{ subtitle }}
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-4 ms-auto">
-        <p v-if="stat" class="m-0 flex flex-col items-end leading-tight">
+      <div class="flex shrink-0 items-center gap-4 ms-auto">
+        <p v-if="stat" class="m-0 flex flex-col items-end leading-tight whitespace-nowrap">
           <b class="font-extrabold tabular-nums text-accent-text text-xl lg:text-[clamp(22px,3.2vh,36px)]">{{ stat.value }}</b>
           <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.5vh,16px)]">{{ stat.label }}</span>
         </p>

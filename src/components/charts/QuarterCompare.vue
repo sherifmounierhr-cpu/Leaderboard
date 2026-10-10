@@ -29,6 +29,9 @@ const base = computed(() =>
       : { label: 132, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
 )
 const MAX_BAR = 34
+/** أصغر مقاس مقبول لما البطاقة أقصر من الحاجة (تلفزيون 720): القضبان تنحف بدل ما الصفحة تتمرّر. */
+const MIN_BAR = 9
+const MIN_PAD = 12
 const GAP = 2 // فجوة بلون السطح بين القضبان المتلاصقة
 const TOP = 8
 const X_BAND = 26
@@ -82,10 +85,15 @@ const maxValue = computed(() => {
 
 const top = computed(() => niceScale(maxValue.value, 3).top)
 
-/** أقل ارتفاع يحتاجه الرسم بسُمك القضيب الأساسي — الحاوية لا تنزل تحته. */
+/** ارتفاع الرسم بالمقاس الأساسي — ما تاخده الحاوية لما الصفحة بتتمرّر (موبايل). */
 const naturalHeight = computed(() => {
   const q = props.quarters.length
   return TOP + X_BAND + teams.value.length * (q * base.value.bar + (q - 1) * GAP + base.value.rowPad)
+})
+/** أقل ارتفاع يفضل الرسم مقروءاً عنده — حدّ الحاوية لما الرسم بيملأ ارتفاع الشاشة. */
+const compactHeight = computed(() => {
+  const q = props.quarters.length
+  return TOP + X_BAND + teams.value.length * (q * MIN_BAR + (q - 1) * GAP + MIN_PAD)
 })
 
 /**
@@ -95,9 +103,11 @@ const naturalHeight = computed(() => {
 const size = computed(() => {
   const q = Math.max(props.quarters.length, 1)
   const n = Math.max(teams.value.length, 1)
-  const perTeam = (Math.max(height.value, naturalHeight.value) - TOP - X_BAND) / n
-  const bar = Math.min(MAX_BAR, Math.max(base.value.bar, Math.floor((perTeam - base.value.rowPad - (q - 1) * GAP) / q)))
-  return { ...base.value, bar, rowPad: Math.max(base.value.rowPad, perTeam - q * bar - (q - 1) * GAP) }
+  const perTeam = (Math.max(height.value, compactHeight.value) - TOP - X_BAND) / n
+  // الحشوة تاخد ربع نصيب الفريق تقريباً، والباقي للقضبان بين الحدّين
+  const pad = Math.max(MIN_PAD, Math.min(base.value.rowPad, perTeam * 0.24))
+  const bar = Math.min(MAX_BAR, Math.max(MIN_BAR, Math.floor((perTeam - pad - (q - 1) * GAP) / q)))
+  return { ...base.value, bar, rowPad: Math.max(MIN_PAD, perTeam - q * bar - (q - 1) * GAP) }
 })
 
 /** ارتفاع مجموعة قضبان الفرع الواحد بدون الحشوة. */
@@ -169,7 +179,11 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
 
 <template>
   <ChartFrame :title="t('chart.compare')" :subtitle="t('chart.compareSub')" :legend="legend" icon="mdi:chart-bar" :stat="stat">
-    <div ref="host" class="relative w-full min-w-0 flex-1 xl:min-h-0" :style="{ minHeight: `${naturalHeight}px` }">
+    <div
+      ref="host"
+      class="relative w-full min-w-0 flex-1 min-h-[var(--nat)] xl:min-h-[var(--nat-min)]"
+      :style="{ '--nat': `${naturalHeight}px`, '--nat-min': `${compactHeight}px` }"
+    >
       <p v-if="!teams.length" class="m-0 py-12 text-center font-medium text-mute text-sm">
         {{ t('chart.noHistory') }}
       </p>

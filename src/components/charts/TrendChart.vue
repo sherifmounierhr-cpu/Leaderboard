@@ -111,7 +111,11 @@ const dateTicks = computed(() => {
   const step = Math.max(1, Math.ceil(n / 5))
   const out: number[] = []
   for (let i = 0; i < n; i += step) out.push(i)
-  if (out[out.length - 1] !== n - 1) out.push(n - 1)
+  // آخر تاريخ يظهر دائماً؛ لو لاصق في اللي قبله نشيل اللي قبله بدل ما يتراكبوا
+  if (out[out.length - 1] !== n - 1) {
+    if (n - 1 - out[out.length - 1] < step) out.pop()
+    out.push(n - 1)
+  }
   return out
 })
 
@@ -242,7 +246,7 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
 
 <template>
   <ChartFrame :title="t('chart.trend')" :subtitle="t('chart.trendSub')" :legend="legend" icon="mdi:chart-timeline-variant" :stat="stat">
-    <div ref="host" class="relative w-full min-w-0 flex-1 min-h-[320px] xl:min-h-0">
+    <div ref="host" class="relative w-full min-w-0 flex-1 min-h-[320px] xl:min-h-[200px]">
       <p v-if="dates.length < 2" class="m-0 py-12 text-center font-medium text-mute text-sm">
         {{ t('chart.noHistory') }}
       </p>
