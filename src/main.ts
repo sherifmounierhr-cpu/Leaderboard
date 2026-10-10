@@ -2,6 +2,8 @@ import { createApp } from 'vue'
 import 'iconify-icon'
 import './style.css'
 import { i18n } from './i18n'
+// يُحمَّل من البداية: حدث التثبيت بيتبعت مرة واحدة بدري، قبل ما قائمة الإعدادات تتحمّل
+import './composables/useInstall'
 
 /**
  * لا router: صفحتان فقط تفصلهما علامة في الرابط.

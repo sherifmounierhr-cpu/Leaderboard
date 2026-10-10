@@ -919,5 +919,11 @@
       "insights_in_rotation": "Insights in rotation",
       "insights_screen_s": "Insights screen time (s)"
     }
+  },
+  "install": {
+    "title": "Install as an app",
+    "button": "Install app",
+    "ios": "In Safari: tap Share, then “Add to Home Screen”.",
+    "android": "From the browser menu (⋮ or ☰) choose “Install app” or “Add to Home screen”."
   }
 }

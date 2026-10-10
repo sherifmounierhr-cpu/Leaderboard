@@ -9,6 +9,7 @@ import {
   settings,
 } from '@/composables/useSettings'
 import { useAuth } from '@/composables/useAuth'
+import { useInstall } from '@/composables/useInstall'
 import type { LocaleName, ThemePreference } from '@/lib/types'
 
 const props = defineProps<{ open: boolean; isFullscreen: boolean }>()
@@ -17,6 +18,7 @@ const emit = defineEmits<{ 'update:open': [boolean]; fullscreen: [] }>()
 const { t } = useI18n()
 const { email, signOut } = useAuth()
 const root = ref<HTMLElement | null>(null)
+const { mode: installMode, install } = useInstall()
 
 function onDocumentClick(event: MouseEvent) {
   if (!props.open) return
@@ -161,6 +163,31 @@ const locales: LocaleName[] = ['ar', 'en']
         />
         {{ isFullscreen ? t('settings.exitFullscreen') : t('settings.fullscreen') }}
       </button>
+
+      <!-- التثبيت كتطبيق: زرار مباشر لو المتصفح بيدعمه، وإلا الخطوات اليدوية -->
+      <button
+        v-if="installMode === 'prompt'"
+        type="button"
+        class="mb-3 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2.5 text-sm font-bold text-white transition-colors hover:bg-accent-strong"
+        @click="install"
+      >
+        <iconify-icon icon="mdi:cellphone-arrow-down" aria-hidden="true" class="text-lg" />
+        {{ t('install.button') }}
+      </button>
+      <div
+        v-else-if="installMode"
+        class="mb-3 flex items-start gap-2.5 rounded-lg border border-card-border bg-accent/[0.06] px-3 py-2.5"
+      >
+        <iconify-icon
+          :icon="installMode === 'ios' ? 'mdi:export-variant' : 'mdi:cellphone-arrow-down'"
+          aria-hidden="true"
+          class="mt-0.5 shrink-0 text-lg text-accent-text"
+        />
+        <p class="m-0 text-caption leading-relaxed text-mute">
+          <b class="block font-bold text-strong">{{ t('install.title') }}</b>
+          {{ t(`install.${installMode}`) }}
+        </p>
+      </div>
 
       <a
         href="?admin=1"
