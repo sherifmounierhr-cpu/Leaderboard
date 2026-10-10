@@ -20,7 +20,7 @@ const GRID =
 
 <template>
   <div
-    class="flex-1 flex flex-col justify-center gap-6 lg:gap-[clamp(12px,2.2vh,28px)] px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(14px,2.6vh,32px)] min-h-0"
+    class="flex-1 flex flex-col justify-center gap-6 lg:gap-[clamp(12px,2.2vh,28px)] px-4 py-6 sm:px-8 lg:px-8 2xl:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(14px,2.6vh,32px)] min-h-0"
   >
     <p class="sr-only" role="status" aria-live="polite">
       <template v-if="teams.length">
@@ -114,7 +114,7 @@ const GRID =
               </span>
 
               <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
-                <Avatar :entity="team" kind="team" class="size-12 2xl:size-[clamp(56px,6.2vh,74px)] rounded-xl 2xl:rounded-2xl shrink-0" />
+                <Avatar :entity="team" kind="team" class="size-12 [@media(max-height:820px)]:size-10 2xl:size-[clamp(56px,6.2vh,74px)] rounded-xl 2xl:rounded-2xl shrink-0" />
                 <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ team.name }}</span>
                 <RankDelta :delta="teamDeltas.get(team.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
               </div>

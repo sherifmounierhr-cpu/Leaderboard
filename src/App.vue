@@ -80,7 +80,7 @@ const board = ref<HTMLElement | null>(null)
     </div>
     <main id="board-main" tabindex="-1" class="flex-1 flex flex-col min-h-0 focus:outline-none">
       <!-- ملخص الشركة فوق شاشات الأرقام؛ شاشة الأخبار ليها الشاشة كاملة -->
-      <div v-if="view !== 'news' && view !== 'markets'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
+      <div v-if="view !== 'news' && view !== 'markets'" class="px-4 pt-4 sm:px-8 lg:px-8 2xl:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
         <KpiStrip />
       </div>
       <!--

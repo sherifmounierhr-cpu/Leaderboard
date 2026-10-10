@@ -49,7 +49,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
 
 <template>
   <header
-    class="relative isolate z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
+    class="relative isolate z-30 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-8 2xl:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
   >
     <span class="peaks -z-10" aria-hidden="true" data-export-hide />
     <h1 class="sr-only">{{ t('brand') }} — {{ heading.title }}</h1>
@@ -58,10 +58,10 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
       <BrandLogo tone="white" class="h-9 sm:h-10 lg:h-[clamp(38px,5.6vh,56px)]" />
       <div class="hidden md:block w-px h-10 bg-white/15 mx-1.5 lg:mx-2.5" />
       <div class="hidden md:flex flex-col gap-1.5 min-w-0" aria-hidden="true">
-        <p class="m-0 font-extrabold tracking-[-0.01em] leading-none text-xl lg:text-[clamp(22px,3vh,30px)] truncate">
+        <p class="m-0 font-extrabold tracking-[-0.01em] leading-[1.1] text-lg line-clamp-2 2xl:line-clamp-1 2xl:leading-none 2xl:text-[clamp(22px,3vh,30px)]">
           {{ heading.title }}
         </p>
-        <p class="m-0 font-medium text-white/65 text-caption lg:text-note truncate">
+        <p class="m-0 font-medium text-white/65 text-caption lg:text-note truncate max-2xl:hidden">
           {{ heading.sub }}
         </p>
       </div>
@@ -76,10 +76,10 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
       data-export-hide
     />
 
-    <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap justify-end ms-auto">
+    <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap lg:flex-nowrap lg:shrink-0 justify-end ms-auto">
       <!-- الفترة تبقى في التصدير: التقرير يجب أن يقول أي ربع يغطّي -->
       <div
-        class="hidden xl:flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-semibold text-sm lg:text-note text-white/85"
+        class="hidden min-[1500px]:flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-semibold text-sm lg:text-note text-white/85"
       >
         <iconify-icon
           icon="mdi:calendar-month-outline"

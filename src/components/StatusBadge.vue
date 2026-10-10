@@ -29,6 +29,6 @@ const isLive = computed(() => status.value === 'live')
           : 'bg-white/50'
       "
     />
-    <span>{{ label }}</span>
+    <span class="max-[1499px]:sr-only">{{ label }}</span>
   </div>
 </template>

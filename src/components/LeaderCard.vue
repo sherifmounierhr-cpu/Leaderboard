@@ -35,7 +35,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
   <!-- سطح الهوية الغامق: المتصدّر هو العنصر الوحيد الملوَّن بالكامل على الشاشة -->
   <div
     data-surface="dark"
-    class="on-brand relative isolate overflow-hidden flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 [@media(max-height:820px)]:pb-2 rounded-2xl px-6 pb-8 lg:pb-[clamp(12px,2.4vh,28px)] pt-0 lg:px-8 ring-1 ring-inset ring-white/15 shadow-[0_1px_2px_-1px_rgba(10,46,47,0.2),0_26px_50px_-26px_rgba(10,46,47,0.75)]"
+    class="on-brand relative isolate overflow-hidden shrink-0 flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 [@media(max-height:820px)]:pb-2 rounded-2xl px-6 pb-8 lg:pb-[clamp(12px,2.4vh,28px)] pt-0 lg:px-8 ring-1 ring-inset ring-white/15 shadow-[0_1px_2px_-1px_rgba(10,46,47,0.2),0_26px_50px_-26px_rgba(10,46,47,0.75)]"
   >
     <span class="peaks -z-10" aria-hidden="true" />
     <div

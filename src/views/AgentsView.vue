@@ -53,11 +53,11 @@ const MEDAL: Record<number, string> = {
 }
 
 const GRID =
-  'grid-cols-[60px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[52px_2.6fr_0.9fr_clamp(112px,9vw,205px)_clamp(116px,9vw,160px)_0.8fr] gap-3 px-5 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
 
 <template>
-  <div class="flex-1 flex flex-col px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(16px,3vh,44px)] min-h-0 gap-4">
+  <div class="flex-1 flex flex-col px-4 py-6 sm:px-8 lg:px-8 2xl:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(16px,3vh,44px)] min-h-0 gap-4">
     <p class="sr-only" role="status" aria-live="polite">
       <template v-if="agents.length">
         {{ t('a11y.topAgent', { name: agents[0].name, amount: egp(agents[0].deals) }) }}
@@ -90,7 +90,7 @@ const GRID =
     <!-- المتصدّر في بطاقة خاصة، وبجانب الجدول على الشاشات الكبيرة حتى لا يأكل ارتفاعاً -->
     <div
       v-if="filtered.length"
-      class="flex-1 min-h-0 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(270px,330px)_1fr] lg:gap-6 2xl:grid-cols-[minmax(320px,400px)_1fr]"
+      class="flex-1 min-h-0 flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(250px,300px)_1fr] lg:gap-5 2xl:gap-6 2xl:grid-cols-[minmax(320px,400px)_1fr]"
     >
       <div v-if="leader" class="flex flex-col gap-4 lg:gap-[clamp(10px,1.8vh,20px)] min-h-0">
         <LeaderCard
@@ -228,7 +228,7 @@ const GRID =
               class="rounded-xl 2xl:rounded-2xl shrink-0 text-xl"
               :class="rank === 1 ? 'size-14 2xl:size-[72px] ring-2 ring-accent/70' : 'size-14 2xl:size-[66px]'"
             />
-            <span class="font-semibold truncate text-strong text-xl 2xl:text-name">{{ agent.name }}</span>
+            <span class="min-w-0 font-semibold leading-tight text-strong text-lg xl:text-xl 2xl:text-name line-clamp-2 break-words" :title="agent.name">{{ agent.name }}</span>
             <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
           </div>
 
