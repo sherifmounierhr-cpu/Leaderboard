@@ -577,7 +577,9 @@ onBeforeUnmount(() => {
         v-if="!isDivider && !isTeam"
         tone="white"
         class="celebrate-logo pointer-events-none absolute top-[4.5vh] z-10 h-[clamp(34px,6.4vh,76px)] opacity-90"
-        :class="isIntro || isRanking ? 'start-[4vw]' : 'end-[47vw]'"
+        :class="isIntro || isRanking
+          ? 'start-[4vw] portrait:inset-x-0 portrait:mx-auto portrait:top-[2.5vh] portrait:h-[clamp(30px,5vh,56px)]'
+          : 'end-[47vw] portrait:inset-x-0 portrait:mx-auto portrait:top-[2.5vh] portrait:h-[clamp(30px,5vh,56px)]'"
       />
 
       <!--
@@ -594,6 +596,18 @@ onBeforeUnmount(() => {
         v-else
         aria-hidden="true"
         class="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,22,23,0.94)_0%,rgba(6,22,23,0.78)_26%,rgba(6,22,23,0.25)_55%,rgba(6,22,23,0.45)_100%)]"
+      />
+      <!-- الفريق في الوضع الرأسي: الكلام فوق، فوق شعار الفريق المكتوب في صورته — تعتيم من أعلى -->
+      <span
+        v-if="isTeam"
+        aria-hidden="true"
+        class="absolute inset-0 hidden portrait:block bg-[linear-gradient(to_bottom,rgba(6,22,23,0.93)_0%,rgba(6,22,23,0.84)_40%,rgba(6,22,23,0.25)_60%,transparent_100%)]"
+      />
+      <!-- الوضع الرأسي (موبايل): الكلام تحت الصورة، فالتعتيم من أسفل لأعلى -->
+      <span
+        v-if="!isTeam && !isIntro && !isDivider && !isRanking"
+        aria-hidden="true"
+        class="absolute inset-0 hidden portrait:block bg-[linear-gradient(to_top,rgba(6,22,23,0.96)_0%,rgba(6,22,23,0.88)_42%,rgba(6,22,23,0.45)_70%,rgba(6,22,23,0.6)_100%)]"
       />
       <!-- ظل سفلي خفيف يفضل حتى مع تدرّج الفرد الجانبي، لوضوح شريط الوقت -->
       <span v-if="!isTeam && !isIntro && !isDivider && !isRanking" aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[26vh] bg-gradient-to-t from-[#061617]/80 to-transparent" />
@@ -632,8 +646,8 @@ onBeforeUnmount(() => {
         :key="m.id"
         class="pointer-events-none absolute inset-y-0 flex items-end justify-center"
         :class="heroManager
-          ? 'start-[2vw] w-[46vw]'
-          : ['w-[32vw]', i === 0 ? 'start-[1vw]' : 'end-[1vw]']"
+          ? 'start-[2vw] w-[46vw] portrait:start-0 portrait:w-full'
+          : ['w-[32vw] portrait:w-[46vw]', i === 0 ? 'start-[1vw] portrait:start-[3vw]' : 'end-[1vw] portrait:end-[3vw]']"
       >
         <template v-if="m.cutout">
           <div
@@ -657,7 +671,7 @@ onBeforeUnmount(() => {
         <div
           v-else
           class="ranking-face mb-[16vh] aspect-[4/5] rounded-[1.8rem] bg-avatar shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] ring-[3px] ring-white/70"
-          :class="heroManager ? 'w-[min(32vw,34rem)]' : 'w-[min(22vw,24rem)]'"
+          :class="heroManager ? 'w-[min(32vw,34rem)] portrait:w-[min(54vw,36vh)] portrait:mb-[13vh]' : 'w-[min(22vw,24rem)] portrait:w-[min(40vw,28vh)] portrait:mb-[13vh]'"
           :style="m.photo ? { backgroundImage: `url('${m.photo}')` } : undefined"
         />
 
@@ -701,14 +715,14 @@ onBeforeUnmount(() => {
       -->
       <div
         v-if="agent?.photo && figureBox[agent.photo] && !agentCutout && !partner"
-        class="celebrate-portrait absolute end-[5vw] top-1/2 aspect-[4/5] h-[82vh] max-w-[38vw] overflow-hidden rounded-[clamp(18px,3vh,36px)] bg-avatar shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]"
+        class="celebrate-portrait absolute end-[5vw] top-1/2 aspect-[4/5] h-[82vh] max-w-[38vw] portrait:inset-x-0 portrait:top-[15vh] portrait:mx-auto portrait:h-[40vh] portrait:max-w-[84vw] overflow-hidden rounded-[clamp(18px,3vh,36px)] bg-avatar shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]"
         :class="isChampion ? 'ring-[4px] ring-gold' : 'ring-1 ring-white/20'"
       >
         <img :src="agent.photo" alt="" referrerpolicy="no-referrer" class="size-full object-cover object-top" />
       </div>
 
       <!-- صورة معزولة: المستشار واقف من أسفل الشاشة على الجنب التاني، زي مديري الفرق -->
-      <div v-if="agent?.photo && agentCutout && figureBox[agent.photo] && !partner" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw]">
+      <div v-if="agent?.photo && agentCutout && figureBox[agent.photo] && !partner" class="pointer-events-none absolute inset-y-0 end-[3vw] w-[42vw] portrait:end-0 portrait:top-[12vh] portrait:bottom-[36vh] portrait:w-full">
         <div
           class="celebrate-figure"
           :style="{ '--ar': figureBox[agent.photo].ar, '--max-h': '124vh', '--max-w': '40vw' }"
@@ -725,12 +739,12 @@ onBeforeUnmount(() => {
       <!-- صفقة مشتركة: المستشاران جنب بعض في إطارين متساويين، وتحت كل واحد اسمه ونسبته -->
       <div
         v-if="agent && partner"
-        class="animate-celebrate-in absolute inset-y-0 end-[3vw] flex w-[42vw] items-center justify-center gap-[1.6vw]"
+        class="animate-celebrate-in absolute inset-y-0 end-[3vw] flex w-[42vw] items-center justify-center gap-[1.6vw] portrait:inset-y-auto portrait:top-[11vh] portrait:end-0 portrait:w-full portrait:items-start portrait:gap-[4vw]"
       >
         <figure
           v-for="(p, i) in [agent, partner]"
           :key="p.id"
-          class="m-0 flex w-[19.5vw] flex-col items-center gap-[1.6vh]"
+          class="m-0 flex w-[19.5vw] portrait:w-[min(40vw,27vh)] flex-col items-center gap-[1.6vh] portrait:gap-[0.8vh]"
         >
           <div class="aspect-[4/5] w-full overflow-hidden rounded-[clamp(16px,2.6vh,32px)] bg-avatar ring-[3px] ring-gold shadow-[0_40px_100px_-30px_rgba(0,0,0,0.9)]">
             <img
@@ -757,7 +771,7 @@ onBeforeUnmount(() => {
         المقصوص من أعلى الصورة)، واضحة من أول لحظة بدل ما تُدفَن بين سطور
         النص السفلية.
       -->
-      <div v-if="!isTeam && !isIntro && !isDivider && !isRanking && rank > 0" class="absolute top-[5vh] start-[6vw] z-10">
+      <div v-if="!isTeam && !isIntro && !isDivider && !isRanking && rank > 0" class="absolute top-[5vh] start-[6vw] z-10 portrait:inset-x-0 portrait:top-[8.5vh] portrait:flex portrait:justify-center">
         <span
           class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
@@ -779,8 +793,10 @@ onBeforeUnmount(() => {
         v-if="!isIntro && !isDivider && !isRanking"
         class="celebrate-copy relative flex h-full flex-col gap-[clamp(12px,2.2vh,26px)] py-[6vh] text-white"
         :class="isTeam
-          ? (heroManager ? 'w-1/2 ms-auto items-center justify-center px-[3vw] text-center' : 'w-full items-center justify-center px-[6vw] text-center')
-          : 'w-[54vw] items-start justify-end ps-[6vw] pe-[2vw] pb-[clamp(40px,8vh,100px)] text-start'"
+          ? (heroManager
+              ? 'w-1/2 ms-auto items-center justify-center px-[3vw] text-center portrait:w-full portrait:justify-start portrait:px-[6vw] portrait:pt-[9vh] portrait:gap-[1.4vh]'
+              : 'w-full items-center justify-center px-[6vw] text-center portrait:justify-start portrait:pt-[16vh] portrait:gap-[1.4vh]')
+          : 'w-[54vw] items-start justify-end ps-[6vw] pe-[2vw] pb-[clamp(40px,8vh,100px)] text-start portrait:w-full portrait:items-center portrait:px-[6vw] portrait:text-center portrait:gap-[1.2vh] portrait:pb-[5vh]'"
       >
         <span
           v-if="isTeam && heroManager && rank > 0"
@@ -846,7 +862,7 @@ onBeforeUnmount(() => {
           v-if="headline"
           :class="isTeam
             ? 'flex flex-col items-center gap-[0.3em]'
-            : 'flex flex-col items-start gap-[0.3em] border-s-[clamp(5px,0.5vw,10px)] ps-[clamp(14px,1.6vw,30px)] [border-image:linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))_1]'"
+            : 'flex flex-col items-start gap-[0.3em] border-s-[clamp(5px,0.5vw,10px)] ps-[clamp(14px,1.6vw,30px)] [border-image:linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))_1] portrait:items-center portrait:border-s-0 portrait:ps-0'"
           :title="egp(headline.value)"
         >
           <span class="font-semibold tracking-[0.06em] text-white/70 text-[clamp(14px,min(2.3vh,1.38vw),26px)]">
@@ -892,7 +908,7 @@ onBeforeUnmount(() => {
       <!-- جدول الترتيب بعد كل قسم: ترتيب ربع الاحتفال نفسه -->
       <div
         v-else-if="isRanking"
-        class="relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] text-white"
+        class="relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] portrait:pt-[10vh] text-white"
       >
         <h2 class="rise m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,min(5.4vh,3.24vw),68px)]">
           <iconify-icon icon="mdi:podium-gold" aria-hidden="true" class="text-gold" />
@@ -904,9 +920,9 @@ onBeforeUnmount(() => {
           <article
             v-for="row in rankingList"
             :key="row.id"
-            class="rise flex flex-col overflow-hidden rounded-[clamp(14px,2vh,26px)] bg-[#061617]/70 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.75)] ring-1 ring-white/15"
+            class="rise flex flex-col overflow-hidden rounded-[clamp(14px,2vh,26px)] bg-[#061617]/70 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.75)] ring-1 ring-white/15 w-[var(--w)] portrait:w-[min(43vw,25vh)]"
             :class="row.rank === 1 ? 'ring-[3px] ring-gold scale-[1.04]' : ''"
-            :style="{ '--i': row.rank + 1, width: `min(34rem, 52vh, ${Math.floor(86 / Math.min(Math.max(rankingList.length, 1), 4))}vw)` }"
+            :style="{ '--i': row.rank + 1, '--w': `min(34rem, 52vh, ${Math.floor(86 / Math.min(Math.max(rankingList.length, 1), 4))}vw)` }"
           >
             <!-- صور الفرق بوسترات طولية: إطار طولي يعرض البوستر كله بدل ما يتقص -->
             <div class="relative aspect-[3/4] overflow-hidden bg-avatar">
@@ -929,7 +945,7 @@ onBeforeUnmount(() => {
         <ol
           v-else
           class="m-0 grid w-full flex-1 list-none content-center gap-[clamp(8px,1.4vh,18px)] p-0"
-          :class="rankingList.length > 10 ? 'grid-cols-3' : 'grid-cols-2'"
+          :class="rankingList.length > 10 ? 'grid-cols-3 portrait:grid-cols-2' : 'grid-cols-2 portrait:grid-cols-1'"
         >
           <li
             v-for="row in rankingList"
@@ -958,7 +974,7 @@ onBeforeUnmount(() => {
       <!-- افتتاحية الاحتفال: كلمة الإدارة وصور مديري الشركة، مرة قبل الفرق -->
       <div
         v-else-if="isIntro"
-        class="celebrate-copy relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] text-center text-white"
+        class="celebrate-copy relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] portrait:pt-[10vh] text-center text-white"
       >
         <div
           class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,min(2.2vh,1.32vw),26px)]"
@@ -1049,6 +1065,24 @@ onBeforeUnmount(() => {
 .celebrate-portrait {
   transform: translateY(-50%);
   animation: celebrate-portrait-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/*
+ * الوضع الرأسي: الإطار موضوع من أعلى (مش متوسّط بـ translateY)، والشخص
+ * المعزول يتقاس على عرض الشاشة بدل نصها. !important لأن المقاسين style مباشر.
+ */
+@media (orientation: portrait) {
+  .celebrate-portrait {
+    transform: none;
+    animation-name: celebrate-portrait-in-tall;
+  }
+  .celebrate-figure {
+    --max-h: 60vh !important;
+    --max-w: 90vw !important;
+  }
+}
+@keyframes celebrate-portrait-in-tall {
+  from { opacity: 0; transform: translateY(3vh) scale(0.97); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes celebrate-portrait-in {
   from { opacity: 0; transform: translateY(calc(-50% + 4vh)) scale(0.97); }
