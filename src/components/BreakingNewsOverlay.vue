@@ -75,6 +75,10 @@ const when = computed(() => {
       @click="dismiss()"
     >
       <!-- الصورة بأكبر مقاس متاح، مالية الشاشة -->
+      <!-- خبر بلا صورة (أو صورته ما اتحمّلتش): سطح الهوية بدل شاشة غامقة فاضية -->
+      <div v-if="!shown.item.image || broken" aria-hidden="true" class="absolute inset-0 [background:var(--brand-surface)]">
+        <span class="peaks !w-[62%] !opacity-[0.08]" />
+      </div>
       <img
         v-if="shown.item.image && !broken"
         :src="shown.item.image"

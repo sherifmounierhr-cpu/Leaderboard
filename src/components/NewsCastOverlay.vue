@@ -104,6 +104,10 @@ onBeforeUnmount(() => {
       :aria-label="shown.title"
       @click="close()"
     >
+      <!-- خبر بلا صورة (أو صورته ما اتحمّلتش): سطح الهوية بدل شاشة غامقة فاضية -->
+      <div v-if="!shown.image || broken" aria-hidden="true" class="absolute inset-0 [background:var(--brand-surface)]">
+        <span class="peaks !w-[62%] !opacity-[0.08]" />
+      </div>
       <img
         v-if="shown.image && !broken"
         :src="shown.image"

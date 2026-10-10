@@ -121,6 +121,10 @@ const when = computed(() => {
     <p v-if="!current" class="m-auto text-center text-white/60">{{ t('news.empty') }}</p>
 
     <template v-else>
+      <!-- خبر بلا صورة (أو صورته ما اتحمّلتش): سطح الهوية بدل شاشة غامقة فاضية -->
+      <div v-if="!current.image || broken.has(current.id)" aria-hidden="true" class="absolute inset-0 [background:var(--brand-surface)]">
+        <span class="peaks !w-[62%] !opacity-[0.08]" />
+      </div>
       <Transition name="slide" mode="out-in">
         <img
           v-if="current.image && !broken.has(current.id)"

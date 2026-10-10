@@ -68,7 +68,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 
     <div class="flex items-baseline gap-2" :title="egp(entity.deals)">
       <span
-        class="font-extrabold leading-[0.85] tracking-[-0.02em] tabular-nums text-strong"
+        class="font-extrabold leading-[0.85] [@media(max-height:820px)]:leading-[1.05] tracking-[-0.02em] tabular-nums text-strong"
         :class="statSize"
       >
         {{ compact(deals) }}
