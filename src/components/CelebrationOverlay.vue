@@ -853,7 +853,7 @@ onBeforeUnmount(() => {
             {{ headline.label }}
           </span>
           <span
-            class="font-display font-bold leading-[0.95] tabular-nums text-gold drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(3rem,13vh,10rem)]"
+            class="font-display font-bold leading-[1.12] tabular-nums text-gold drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(3rem,13vh,10rem)]"
           >
             {{ compact(headline.value) }}
           </span>
@@ -934,8 +934,11 @@ onBeforeUnmount(() => {
           <li
             v-for="row in rankingList"
             :key="row.id"
-            class="rise flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em] text-[clamp(15px,2.5vh,30px)]"
-            :class="row.rank <= 3 ? 'bg-[#061617]/70 ring-1 ring-gold/70' : 'bg-[#061617]/50 ring-1 ring-white/10'"
+            class="rise flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em]"
+            :class="[
+              row.rank <= 3 ? 'bg-[#061617]/70 ring-1 ring-gold/70' : 'bg-[#061617]/50 ring-1 ring-white/10',
+              rankingList.length <= 10 ? 'text-[clamp(17px,3vh,36px)]' : 'text-[clamp(15px,2.5vh,30px)]',
+            ]"
             :style="{ '--i': Math.min(row.rank, 14) }"
           >
             <span
@@ -947,7 +950,7 @@ onBeforeUnmount(() => {
               :style="row.photo ? { backgroundImage: `url('${row.photo}')` } : undefined"
             />
             <span class="min-w-0 flex-1 truncate font-bold">{{ row.name }}</span>
-            <span class="shrink-0 font-display font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
+            <span class="shrink-0 font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
           </li>
         </ol>
       </div>
