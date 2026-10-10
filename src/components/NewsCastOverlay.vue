@@ -123,26 +123,26 @@ onBeforeUnmount(() => {
 
       <header class="relative flex items-center justify-between gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
         <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
-        <span class="flex shrink-0 items-center gap-[0.5em] rounded-full bg-gold px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] text-[#0a2e2f] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,2.4vh,30px)]">
+        <span class="flex shrink-0 items-center gap-[0.5em] rounded-full bg-gold px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] text-[#0a2e2f] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,min(2.4vh,1.44vw),30px)]">
           <iconify-icon icon="mdi:bullhorn-variant-outline" aria-hidden="true" class="text-[1.3em]" />
           {{ t('news.cast') }}
         </span>
       </header>
 
-      <div :key="shown.id" class="relative mt-auto flex w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pb-[clamp(40px,9vh,120px)]">
+      <div :key="shown.id" class="relative mt-auto flex min-h-0 w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pt-[clamp(12px,2vh,28px)] pb-[clamp(40px,9vh,120px)]">
         <span
           aria-hidden="true"
           class="rise w-[clamp(5px,0.5vw,10px)] shrink-0 rounded-full bg-[linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))]"
         />
         <div class="flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)]">
           <h2
-            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] text-balance break-words text-[clamp(32px,min(7.4vh,4.44vw),96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
             style="--i: 1"
           >{{ shown.title }}</h2>
 
           <p
             v-if="shown.excerpt"
-            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,min(3vh,1.8vw),38px)]"
             style="--i: 3"
           >{{ shown.excerpt }}</p>
         </div>

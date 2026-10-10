@@ -664,7 +664,7 @@ onBeforeUnmount(() => {
         <div class="absolute inset-x-0 bottom-[4vh] flex justify-center">
           <span
             class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-[#061617]/85 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/20"
-            :class="heroManager ? 'text-[clamp(18px,3vh,36px)]' : 'text-[clamp(15px,2.4vh,28px)]'"
+            :class="heroManager ? 'text-[clamp(18px,min(3vh,1.8vw),36px)]' : 'text-[clamp(15px,min(2.4vh,1.44vw),28px)]'"
           >
             <span
               v-if="rank > 0"
@@ -687,8 +687,8 @@ onBeforeUnmount(() => {
         <span
           class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
-            ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,4.4vh,60px)]'
-            : 'px-[1.3em] py-[0.55em] text-[clamp(18px,3.6vh,50px)]'"
+            ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,min(4.4vh,2.64vw),60px)]'
+            : 'px-[1.3em] py-[0.55em] text-[clamp(18px,min(3.6vh,2.16vw),50px)]'"
         >
           <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
           {{ t('celebrate.rank', { n: rank }) }}
@@ -740,13 +740,13 @@ onBeforeUnmount(() => {
               referrerpolicy="no-referrer"
               class="size-full object-cover object-top"
             />
-            <Avatar v-else :entity="p" kind="agent" class="size-full rounded-none text-[clamp(2rem,8vh,6rem)]" />
+            <Avatar v-else :entity="p" kind="agent" class="size-full rounded-none text-[clamp(2rem,min(8vh,4.8vw),6rem)]" />
           </div>
           <figcaption class="flex flex-col items-center gap-[0.2em] text-center text-white">
-            <span class="font-display font-bold leading-tight text-balance text-[clamp(16px,3vh,36px)]">{{ p.name }}</span>
+            <span class="font-display font-bold leading-tight text-balance text-[clamp(16px,min(3vh,1.8vw),36px)]">{{ p.name }}</span>
             <span
               v-if="shares[i]"
-              class="rounded-full bg-gold px-[0.9em] py-[0.2em] font-bold tabular-nums text-header text-[clamp(14px,2.4vh,28px)]"
+              class="rounded-full bg-gold px-[0.9em] py-[0.2em] font-bold tabular-nums text-header text-[clamp(14px,min(2.4vh,1.44vw),28px)]"
             >{{ shares[i].pct }}%</span>
           </figcaption>
         </figure>
@@ -761,8 +761,8 @@ onBeforeUnmount(() => {
         <span
           class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
-            ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,4.4vh,60px)]'
-            : 'px-[1.3em] py-[0.55em] text-[clamp(18px,3.6vh,50px)]'"
+            ? 'celebrate-rank-pulse px-[1.5em] py-[0.65em] text-[clamp(22px,min(4.4vh,2.64vw),60px)]'
+            : 'px-[1.3em] py-[0.55em] text-[clamp(18px,min(3.6vh,2.16vw),50px)]'"
         >
           <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
           {{ t('celebrate.rank', { n: rank }) }}
@@ -786,15 +786,15 @@ onBeforeUnmount(() => {
           v-if="isTeam && heroManager && rank > 0"
           class="flex items-center gap-[0.45em] rounded-full bg-gold font-display font-bold text-header shadow-[0_10px_36px_-8px_rgba(0,0,0,0.6)] [word-spacing:0.25em]"
           :class="isChampion
-            ? 'celebrate-rank-pulse px-[1.5em] py-[0.6em] text-[clamp(22px,4.4vh,60px)]'
-            : 'px-[1.3em] py-[0.5em] text-[clamp(18px,3.6vh,50px)]'"
+            ? 'celebrate-rank-pulse px-[1.5em] py-[0.6em] text-[clamp(22px,min(4.4vh,2.64vw),60px)]'
+            : 'px-[1.3em] py-[0.5em] text-[clamp(18px,min(3.6vh,2.16vw),50px)]'"
         >
           <iconify-icon :icon="isChampion ? 'mdi:crown' : 'mdi:medal'" aria-hidden="true" />
           {{ t('celebrate.rank', { n: rank }) }}
         </span>
 
         <div
-          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,2.2vh,26px)]"
+          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,min(2.2vh,1.32vw),26px)]"
         >
           <iconify-icon
             :icon="isSale ? 'mdi:party-popper' : 'mdi:trophy'"
@@ -806,14 +806,14 @@ onBeforeUnmount(() => {
 
         <div
           class="max-w-[22ch] font-display font-bold leading-[1.1] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)]"
-          :class="partner ? 'text-[clamp(30px,6.6vh,84px)]' : 'text-[clamp(38px,9vh,116px)]'"
+          :class="partner ? 'text-[clamp(30px,min(6.6vh,3.96vw),84px)]' : 'text-[clamp(38px,min(9vh,5.4vw),116px)]'"
         >
           <template v-if="partner">
             {{ agent?.name }} <span class="text-gold">{{ t('celebrate.and') }}</span> {{ partner.name }}
           </template>
           <template v-else>{{ team?.name ?? agent?.name }}</template>
         </div>
-        <div v-if="agentTeam && !partner" class="font-medium text-white/80 text-[clamp(16px,2.8vh,32px)]">
+        <div v-if="agentTeam && !partner" class="font-medium text-white/80 text-[clamp(16px,min(2.8vh,1.68vw),32px)]">
           {{ t('spotlight.ofTeam', { team: agentTeam }) }}
         </div>
 
@@ -823,9 +823,9 @@ onBeforeUnmount(() => {
             <Avatar
               :entity="m"
               kind="agent"
-              class="size-[clamp(2.6rem,7vh,4.6rem)] rounded-full text-[clamp(0.9rem,2vh,1.4rem)] ring-2 ring-white/60"
+              class="size-[clamp(2.6rem,7vh,4.6rem)] rounded-full text-[clamp(0.9rem,min(2vh,1.2vw),1.4rem)] ring-2 ring-white/60"
             />
-            <span class="font-semibold text-white/85 text-[clamp(11px,1.6vh,16px)] max-w-[10ch] truncate">{{ m.name }}</span>
+            <span class="font-semibold text-white/85 text-[clamp(11px,min(1.6vh,0.96vw),16px)] max-w-[10ch] truncate">{{ m.name }}</span>
           </div>
         </div>
 
@@ -836,7 +836,7 @@ onBeforeUnmount(() => {
         <p
           v-if="noteText"
           dir="auto"
-          class="m-0 flex max-w-[60ch] items-start gap-[0.4em] rounded-2xl border border-white/12 bg-[#061617]/55 px-[1em] py-[0.6em] break-words font-semibold leading-snug text-[clamp(18px,3.2vh,38px)]"
+          class="m-0 flex max-w-[60ch] items-start gap-[0.4em] rounded-2xl border border-white/12 bg-[#061617]/55 px-[1em] py-[0.6em] break-words font-semibold leading-snug text-[clamp(18px,min(3.2vh,1.92vw),38px)]"
         >
           <iconify-icon icon="mdi:format-quote-open" aria-hidden="true" class="shrink-0 text-gold text-[1.1em]" />
           <span>{{ noteText }}</span>
@@ -849,23 +849,23 @@ onBeforeUnmount(() => {
             : 'flex flex-col items-start gap-[0.3em] border-s-[clamp(5px,0.5vw,10px)] ps-[clamp(14px,1.6vw,30px)] [border-image:linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))_1]'"
           :title="egp(headline.value)"
         >
-          <span class="font-semibold tracking-[0.06em] text-white/70 text-[clamp(14px,2.3vh,26px)]">
+          <span class="font-semibold tracking-[0.06em] text-white/70 text-[clamp(14px,min(2.3vh,1.38vw),26px)]">
             {{ headline.label }}
           </span>
           <span
-            class="font-display font-bold leading-[1.12] tabular-nums text-gold drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(3rem,13vh,10rem)]"
+            class="font-display font-bold leading-[1.12] tabular-nums text-gold drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(3rem,min(13vh,7.8vw),10rem)]"
           >
             {{ compact(headline.value) }}
           </span>
         </div>
 
-        <div v-if="isSale && partner" class="flex flex-wrap gap-x-[1.4em] gap-y-[0.2em] font-medium text-white/75 text-[clamp(15px,2.4vh,28px)]">
+        <div v-if="isSale && partner" class="flex flex-wrap gap-x-[1.4em] gap-y-[0.2em] font-medium text-white/75 text-[clamp(15px,min(2.4vh,1.44vw),28px)]">
           <span v-for="s in shares" :key="s.name" :title="egp(s.amount)">
             {{ s.name }}
             <b class="font-bold tabular-nums text-white">{{ compact(s.amount) }}</b>
           </span>
         </div>
-        <div v-else-if="isSale" class="font-medium text-white/70 text-[clamp(15px,2.4vh,28px)]" :title="egp(saleEventTotal)">
+        <div v-else-if="isSale" class="font-medium text-white/70 text-[clamp(15px,min(2.4vh,1.44vw),28px)]" :title="egp(saleEventTotal)">
           {{ t('celebrate.newTotal') }}
           <b class="font-bold tabular-nums text-white">{{ compact(saleEventTotal) }}</b>
         </div>
@@ -884,7 +884,7 @@ onBeforeUnmount(() => {
         <!-- الشعار الأبيض مباشرة على سطح الهوية: هو نجم البطاقة دي -->
         <BrandLogo tone="white" class="h-[clamp(96px,22vh,250px)] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)]" />
         <span aria-hidden="true" class="h-[4px] w-[clamp(80px,12vw,220px)] rounded-full bg-[linear-gradient(90deg,var(--color-gold),var(--color-accent-live))]" />
-        <h2 class="m-0 font-display font-bold leading-[1.15] text-balance drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(36px,8.5vh,108px)]">
+        <h2 class="m-0 font-display font-bold leading-[1.15] text-balance drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(36px,min(8.5vh,5.1vw),108px)]">
           {{ t(section === 'team' ? 'celebrate.dividerTeamTitle' : 'celebrate.dividerAgentTitle') }}
         </h2>
       </div>
@@ -894,7 +894,7 @@ onBeforeUnmount(() => {
         v-else-if="isRanking"
         class="relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] text-white"
       >
-        <h2 class="rise m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,5.4vh,68px)]">
+        <h2 class="rise m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,min(5.4vh,3.24vw),68px)]">
           <iconify-icon icon="mdi:podium-gold" aria-hidden="true" class="text-gold" />
           {{ t(section === 'team' ? 'celebrate.rankingTeamTitle' : 'celebrate.rankingAgentTitle') }}
         </h2>
@@ -912,13 +912,13 @@ onBeforeUnmount(() => {
             <div class="relative aspect-[3/4] overflow-hidden bg-avatar">
               <img v-if="row.photo" :src="row.photo" alt="" referrerpolicy="no-referrer" class="absolute inset-0 size-full object-cover object-top" />
               <span
-                class="absolute top-[0.5em] start-[0.5em] flex items-center gap-[0.25em] rounded-full bg-gold px-[0.6em] py-[0.1em] font-display font-bold text-header shadow-[0_8px_20px_-6px_rgba(0,0,0,0.7)] text-[clamp(20px,4vh,52px)]"
+                class="absolute top-[0.5em] start-[0.5em] flex items-center gap-[0.25em] rounded-full bg-gold px-[0.6em] py-[0.1em] font-display font-bold text-header shadow-[0_8px_20px_-6px_rgba(0,0,0,0.7)] text-[clamp(20px,min(4vh,2.4vw),52px)]"
               >
                 <iconify-icon v-if="row.rank === 1" icon="mdi:crown" aria-hidden="true" />
                 {{ row.rank }}
               </span>
             </div>
-            <div class="flex items-baseline justify-between gap-[0.6em] px-[0.9em] py-[0.6em] text-[clamp(16px,3vh,38px)]">
+            <div class="flex items-baseline justify-between gap-[0.6em] px-[0.9em] py-[0.6em] text-[clamp(16px,min(3vh,1.8vw),38px)]">
               <span class="min-w-0 truncate font-display font-bold">{{ row.name }}</span>
               <span class="shrink-0 font-display font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
             </div>
@@ -937,7 +937,7 @@ onBeforeUnmount(() => {
             class="rise flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em]"
             :class="[
               row.rank <= 3 ? 'bg-[#061617]/70 ring-1 ring-gold/70' : 'bg-[#061617]/50 ring-1 ring-white/10',
-              rankingList.length <= 10 ? 'text-[clamp(17px,3vh,36px)]' : 'text-[clamp(15px,2.5vh,30px)]',
+              rankingList.length <= 10 ? 'text-[clamp(17px,min(3vh,1.8vw),36px)]' : 'text-[clamp(15px,min(2.5vh,1.5vw),30px)]',
             ]"
             :style="{ '--i': Math.min(row.rank, 14) }"
           >
@@ -961,7 +961,7 @@ onBeforeUnmount(() => {
         class="celebrate-copy relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] text-center text-white"
       >
         <div
-          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,2.2vh,26px)]"
+          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,min(2.2vh,1.32vw),26px)]"
         >
           <iconify-icon icon="mdi:bullhorn-variant" aria-hidden="true" class="text-gold text-[1.3em]" />
           {{ t('celebrate.introTitle') }}
@@ -970,7 +970,7 @@ onBeforeUnmount(() => {
         <p
           v-if="introMessage"
           dir="auto"
-          class="m-0 max-w-[60ch] font-extrabold leading-[1.25] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(26px,5vh,56px)]"
+          class="m-0 max-w-[60ch] font-extrabold leading-[1.25] text-balance break-words drop-shadow-[0_4px_28px_rgba(0,0,0,0.65)] text-[clamp(26px,min(5vh,3vw),56px)]"
         >{{ introMessage }}</p>
 
         <div
@@ -982,10 +982,10 @@ onBeforeUnmount(() => {
               :entity="{ id: d.id, name: d.name, photo: d.photo, deals: 0, target: 0, pct: 0 }"
               kind="agent"
               size="large"
-              class="size-[clamp(5.5rem,14vh,9rem)] rounded-[1.4rem] text-[clamp(1.4rem,3.4vh,2.4rem)] shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] ring-2 ring-white/60"
+              class="size-[clamp(5.5rem,14vh,9rem)] rounded-[1.4rem] text-[clamp(1.4rem,min(3.4vh,2.04vw),2.4rem)] shadow-[0_14px_40px_-12px_rgba(0,0,0,0.65)] ring-2 ring-white/60"
             />
-            <span class="max-w-[14ch] truncate font-bold text-white text-[clamp(15px,2.2vh,24px)]">{{ d.name }}</span>
-            <span v-if="d.title" class="max-w-[16ch] truncate font-medium text-white/75 text-[clamp(12px,1.7vh,18px)]">{{ d.title }}</span>
+            <span class="max-w-[14ch] truncate font-bold text-white text-[clamp(15px,min(2.2vh,1.32vw),24px)]">{{ d.name }}</span>
+            <span v-if="d.title" class="max-w-[16ch] truncate font-medium text-white/75 text-[clamp(12px,min(1.7vh,1.02vw),18px)]">{{ d.title }}</span>
           </div>
         </div>
       </div>

@@ -100,7 +100,7 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
 
       <div class="relative flex max-w-[min(90vw,80rem)] flex-col items-center gap-[clamp(16px,3.5vh,44px)]">
         <div
-          class="rise announce-chip flex items-center gap-[0.5em] rounded-full border px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.3vh,28px)]"
+          class="rise announce-chip flex items-center gap-[0.5em] rounded-full border px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,min(2.3vh,1.38vw),28px)]"
         >
           <iconify-icon
             :icon="isWelcome ? 'mdi:hand-wave' : 'mdi:rocket-launch'"
@@ -112,13 +112,13 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
 
         <h2
           dir="auto"
-          class="rise announce-title m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,10vh,128px)]"
+          class="rise announce-title m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,min(10vh,6vw),128px)]"
         >{{ shown.announcement.title }}</h2>
 
         <p
           v-if="shown.announcement.body"
           dir="auto"
-          class="rise announce-body m-0 max-w-[60ch] font-medium leading-snug text-balance break-words text-[clamp(20px,4.2vh,52px)]"
+          class="rise announce-body m-0 max-w-[60ch] font-medium leading-snug text-balance break-words text-[clamp(20px,min(4.2vh,2.52vw),52px)]"
         >{{ shown.announcement.body }}</p>
       </div>
 

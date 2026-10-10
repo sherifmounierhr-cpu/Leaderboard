@@ -96,33 +96,33 @@ const when = computed(() => {
       <header class="relative flex items-center justify-between gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
         <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
         <span
-          class="flex shrink-0 items-center gap-[0.55em] rounded-full bg-[#c13c34] px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,2.4vh,30px)]"
+          class="flex shrink-0 items-center gap-[0.55em] rounded-full bg-[#c13c34] px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,min(2.4vh,1.44vw),30px)]"
         >
           <span aria-hidden="true" class="size-[0.55em] rounded-full bg-white animate-pulse-dot" />
-          {{ t('news.breaking') }}
+          <bdi>{{ t('news.breaking') }}</bdi>
         </span>
       </header>
 
-      <div class="relative mt-auto flex w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pb-[clamp(36px,8vh,110px)]">
+      <div class="relative mt-auto flex min-h-0 w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pt-[clamp(12px,2vh,28px)] pb-[clamp(36px,8vh,110px)]">
         <span
           aria-hidden="true"
           class="rise w-[clamp(5px,0.5vw,10px)] shrink-0 rounded-full bg-[linear-gradient(to_bottom,#ff8a80,var(--color-accent-live))]"
         />
         <div class="flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)]">
-          <p class="rise m-0 flex items-center gap-[0.5em] font-semibold text-white/70 text-[clamp(13px,2vh,24px)]">
+          <p class="rise m-0 flex items-center gap-[0.5em] font-semibold text-white/70 text-[clamp(13px,min(2vh,1.2vw),24px)]">
             <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold text-[1.2em]" />
-            {{ t('news.label') }}
-            <template v-if="when"><span aria-hidden="true">·</span>{{ when }}</template>
+            <bdi>{{ t('news.label') }}</bdi>
+            <template v-if="when"><span aria-hidden="true">·</span><bdi>{{ when }}</bdi></template>
           </p>
 
           <h2
-            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,min(7.4vh,4.44vw),96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
             style="--i: 1"
           >{{ shown.item.title }}</h2>
 
           <p
             v-if="shown.item.excerpt"
-            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,min(3vh,1.8vw),38px)]"
             style="--i: 3"
           >{{ shown.item.excerpt }}</p>
         </div>

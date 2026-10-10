@@ -85,7 +85,7 @@ const move = computed(() => {
       <header class="relative flex items-center justify-between gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
         <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
         <span
-          class="flex shrink-0 items-center gap-[0.5em] rounded-full border border-white/25 bg-white/12 px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] text-[clamp(15px,2.4vh,30px)]"
+          class="flex shrink-0 items-center gap-[0.5em] rounded-full border border-white/25 bg-white/12 px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] text-[clamp(15px,min(2.4vh,1.44vw),30px)]"
         >
           <iconify-icon
             :icon="up ? 'mdi:trending-up' : 'mdi:trending-down'"
@@ -98,23 +98,23 @@ const move = computed(() => {
       </header>
 
       <div
-        class="relative grid min-h-0 flex-1 items-center gap-[clamp(20px,4vw,72px)] px-[6vw] pb-[clamp(24px,6vh,80px)]"
+        class="relative grid min-h-0 flex-1 items-center max-lg:content-center gap-[clamp(20px,4vw,72px)] max-lg:gap-[clamp(16px,3vh,40px)] px-[6vw] pt-[clamp(12px,3vh,40px)] pb-[clamp(24px,6vh,80px)]"
         :class="hasSpark ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]' : 'justify-items-center text-center'"
       >
         <div class="flex min-w-0 flex-col gap-[clamp(10px,2.2vh,30px)]" :class="hasSpark ? 'items-start max-lg:items-center max-lg:text-center' : 'items-center'">
-          <h2 class="rise m-0 font-extrabold leading-[1.1] text-balance break-words text-[clamp(30px,6.5vh,86px)]">
+          <h2 class="rise m-0 font-extrabold leading-[1.1] text-balance break-words text-[clamp(30px,min(6.5vh,3.9vw),86px)]">
             {{ ar(`markets.name.${shown.quote.key}`) }}
           </h2>
 
-          <p class="rise m-0 flex items-baseline gap-[0.4em] font-extrabold tabular-nums leading-none text-[clamp(44px,11vh,150px)]" style="--i: 1">
+          <p class="rise m-0 flex items-baseline gap-[0.4em] font-extrabold tabular-nums leading-none text-[clamp(44px,min(11vh,6.6vw),150px)]" style="--i: 1">
             <span dir="ltr">{{ price }}</span>
-            <span class="font-semibold text-white/60 text-[0.26em]">
+            <span class="whitespace-nowrap font-semibold text-white/60 text-[0.26em]">
               {{ shown.quote.currency }}<template v-if="shown.quote.unit"> / {{ ar(`markets.unit.${shown.quote.unit}`) }}</template>
             </span>
           </p>
 
           <p
-            class="rise m-0 flex items-center gap-[0.35em] rounded-[0.5em] px-[0.5em] py-[0.15em] font-extrabold tabular-nums text-[clamp(24px,5vh,64px)]"
+            class="rise m-0 flex items-center gap-[0.35em] rounded-[0.5em] px-[0.5em] py-[0.15em] font-extrabold tabular-nums text-[clamp(24px,min(5vh,3vw),64px)]"
             :class="up ? 'bg-accent-live/15 text-accent-live' : 'bg-down/20 text-[#ff9d94]'"
             style="--i: 2"
           >
@@ -130,11 +130,11 @@ const move = computed(() => {
           class="rise flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)] rounded-[clamp(18px,3vh,36px)] border border-white/12 bg-white/[0.06] p-[clamp(16px,3.2vh,44px)]"
           style="--i: 2"
         >
-          <p class="m-0 flex items-center gap-[0.5em] font-semibold text-white/65 text-[clamp(13px,2vh,24px)]">
+          <p class="m-0 flex items-center gap-[0.5em] font-semibold text-white/65 text-[clamp(13px,min(2vh,1.2vw),24px)]">
             <iconify-icon icon="mdi:chart-line" aria-hidden="true" class="text-[1.2em]" />
             {{ ar('markets.lastMonth') }}
           </p>
-          <Sparkline :points="shown.quote.spark" :up="up" class="h-[clamp(110px,34vh,420px)] w-full" />
+          <Sparkline :points="shown.quote.spark" :up="up" class="h-[clamp(110px,34vh,420px)] max-lg:h-[clamp(90px,20vh,240px)] w-full" />
         </div>
       </div>
 
