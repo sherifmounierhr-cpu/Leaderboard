@@ -49,7 +49,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
 
 <template>
   <header
-    class="relative isolate flex flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
+    class="relative isolate z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
   >
     <span class="peaks -z-10" aria-hidden="true" data-export-hide />
     <h1 class="sr-only">{{ t('brand') }} — {{ heading.title }}</h1>
