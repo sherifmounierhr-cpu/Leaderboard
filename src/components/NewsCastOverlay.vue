@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import BrandLogo from './BrandLogo.vue'
 import { useNewsControls } from '@/composables/useNewsControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
@@ -96,7 +97,8 @@ onBeforeUnmount(() => {
       v-if="shown"
       dir="rtl"
       data-export-hide
-      class="fixed inset-0 z-[57] flex cursor-pointer items-end overflow-hidden bg-header"
+      data-surface="dark"
+      class="fixed inset-0 z-[57] flex cursor-pointer flex-col overflow-hidden bg-header text-white"
       role="dialog"
       aria-modal="true"
       :aria-label="shown.title"
@@ -112,23 +114,34 @@ onBeforeUnmount(() => {
       />
       <span
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.96)_0%,rgba(10,14,18,0.82)_34%,rgba(10,14,18,0.22)_64%,rgba(10,14,18,0.5)_100%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,22,23,0.97)_0%,rgba(6,22,23,0.86)_36%,rgba(6,22,23,0.2)_66%,rgba(6,22,23,0.72)_100%)]"
       />
 
-      <div class="relative flex w-full flex-col gap-[clamp(10px,2vh,24px)] px-[6vw] pb-[clamp(40px,9vh,120px)] pt-[6vh] text-white">
-        <span class="flex w-fit items-center gap-[0.5em] rounded-full bg-gold px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-header text-[clamp(13px,2vh,24px)]">
+      <header class="relative flex items-center justify-between gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
+        <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
+        <span class="flex shrink-0 items-center gap-[0.5em] rounded-full bg-gold px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] text-[#0a2e2f] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,2.4vh,30px)]">
           <iconify-icon icon="mdi:bullhorn-variant-outline" aria-hidden="true" class="text-[1.3em]" />
           {{ t('news.cast') }}
         </span>
+      </header>
 
-        <h2
-          class="m-0 max-w-[24ch] font-extrabold leading-[1.12] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
-        >{{ shown.title }}</h2>
+      <div :key="shown.id" class="relative mt-auto flex w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pb-[clamp(40px,9vh,120px)]">
+        <span
+          aria-hidden="true"
+          class="rise w-[clamp(5px,0.5vw,10px)] shrink-0 rounded-full bg-[linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))]"
+        />
+        <div class="flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)]">
+          <h2
+            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            style="--i: 1"
+          >{{ shown.title }}</h2>
 
-        <p
-          v-if="shown.excerpt"
-          class="m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
-        >{{ shown.excerpt }}</p>
+          <p
+            v-if="shown.excerpt"
+            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+            style="--i: 3"
+          >{{ shown.excerpt }}</p>
+        </div>
       </div>
 
       <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">

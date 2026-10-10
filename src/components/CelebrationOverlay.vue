@@ -10,6 +10,7 @@ import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { supabase } from '@/lib/supabase'
 import type { AgentStanding, LocaleName, TeamContribution, TeamStanding } from '@/lib/types'
 import Avatar from './Avatar.vue'
+import BrandLogo from './BrandLogo.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
 const PIECES = 44
@@ -475,10 +476,10 @@ onMounted(() => document.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 const CONFETTI_COLORS = [
-  'var(--color-accent)',
+  '#1fa79c',
   'var(--color-accent-live)',
   'var(--color-gold)',
-  'var(--color-accent-strong)',
+  '#ffffff',
 ]
 
 /** تُعاد التوليدة مع كل احتفال جديد حتى لا تتكرر نفس القصاصات حرفياً. */
@@ -562,7 +563,21 @@ onBeforeUnmount(() => {
       <div
         v-else
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(135deg,var(--color-accent-strong),var(--color-accent))]"
+        class="absolute inset-0 [background:var(--brand-surface)]"
+      >
+        <span class="peaks !w-[60%] !opacity-[0.08]" />
+      </div>
+      <!-- شعار إيفرست ثابت في ركن كل بطاقة: الاحتفال باسم الشركة -->
+      <!--
+        الافتتاحية والترتيب: الركن العلوي فاضي. الفرد: آخر نص الكلام، بعيد عن
+        شارة الترتيب في أوله وعن الصورة في النص التاني. الفريق: الشعار تحت
+        الكلام نفسه (الجنبين والأعلى محجوزين للمديرين وشارة الترتيب).
+      -->
+      <BrandLogo
+        v-if="!isDivider && !isTeam"
+        tone="white"
+        class="celebrate-logo pointer-events-none absolute top-[4.5vh] z-10 h-[clamp(34px,6.4vh,76px)] opacity-90"
+        :class="isIntro || isRanking ? 'start-[4vw]' : 'end-[47vw]'"
       />
 
       <!--
@@ -573,15 +588,15 @@ onBeforeUnmount(() => {
       <span
         v-if="!isTeam && !isIntro && !isDivider && !isRanking"
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_right,rgba(10,14,18,0.82)_0%,rgba(10,14,18,0.55)_60%,rgba(10,14,18,0.4)_100%)] rtl:bg-[linear-gradient(to_left,rgba(10,14,18,0.82)_0%,rgba(10,14,18,0.55)_60%,rgba(10,14,18,0.4)_100%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_right,rgba(6,22,23,0.82)_0%,rgba(6,22,23,0.55)_60%,rgba(6,22,23,0.4)_100%)] rtl:bg-[linear-gradient(to_left,rgba(6,22,23,0.82)_0%,rgba(6,22,23,0.55)_60%,rgba(6,22,23,0.4)_100%)]"
       />
       <span
         v-else
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.94)_0%,rgba(10,14,18,0.78)_26%,rgba(10,14,18,0.25)_55%,rgba(10,14,18,0.45)_100%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,22,23,0.94)_0%,rgba(6,22,23,0.78)_26%,rgba(6,22,23,0.25)_55%,rgba(6,22,23,0.45)_100%)]"
       />
       <!-- ظل سفلي خفيف يفضل حتى مع تدرّج الفرد الجانبي، لوضوح شريط الوقت -->
-      <span v-if="!isTeam && !isIntro && !isDivider && !isRanking" aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[26vh] bg-gradient-to-t from-black/75 to-transparent" />
+      <span v-if="!isTeam && !isIntro && !isDivider && !isRanking" aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[26vh] bg-gradient-to-t from-[#061617]/80 to-transparent" />
 
       <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0">
         <span
@@ -605,7 +620,7 @@ onBeforeUnmount(() => {
       <span
         v-if="heroManager"
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_left,rgba(10,14,18,0.78)_0%,rgba(10,14,18,0.35)_45%,transparent_65%)] rtl:bg-[linear-gradient(to_right,rgba(10,14,18,0.78)_0%,rgba(10,14,18,0.35)_45%,transparent_65%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_left,rgba(6,22,23,0.78)_0%,rgba(6,22,23,0.35)_45%,transparent_65%)] rtl:bg-[linear-gradient(to_right,rgba(6,22,23,0.78)_0%,rgba(6,22,23,0.35)_45%,transparent_65%)]"
       />
 
       <!--
@@ -648,7 +663,7 @@ onBeforeUnmount(() => {
 
         <div class="absolute inset-x-0 bottom-[4vh] flex justify-center">
           <span
-            class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-black/75 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/15"
+            class="flex max-w-[92%] items-center gap-[0.55em] rounded-full bg-[#061617]/85 py-[0.35em] ps-[0.4em] pe-[1.1em] text-white shadow-[0_12px_32px_-10px_rgba(0,0,0,0.8)] ring-1 ring-white/20"
             :class="heroManager ? 'text-[clamp(18px,3vh,36px)]' : 'text-[clamp(15px,2.4vh,28px)]'"
           >
             <span
@@ -762,7 +777,7 @@ onBeforeUnmount(() => {
       -->
       <div
         v-if="!isIntro && !isDivider && !isRanking"
-        class="animate-celebrate-in relative flex h-full flex-col gap-[clamp(12px,2.2vh,26px)] py-[6vh] text-white"
+        class="celebrate-copy relative flex h-full flex-col gap-[clamp(12px,2.2vh,26px)] py-[6vh] text-white"
         :class="isTeam
           ? (heroManager ? 'w-1/2 ms-auto items-center justify-center px-[3vw] text-center' : 'w-full items-center justify-center px-[6vw] text-center')
           : 'w-[54vw] items-start justify-end ps-[6vw] pe-[2vw] pb-[clamp(40px,8vh,100px)] text-start'"
@@ -779,7 +794,7 @@ onBeforeUnmount(() => {
         </span>
 
         <div
-          class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
+          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,2.2vh,26px)]"
         >
           <iconify-icon
             :icon="isSale ? 'mdi:party-popper' : 'mdi:trophy'"
@@ -821,13 +836,19 @@ onBeforeUnmount(() => {
         <p
           v-if="noteText"
           dir="auto"
-          class="m-0 flex max-w-[60ch] items-start gap-[0.4em] rounded-2xl bg-black/35 px-[1em] py-[0.6em] break-words font-semibold leading-snug text-[clamp(18px,3.2vh,38px)]"
+          class="m-0 flex max-w-[60ch] items-start gap-[0.4em] rounded-2xl border border-white/12 bg-[#061617]/55 px-[1em] py-[0.6em] break-words font-semibold leading-snug text-[clamp(18px,3.2vh,38px)]"
         >
           <iconify-icon icon="mdi:format-quote-open" aria-hidden="true" class="shrink-0 text-gold text-[1.1em]" />
           <span>{{ noteText }}</span>
         </p>
 
-        <div :class="isTeam ? 'flex flex-col items-center gap-[0.3em]' : 'flex flex-col items-start gap-[0.3em]'" v-if="headline" :title="egp(headline.value)">
+        <div
+          v-if="headline"
+          :class="isTeam
+            ? 'flex flex-col items-center gap-[0.3em]'
+            : 'flex flex-col items-start gap-[0.3em] border-s-[clamp(5px,0.5vw,10px)] ps-[clamp(14px,1.6vw,30px)] [border-image:linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))_1]'"
+          :title="egp(headline.value)"
+        >
           <span class="font-semibold tracking-[0.06em] text-white/70 text-[clamp(14px,2.3vh,26px)]">
             {{ headline.label }}
           </span>
@@ -848,6 +869,8 @@ onBeforeUnmount(() => {
           {{ t('celebrate.newTotal') }}
           <b class="font-bold tabular-nums text-white">{{ compact(saleEventTotal) }}</b>
         </div>
+
+        <BrandLogo v-if="isTeam" tone="white" class="mt-[clamp(6px,1.4vh,18px)] h-[clamp(30px,5.6vh,66px)] opacity-90" />
       </div>
 
       <!--
@@ -856,13 +879,11 @@ onBeforeUnmount(() => {
       -->
       <div
         v-else-if="isDivider"
-        class="animate-celebrate-in relative flex h-full w-full flex-col items-center justify-center gap-[clamp(20px,3.4vh,40px)] px-[6vw] py-[6vh] text-center text-white"
+        class="celebrate-copy relative flex h-full w-full flex-col items-center justify-center gap-[clamp(20px,3.4vh,40px)] px-[6vw] py-[6vh] text-center text-white"
       >
-        <!-- الشعار على "لوح القمة" الأبيض: ألوانه الخضرا/التركوازي ما تبانش على الأخضر الغامق -->
-        <div class="rounded-[clamp(18px,3vh,36px)] bg-white px-[clamp(28px,4vw,72px)] py-[clamp(16px,2.6vh,40px)] shadow-[0_30px_80px_-24px_rgba(0,0,0,0.75)]">
-          <img src="/logo.png" :alt="t('brand')" class="h-[clamp(80px,17vh,190px)] w-auto" draggable="false" />
-        </div>
-        <span aria-hidden="true" class="h-[3px] w-[clamp(60px,10vw,180px)] rounded-full bg-gold" />
+        <!-- الشعار الأبيض مباشرة على سطح الهوية: هو نجم البطاقة دي -->
+        <BrandLogo tone="white" class="h-[clamp(96px,22vh,250px)] drop-shadow-[0_18px_40px_rgba(0,0,0,0.55)]" />
+        <span aria-hidden="true" class="h-[4px] w-[clamp(80px,12vw,220px)] rounded-full bg-[linear-gradient(90deg,var(--color-gold),var(--color-accent-live))]" />
         <h2 class="m-0 font-display font-bold leading-[1.15] text-balance drop-shadow-[0_6px_30px_rgba(0,0,0,0.55)] text-[clamp(36px,8.5vh,108px)]">
           {{ t(section === 'team' ? 'celebrate.dividerTeamTitle' : 'celebrate.dividerAgentTitle') }}
         </h2>
@@ -871,9 +892,9 @@ onBeforeUnmount(() => {
       <!-- جدول الترتيب بعد كل قسم: ترتيب ربع الاحتفال نفسه -->
       <div
         v-else-if="isRanking"
-        class="animate-celebrate-in relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] text-white"
+        class="relative flex h-full w-full flex-col items-center gap-[clamp(14px,3vh,36px)] px-[4vw] py-[5vh] text-white"
       >
-        <h2 class="m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,5.4vh,68px)]">
+        <h2 class="rise m-0 flex items-center gap-[0.45em] font-display font-bold drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)] text-[clamp(26px,5.4vh,68px)]">
           <iconify-icon icon="mdi:podium-gold" aria-hidden="true" class="text-gold" />
           {{ t(section === 'team' ? 'celebrate.rankingTeamTitle' : 'celebrate.rankingAgentTitle') }}
         </h2>
@@ -883,9 +904,9 @@ onBeforeUnmount(() => {
           <article
             v-for="row in rankingList"
             :key="row.id"
-            class="flex flex-col overflow-hidden rounded-[clamp(14px,2vh,26px)] bg-black/40 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.75)] ring-1 ring-white/10"
+            class="rise flex flex-col overflow-hidden rounded-[clamp(14px,2vh,26px)] bg-[#061617]/70 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.75)] ring-1 ring-white/15"
             :class="row.rank === 1 ? 'ring-[3px] ring-gold scale-[1.04]' : ''"
-            :style="{ width: `min(34rem, 52vh, ${Math.floor(86 / Math.min(Math.max(rankingList.length, 1), 4))}vw)` }"
+            :style="{ '--i': row.rank + 1, width: `min(34rem, 52vh, ${Math.floor(86 / Math.min(Math.max(rankingList.length, 1), 4))}vw)` }"
           >
             <!-- صور الفرق بوسترات طولية: إطار طولي يعرض البوستر كله بدل ما يتقص -->
             <div class="relative aspect-[3/4] overflow-hidden bg-avatar">
@@ -913,8 +934,9 @@ onBeforeUnmount(() => {
           <li
             v-for="row in rankingList"
             :key="row.id"
-            class="flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em] text-[clamp(15px,2.5vh,30px)]"
-            :class="row.rank <= 3 ? 'bg-black/45 ring-1 ring-gold/60' : 'bg-black/30'"
+            class="rise flex items-center gap-[0.75em] rounded-[clamp(10px,1.6vh,18px)] px-[0.8em] py-[0.5em] text-[clamp(15px,2.5vh,30px)]"
+            :class="row.rank <= 3 ? 'bg-[#061617]/70 ring-1 ring-gold/70' : 'bg-[#061617]/50 ring-1 ring-white/10'"
+            :style="{ '--i': Math.min(row.rank, 14) }"
           >
             <span
               class="flex size-[1.9em] shrink-0 items-center justify-center rounded-full font-display font-bold"
@@ -933,10 +955,10 @@ onBeforeUnmount(() => {
       <!-- افتتاحية الاحتفال: كلمة الإدارة وصور مديري الشركة، مرة قبل الفرق -->
       <div
         v-else-if="isIntro"
-        class="animate-celebrate-in relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] text-center text-white"
+        class="celebrate-copy relative flex h-full w-full flex-col items-center justify-center gap-[clamp(16px,2.6vh,32px)] px-[6vw] py-[6vh] text-center text-white"
       >
         <div
-          class="flex items-center gap-[0.5em] rounded-full bg-accent-strong px-[1.2em] py-[0.45em] font-bold tracking-[0.08em] text-[clamp(14px,2.2vh,26px)]"
+          class="flex items-center gap-[0.5em] rounded-full border border-white/25 bg-accent px-[1.2em] py-[0.45em] font-bold tracking-[0.06em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(14px,2.2vh,26px)]"
         >
           <iconify-icon icon="mdi:bullhorn-variant" aria-hidden="true" class="text-gold text-[1.3em]" />
           {{ t('celebrate.introTitle') }}
@@ -977,6 +999,33 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/*
+ * عمود الكلام يدخل سطراً سطراً بترتيب القراءة (الشارة، الاسم، الفريق،
+ * الرقم) بدل ما يظهر كتلة واحدة. `backwards` فقط: بعد النهاية لا يبقى
+ * transform على العناصر.
+ */
+.celebrate-copy > * {
+  animation: celebrate-line 0.7s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.celebrate-copy > :nth-child(1) { animation-delay: 0.1s; }
+.celebrate-copy > :nth-child(2) { animation-delay: 0.22s; }
+.celebrate-copy > :nth-child(3) { animation-delay: 0.34s; }
+.celebrate-copy > :nth-child(4) { animation-delay: 0.46s; }
+.celebrate-copy > :nth-child(5) { animation-delay: 0.58s; }
+.celebrate-copy > :nth-child(n + 6) { animation-delay: 0.7s; }
+@keyframes celebrate-line {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+.celebrate-logo { animation: celebrate-logo 0.8s ease-out 0.2s backwards; }
+@keyframes celebrate-logo {
+  from { opacity: 0; }
+  to { opacity: 0.9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .celebrate-copy > *, .celebrate-logo { animation: none; }
+}
+
 .celebrate-enter-active,
 .celebrate-leave-active {
   transition: opacity 0.4s ease;

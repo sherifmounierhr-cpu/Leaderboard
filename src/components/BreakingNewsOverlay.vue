@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import BrandLogo from './BrandLogo.vue'
 import { relativeTime } from '@/lib/format'
 import { BREAKING_MS, useBreakingNews } from '@/composables/useBreakingNews'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
@@ -66,7 +67,8 @@ const when = computed(() => {
       v-if="shown"
       dir="rtl"
       data-export-hide
-      class="fixed inset-0 z-[56] flex cursor-pointer items-end overflow-hidden bg-header"
+      data-surface="dark"
+      class="fixed inset-0 z-[56] flex cursor-pointer flex-col overflow-hidden bg-header text-white"
       role="dialog"
       aria-modal="true"
       :aria-label="shown.item.title"
@@ -83,36 +85,48 @@ const when = computed(() => {
       />
       <span
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.96)_0%,rgba(10,14,18,0.82)_32%,rgba(10,14,18,0.25)_62%,rgba(10,14,18,0.45)_100%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,22,23,0.97)_0%,rgba(6,22,23,0.86)_36%,rgba(6,22,23,0.2)_66%,rgba(6,22,23,0.72)_100%)]"
       />
 
-      <div class="breaking-in relative flex w-full flex-col gap-[clamp(10px,2vh,24px)] px-[6vw] pb-[clamp(36px,8vh,110px)] pt-[6vh] text-white">
+      <!-- نفس إطار شاشة الأخبار؛ الأحمر محجوز لشارة «خبر جديد» وشريط الوقت -->
+      <header class="relative flex items-center justify-between gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
+        <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
         <span
-          class="flex w-fit items-center gap-[0.5em] rounded-full bg-down px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.2vh,26px)]"
+          class="flex shrink-0 items-center gap-[0.55em] rounded-full bg-[#c13c34] px-[1.2em] py-[0.45em] font-bold tracking-[0.04em] shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] text-[clamp(15px,2.4vh,30px)]"
         >
           <span aria-hidden="true" class="size-[0.55em] rounded-full bg-white animate-pulse-dot" />
           {{ t('news.breaking') }}
         </span>
+      </header>
 
-        <h2
-          class="m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
-        >{{ shown.item.title }}</h2>
+      <div class="relative mt-auto flex w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pb-[clamp(36px,8vh,110px)]">
+        <span
+          aria-hidden="true"
+          class="rise w-[clamp(5px,0.5vw,10px)] shrink-0 rounded-full bg-[linear-gradient(to_bottom,#ff8a80,var(--color-accent-live))]"
+        />
+        <div class="flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)]">
+          <p class="rise m-0 flex items-center gap-[0.5em] font-semibold text-white/70 text-[clamp(13px,2vh,24px)]">
+            <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold text-[1.2em]" />
+            {{ t('news.label') }}
+            <template v-if="when"><span aria-hidden="true">·</span>{{ when }}</template>
+          </p>
 
-        <p
-          v-if="shown.item.excerpt"
-          class="m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
-        >{{ shown.item.excerpt }}</p>
+          <h2
+            class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+            style="--i: 1"
+          >{{ shown.item.title }}</h2>
 
-        <p class="m-0 flex items-center gap-2 font-semibold text-white/60 text-[clamp(13px,1.9vh,22px)]">
-          <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold" />
-          {{ t('news.label') }}
-          <template v-if="when"> · {{ when }}</template>
-        </p>
+          <p
+            v-if="shown.item.excerpt"
+            class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+            style="--i: 3"
+          >{{ shown.item.excerpt }}</p>
+        </div>
       </div>
 
       <!-- الوقت الباقي -->
       <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
-        <div class="h-full bg-down transition-[width] duration-300 ease-linear" :style="{ width: `${progress}%` }" />
+        <div class="h-full bg-[#ff6f64] transition-[width] duration-300 ease-linear" :style="{ width: `${progress}%` }" />
       </div>
     </div>
   </Transition>

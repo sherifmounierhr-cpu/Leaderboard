@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import BrandLogo from './BrandLogo.vue'
 import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
@@ -91,12 +92,15 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
       @click="close"
     >
       <!-- زخرفة خفيفة: دوائر ضوء بطيئة، بدون كونفيتي حتى لا تُخلط بالاحتفال -->
-      <span aria-hidden="true" class="announce-glow announce-halo pointer-events-none absolute -top-[20vh] -start-[10vw] size-[60vh] rounded-full blur-3xl" />
-      <span aria-hidden="true" class="announce-glow announce-tint pointer-events-none absolute -bottom-[25vh] -end-[10vw] size-[70vh] rounded-full blur-3xl" />
+      <!-- بقع ضوء بتدرّج دائري ناعم بدل blur: نفس الشكل من غير فلتر تقيل على التلفزيون -->
+      <span aria-hidden="true" class="announce-glow announce-halo pointer-events-none absolute -top-[30vh] -start-[16vw] size-[90vh] rounded-full" />
+      <span aria-hidden="true" class="announce-glow announce-tint pointer-events-none absolute -bottom-[36vh] -end-[16vw] size-[100vh] rounded-full" />
 
-      <div class="announce-in relative flex max-w-[min(90vw,80rem)] flex-col items-center gap-[clamp(16px,3.5vh,44px)]">
+      <BrandLogo class="absolute top-[clamp(16px,3.6vh,44px)] start-[5vw] h-[clamp(34px,6.4vh,72px)]" />
+
+      <div class="relative flex max-w-[min(90vw,80rem)] flex-col items-center gap-[clamp(16px,3.5vh,44px)]">
         <div
-          class="announce-chip flex items-center gap-[0.5em] rounded-full border px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.3vh,28px)]"
+          class="rise announce-chip flex items-center gap-[0.5em] rounded-full border px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(14px,2.3vh,28px)]"
         >
           <iconify-icon
             :icon="isWelcome ? 'mdi:hand-wave' : 'mdi:rocket-launch'"
@@ -108,13 +112,13 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
 
         <h2
           dir="auto"
-          class="announce-title m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,10vh,128px)]"
+          class="rise announce-title m-0 font-extrabold leading-[1.1] tracking-[-0.01em] text-balance break-words text-[clamp(40px,10vh,128px)]"
         >{{ shown.announcement.title }}</h2>
 
         <p
           v-if="shown.announcement.body"
           dir="auto"
-          class="announce-body m-0 max-w-[60ch] font-medium leading-snug text-balance break-words text-[clamp(20px,4.2vh,52px)]"
+          class="rise announce-body m-0 max-w-[60ch] font-medium leading-snug text-balance break-words text-[clamp(20px,4.2vh,52px)]"
         >{{ shown.announcement.body }}</p>
       </div>
 
@@ -147,8 +151,10 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
   --an-accent: var(--announce-accent-motivation);
 }
 
-.announce-halo { background: var(--announce-halo); }
-.announce-tint { background: color-mix(in srgb, var(--an-accent) 25%, transparent); }
+.announce-halo { background: radial-gradient(closest-side, var(--announce-halo), transparent); }
+.announce-tint { background: radial-gradient(closest-side, color-mix(in srgb, var(--an-accent) 28%, transparent), transparent); }
+.announce-title { animation-delay: 110ms; }
+.announce-body { animation-delay: 240ms; }
 
 .announce-chip {
   background: var(--announce-chip);
@@ -170,13 +176,6 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
 .announce-leave-to {
   opacity: 0;
 }
-.announce-in {
-  animation: announce-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes announce-in {
-  from { opacity: 0; transform: translateY(24px) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
 .announce-glow {
   animation: announce-glow 9s ease-in-out infinite alternate;
 }
@@ -185,6 +184,6 @@ const isWelcome = computed(() => shown.value?.announcement.style === 'welcome')
   to { transform: translate(4vw, 3vh) scale(1.12); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .announce-in, .announce-glow { animation: none; }
+  .announce-glow { animation: none; }
 }
 </style>
