@@ -117,7 +117,7 @@ const FIELD =
         <template v-if="file">{{ file.name }} · {{ mb(file.size) }}</template>
         <template v-else>{{ t('screen.dropHere') }}</template>
       </p>
-      <input ref="input" type="file" accept="audio/*" class="sr-only" @change="pick(($event.target as HTMLInputElement).files?.[0])" />
+      <input ref="input" type="file" accept="audio/*" class="sr-only" tabindex="-1" aria-hidden="true" @change="pick(($event.target as HTMLInputElement).files?.[0])" />
       <button type="button" class="rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute hover:text-strong" @click="input?.click()">
         {{ t('screen.chooseFile') }}
       </button>

@@ -98,10 +98,10 @@
      1920: Q2 و Q3 السابقان كانا متقاربين حتى يصعب تمييزهما من بعيد، والربع
      الأحدث صار الأغمق لأنه الأهم في المقارنة.
   ------------------------------------------------------------------ */
-  --chart-q1: #a6d8d2;
-  --chart-q2: #55aba2;
-  --chart-q3: #17736b;
-  --chart-q4: #0a4743;
+  --chart-q1: #7dbfb8;
+  --chart-q2: #3f978e;
+  --chart-q3: #156a62;
+  --chart-q4: #09423e;
 
   /* شكل "الإبراز": المتصدّر باللون الأساسي وبقية الفروع رمادية سياقية */
   --chart-emphasis: #0f7e76;
@@ -523,3 +523,21 @@ body { margin: 0; background: var(--color-page); }
 }
 .plinth-2 { --medal: var(--color-silver); }
 .plinth-3 { --medal: var(--color-bronze); }
+
+/* ------------------------------------------------------------------
+   صفحة الإدارة: صقل مشترك لكل النماذج من مكان واحد، بدل تكرار نفس
+   التعديل في 22 مكوّن. الحقول بنفس الارتفاع والاستدارة وردّ الفعل.
+------------------------------------------------------------------ */
+:root { accent-color: var(--color-accent); }
+
+[data-admin] :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]), select, textarea) {
+  border-radius: 10px;
+  transition: border-color var(--dur-2) ease, box-shadow var(--dur-2) ease, background-color var(--dur-2) ease;
+}
+[data-admin] :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"]), select, textarea):hover:not(:disabled, :focus-visible) {
+  border-color: color-mix(in oklab, var(--color-accent) 45%, var(--color-card-border));
+}
+[data-admin] :is(input, select, textarea):disabled { opacity: 0.6; cursor: not-allowed; }
+[data-admin] :is(input[type="checkbox"], input[type="radio"]) { inline-size: 1.05rem; block-size: 1.05rem; cursor: pointer; }
+[data-admin] section { border-radius: 16px; }
+[data-admin] :is(button, a).bg-accent { box-shadow: 0 8px 16px -12px var(--color-accent); }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { useAdminData } from '@/composables/useAdminData'
@@ -27,6 +27,9 @@ import AuditLogAdmin from '@/components/admin/AuditLogAdmin.vue'
 import { ADMIN_TABS, tabLabelKey, type AdminTab } from '@/lib/adminTabs'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
+import SignInScreen from '@/components/SignInScreen.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
+import '@/composables/useSettings'
 import { useStorageHealth } from '@/composables/useStorageHealth'
 import { applyLocale, rememberLocale } from '@/i18n'
 import type { LocaleName } from '@/lib/types'
@@ -41,8 +44,8 @@ function toggleLanguage() {
 }
 
 const {
-  ready, busy, authError, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
-  email, signIn, signOut,
+  ready, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
+  email, signOut,
 } = useAuth()
 const { reload, loading, saveError } = useAdminData()
 
@@ -57,7 +60,40 @@ const tab = ref<AdminTab>('periods')
 watch(tabs, (list) => { if (list.length && !list.includes(tab.value)) tab.value = list[0] }, { immediate: true })
 function goto(name: AdminTab) { if (tabs.value.includes(name)) tab.value = name }
 
-const form = ref({ email: '', password: '' })
+const TAB_ICON: Record<AdminTab, string> = {
+  periods: 'mdi:target',
+  deals: 'mdi:handshake-outline',
+  celebrate: 'mdi:party-popper',
+  messages: 'mdi:message-text-outline',
+  agents: 'mdi:account-tie-outline',
+  teams: 'mdi:account-group-outline',
+  reports: 'mdi:file-chart-outline',
+  data: 'mdi:database-import-outline',
+  newsfeed: 'mdi:newspaper-variant-outline',
+  rates: 'mdi:chart-line',
+  devices: 'mdi:monitor-dashboard',
+  storage: 'mdi:harddisk',
+  users: 'mdi:shield-account-outline',
+}
+
+/** الأسهم تتنقّل بين التبويبات (نمط tablist): تركيز واحد يدخل القائمة والأسهم تكمّل. */
+const tabList = ref<HTMLElement | null>(null)
+function onTabKey(e: KeyboardEvent) {
+  const list = tabs.value
+  const at = list.indexOf(tab.value)
+  const forward = ['ArrowDown', locale.value === 'ar' ? 'ArrowLeft' : 'ArrowRight']
+  const back = ['ArrowUp', locale.value === 'ar' ? 'ArrowRight' : 'ArrowLeft']
+  let next = at
+  if (forward.includes(e.key)) next = (at + 1) % list.length
+  else if (back.includes(e.key)) next = (at - 1 + list.length) % list.length
+  else if (e.key === 'Home') next = 0
+  else if (e.key === 'End') next = list.length - 1
+  else return
+  e.preventDefault()
+  tab.value = list[next]
+  void nextTick(() => tabList.value?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus())
+}
+
 const showChangePassword = ref(false)
 
 /**
@@ -66,10 +102,6 @@ const showChangePassword = ref(false)
  * لكن ليس روابط <a>، فنقرأ الأساس منه صراحةً.
  */
 const boardUrl = import.meta.env.BASE_URL
-
-async function onSignIn() {
-  if (await signIn(form.value.email, form.value.password)) form.value.password = ''
-}
 
 // البيانات تُحمَّل بعد ثبوت صلاحية المسؤول، لا قبلها
 // مؤشر المساحة يبدأ معها، فالتحذير يظهر على أي تبويب مفتوح
@@ -87,27 +119,29 @@ function onAllowed() {
 watch(canViewAdmin, (allowed) => { if (allowed) onAllowed() })
 onMounted(() => { if (canViewAdmin.value) onAllowed() })
 onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
-
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-page text-strong font-sans">
+  <!-- الدخول بنفس شاشة اللوحة: هوية واحدة، وحقول بنفس الإتاحة -->
+  <SignInScreen v-if="ready && !isSignedIn" :title="t('admin.title')" :subtitle="t('admin.signIn')" />
+
+  <div v-else data-admin class="min-h-screen flex flex-col bg-page text-strong font-sans">
+    <a href="#admin-main" class="skip-link" data-export-hide>{{ t('a11y.skip') }}</a>
     <header
-      class="flex flex-wrap items-center justify-between gap-3 bg-header text-white px-4 py-3 sm:px-8 lg:px-12"
+      class="relative isolate flex flex-wrap items-center justify-between gap-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 lg:px-12"
     >
+      <span class="peaks -z-10" aria-hidden="true" data-export-hide />
       <div class="flex items-center gap-3 min-w-0">
-        <img src="/logo.png" :alt="t('brand')" class="h-8 w-auto shrink-0" draggable="false" />
-        <div class="w-px h-8 bg-white/10" />
-        <h1 class="m-0 font-semibold text-lg lg:text-xl truncate">{{ t('admin.title') }}</h1>
+        <BrandLogo tone="white" class="h-10" />
+        <div class="w-px h-9 bg-white/15" />
+        <h1 class="m-0 font-extrabold text-lg lg:text-xl truncate">{{ t('admin.title') }}</h1>
       </div>
 
       <!-- أزرار التنقّل تختفي عند طباعة تقرير؛ الشعار والعنوان يبقيان في الورقة -->
-      <div class="flex items-center gap-2" data-export-hide>
+      <div class="flex flex-wrap items-center justify-end gap-2" data-export-hide>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          class="inline-flex items-center gap-1.5 min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
           :aria-label="t('settings.language')"
           @click="toggleLanguage"
         >
@@ -116,7 +150,7 @@ const FIELD =
         </button>
         <a
           :href="boardUrl"
-          class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          class="inline-flex items-center gap-1.5 min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
         >
           <iconify-icon icon="mdi:view-dashboard-outline" aria-hidden="true" />
           {{ t('admin.backToBoard') }}
@@ -125,71 +159,29 @@ const FIELD =
         <button
           v-if="isSignedIn && !isSharedDemo"
           type="button"
-          class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          class="min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
           @click="showChangePassword = !showChangePassword"
         >{{ t('admin.changePassword') }}</button>
         <button
           v-if="isSignedIn"
           type="button"
-          class="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2 text-sm font-semibold text-white/75 transition-colors hover:text-white"
+          class="min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
           @click="signOut"
         >{{ t('admin.signOut') }}</button>
       </div>
     </header>
+    <div class="h-1 bg-[linear-gradient(90deg,var(--color-accent),var(--color-summit))]" aria-hidden="true" />
 
-    <main class="flex-1 px-4 py-6 sm:px-8 lg:px-12 lg:py-10">
+    <main id="admin-main" tabindex="-1" class="flex-1 px-4 py-6 sm:px-8 lg:px-12 lg:py-8 focus:outline-none">
       <p v-if="!ready" class="text-center font-medium text-mute py-20">{{ t('admin.checking') }}</p>
 
       <div v-if="isSignedIn && showChangePassword && !isSharedDemo" class="mx-auto mb-6 max-w-sm">
         <ChangePasswordCard />
       </div>
 
-      <!-- تسجيل الدخول -->
-      <form
-        v-else-if="!isSignedIn"
-        class="mx-auto flex max-w-sm flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]"
-        @submit.prevent="onSignIn"
-      >
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.signIn') }}</h2>
-
-        <label class="flex flex-col gap-1.5">
-          <span class="font-semibold text-caption text-mute">{{ t('admin.identifier') }}</span>
-          <input
-            v-model="form.email"
-            type="text"
-            autocomplete="username"
-            autocapitalize="none"
-            spellcheck="false"
-            required
-            dir="ltr"
-            :class="FIELD"
-          />
-        </label>
-
-        <label class="flex flex-col gap-1.5">
-          <span class="font-semibold text-caption text-mute">{{ t('admin.password') }}</span>
-          <input
-            v-model="form.password"
-            type="password"
-            autocomplete="current-password"
-            required
-            dir="ltr"
-            :class="FIELD"
-          />
-        </label>
-
-        <p v-if="authError" role="alert" class="m-0 text-caption text-down">{{ authError }}</p>
-
-        <button
-          type="submit"
-          class="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
-          :disabled="busy"
-        >{{ busy ? t('admin.signingIn') : t('admin.signIn') }}</button>
-      </form>
-
       <!-- مسجَّل لكن ليس مسؤولاً -->
       <div
-        v-else-if="!canViewAdmin"
+        v-else-if="isSignedIn && !canViewAdmin"
         class="mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-card-border bg-card p-8 text-center shadow-[var(--shadow-panel)]"
       >
         <iconify-icon icon="mdi:lock-outline" aria-hidden="true" class="text-dim text-5xl" />
@@ -198,7 +190,37 @@ const FIELD =
       </div>
 
       <!-- لوحة الإدارة -->
-      <div v-else class="flex flex-col gap-6">
+      <div v-else-if="isSignedIn" class="flex flex-col gap-6 lg:grid lg:grid-cols-[236px_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <!-- التنقّل: عمود جانبي ثابت على الشاشات العريضة، وشريط يتمرّر أفقياً على الموبايل -->
+        <nav
+          ref="tabList"
+          class="flex gap-1 overflow-x-auto rounded-2xl border border-card-border bg-card p-1.5 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:flex-col lg:overflow-visible lg:p-2"
+          role="tablist"
+          data-export-hide
+          :aria-label="t('admin.title')"
+          @keydown="onTabKey"
+        >
+          <button
+            v-for="name in tabs"
+            :id="`admin-tab-${name}`"
+            :key="name"
+            type="button"
+            role="tab"
+            :aria-selected="tab === name"
+            aria-controls="admin-panel"
+            :tabindex="tab === name ? 0 : -1"
+            class="relative flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 min-h-11 text-sm font-semibold text-start transition-colors duration-200"
+            :class="tab === name
+              ? 'bg-accent text-white shadow-[0_8px_16px_-10px_var(--color-accent)]'
+              : 'text-mute hover:bg-accent/[0.08] hover:text-strong'"
+            @click="tab = name"
+          >
+            <iconify-icon :icon="TAB_ICON[name]" aria-hidden="true" class="text-lg shrink-0" />
+            {{ t(tabLabelKey(name)) }}
+          </button>
+        </nav>
+
+        <div id="admin-panel" role="tabpanel" :aria-labelledby="`admin-tab-${tab}`" class="flex min-w-0 flex-col gap-6">
         <div
           v-if="isDemo"
           role="note"
@@ -234,27 +256,12 @@ const FIELD =
           >{{ t('admin.storage.open') }}</button>
         </div>
 
-        <div
-          class="flex flex-wrap items-center gap-1 self-start rounded-lg border border-card-border bg-card p-1"
-          role="tablist"
-          data-export-hide
-          :aria-label="t('admin.title')"
-        >
-          <button
-            v-for="name in tabs"
-            :key="name"
-            type="button"
-            role="tab"
-            :aria-selected="tab === name"
-            class="rounded-md px-4 py-2 text-sm font-semibold transition-colors"
-            :class="tab === name ? 'bg-accent text-white' : 'text-mute hover:text-strong'"
-            @click="tab = name"
-          >{{ t(tabLabelKey(name)) }}</button>
-        </div>
-
-        <p v-if="loading" class="m-0 font-medium text-mute text-sm">{{ t('admin.loading') }}</p>
+        <p v-if="loading" role="status" class="m-0 flex items-center gap-2 font-medium text-mute text-sm">
+          <iconify-icon icon="mdi:loading" aria-hidden="true" class="animate-spin" />{{ t('admin.loading') }}
+        </p>
         <p v-if="saveError" role="alert" class="m-0 font-medium text-down text-sm">{{ saveError }}</p>
 
+        <div :key="tab" class="fade-in flex min-w-0 flex-col gap-6">
         <PeriodsAdmin v-if="tab === 'periods'" />
         <DealsAdmin v-else-if="tab === 'deals'" />
         <!-- الاحتفال: التهنئة والإعدادات جنب مكتبة الصوت -->
@@ -281,6 +288,8 @@ const FIELD =
           <AuditLogAdmin />
         </div>
         <DataTransfer v-else-if="tab === 'data'" />
+        </div>
+        </div>
       </div>
     </main>
 

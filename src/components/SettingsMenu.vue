@@ -52,6 +52,7 @@ const locales: LocaleName[] = ['ar', 'en']
       <iconify-icon icon="mdi:cog-outline" aria-hidden="true" class="text-xl" />
     </button>
 
+    <Transition name="pop">
     <div
       v-if="open"
       role="dialog"
@@ -181,5 +182,6 @@ const locales: LocaleName[] = ['ar', 'en']
       <p v-if="email" class="m-0 mb-2 truncate text-eyebrow text-dim" dir="ltr">{{ email }}</p>
       <p class="m-0 text-eyebrow leading-relaxed text-dim">{{ t('settings.shortcuts') }}</p>
     </div>
+    </Transition>
   </div>
 </template>

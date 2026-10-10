@@ -16,8 +16,21 @@ function onDocumentClick(event: MouseEvent) {
   if (root.value && !root.value.contains(event.target as Node)) open.value = false
 }
 
-onMounted(() => document.addEventListener('mousedown', onDocumentClick))
-onBeforeUnmount(() => document.removeEventListener('mousedown', onDocumentClick))
+/** Esc يقفل القائمة ويرجّع التركيز للزرار اللي فتحها. */
+function onKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !open.value) return
+  open.value = false
+  root.value?.querySelector<HTMLElement>('button')?.focus()
+}
+
+onMounted(() => {
+  document.addEventListener('mousedown', onDocumentClick)
+  document.addEventListener('keydown', onKeydown)
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('mousedown', onDocumentClick)
+  document.removeEventListener('keydown', onKeydown)
+})
 
 async function onPng() {
   open.value = false
@@ -51,6 +64,7 @@ function onPdf() {
       />
     </button>
 
+    <Transition name="pop">
     <div
       v-if="open"
       role="menu"
@@ -76,6 +90,7 @@ function onPdf() {
         {{ t('export.pdf') }}
       </button>
     </div>
+    </Transition>
 
     <p v-if="state === 'error'" role="alert" class="sr-only">{{ t('export.failed') }}</p>
   </div>

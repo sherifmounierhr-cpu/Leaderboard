@@ -132,6 +132,7 @@ const badge = computed(() => (unreadCount.value > 9 ? '9+' : String(unreadCount.
       >!</span>
     </button>
 
+    <Transition name="pop">
     <div
       v-if="open"
       role="dialog"
@@ -200,5 +201,6 @@ const badge = computed(() => (unreadCount.value > 9 ? '9+' : String(unreadCount.
         </li>
       </ul>
     </div>
+    </Transition>
   </div>
 </template>

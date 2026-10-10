@@ -114,6 +114,8 @@ const BTN =
         <input
           ref="fileInput"
           type="file"
+          tabindex="-1"
+          aria-hidden="true"
           accept=".xlsx"
           class="sr-only"
           @change="onPick"
