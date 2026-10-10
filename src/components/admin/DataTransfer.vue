@@ -87,7 +87,7 @@ const BTN =
 <template>
   <section class="flex flex-col gap-4">
     <header>
-      <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.data') }}</h2>
+      <h2 class="admin-title">{{ t('admin.data') }}</h2>
       <p class="m-0 mt-1 text-caption text-mute">{{ t('admin.dataHint', { year }) }}</p>
     </header>
 

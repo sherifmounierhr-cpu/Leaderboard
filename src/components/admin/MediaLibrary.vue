@@ -99,7 +99,7 @@ const FIELD =
     <div class="flex items-start gap-3">
       <iconify-icon icon="mdi:music-box-multiple-outline" aria-hidden="true" class="mt-0.5 text-accent-text text-2xl" />
       <div class="flex flex-col gap-1">
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('screen.libraryTitle') }}</h2>
+        <h2 class="admin-card-title">{{ t('screen.libraryTitle') }}</h2>
         <p class="m-0 text-mute text-sm leading-relaxed">{{ t('screen.libraryHint', { mb: 15 }) }}</p>
       </div>
     </div>

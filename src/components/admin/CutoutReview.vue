@@ -70,7 +70,7 @@ const BACKDROPS = {
     >
       <header class="flex items-start justify-between gap-3">
         <div class="flex flex-col gap-1">
-          <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.cutoutReviewTitle', { name }) }}</h2>
+          <h2 class="admin-card-title">{{ t('admin.cutoutReviewTitle', { name }) }}</h2>
           <p class="m-0 text-mute text-sm">{{ t('admin.cutoutReviewHint') }}</p>
         </div>
         <button type="button" class="rounded-lg p-1.5 text-mute hover:text-strong" :aria-label="t('admin.cancel')" @click="emit('cancel')">

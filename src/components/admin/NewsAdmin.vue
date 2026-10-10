@@ -180,7 +180,7 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
     <!-- ------------------------------------------------------------ الحالة -->
     <header class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('newsAdmin.title') }}</h2>
+        <h2 class="admin-title">{{ t('newsAdmin.title') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('newsAdmin.hint') }}</p>
       </div>
       <button
@@ -194,7 +194,7 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
     </header>
 
     <div class="grid gap-3 sm:grid-cols-4">
-      <div class="rounded-xl border border-card-border bg-card px-4 py-3">
+      <div class="admin-row rounded-xl border border-card-border bg-card px-4 py-3">
         <p class="m-0 text-caption text-mute">{{ t('newsAdmin.source') }}</p>
         <p class="m-0 font-semibold" :class="stale ? 'text-gold' : 'text-accent-text'">
           {{ stale ? t('newsAdmin.sourceStale') : t('newsAdmin.sourceOk') }}
@@ -202,15 +202,15 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
         <p v-if="updated" class="m-0 text-caption text-dim">{{ t('news.updated', { when: updated }) }}</p>
         <p v-if="lastError" dir="ltr" class="m-0 truncate text-caption text-down" :title="lastError">{{ lastError }}</p>
       </div>
-      <div class="rounded-xl border border-card-border bg-card px-4 py-3">
+      <div class="admin-row rounded-xl border border-card-border bg-card px-4 py-3">
         <p class="m-0 text-caption text-mute">{{ t('newsAdmin.fetched') }}</p>
         <p class="m-0 font-semibold text-strong text-lg tabular-nums">{{ items.length }}</p>
       </div>
-      <div class="rounded-xl border border-card-border bg-card px-4 py-3">
+      <div class="admin-row rounded-xl border border-card-border bg-card px-4 py-3">
         <p class="m-0 text-caption text-mute">{{ t('newsAdmin.airing') }}</p>
         <p class="m-0 font-semibold text-strong text-lg tabular-nums">{{ airing.length }}</p>
       </div>
-      <div class="rounded-xl border border-card-border bg-card px-4 py-3">
+      <div class="admin-row rounded-xl border border-card-border bg-card px-4 py-3">
         <p class="m-0 text-caption text-mute">{{ t('newsAdmin.slot') }}</p>
         <p class="m-0 font-semibold text-strong text-lg tabular-nums">
           {{ t('newsAdmin.seconds', { n: slotSeconds }) }}
@@ -378,7 +378,7 @@ async function run(key: string, action: () => Promise<void>, ok: string) {
         <li
           v-for="row in rows"
           :key="row.item.id"
-          class="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-3 py-2.5"
+          class="flex flex-wrap items-center gap-3 admin-row rounded-xl border bg-card px-3 py-2.5"
           :class="row.hidden ? 'border-down/40 opacity-60' : row.isToday ? 'border-accent/40' : 'border-card-border'"
         >
           <img

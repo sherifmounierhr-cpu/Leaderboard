@@ -69,7 +69,7 @@ const FIELD =
     class="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]"
     @submit.prevent="submit"
   >
-    <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.changePassword') }}</h2>
+    <h2 class="admin-card-title">{{ t('admin.changePassword') }}</h2>
     <p class="m-0 text-caption text-mute">{{ t('admin.changePasswordHint') }}</p>
 
     <label class="flex flex-col gap-1.5">

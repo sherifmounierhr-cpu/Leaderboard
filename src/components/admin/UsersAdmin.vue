@@ -286,7 +286,7 @@ const ICON_BTN =
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">
+        <h2 class="admin-title">
           {{ t('users.title') }}
           <span class="font-medium text-mute text-sm">({{ users.length }})</span>
         </h2>
@@ -482,7 +482,7 @@ const ICON_BTN =
       <li
         v-for="r in rows"
         :key="r.user.id"
-        class="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3"
+        class="flex flex-wrap items-center gap-3 admin-row rounded-xl border bg-card px-4 py-3"
         :class="r.user.banned ? 'border-down/40 opacity-70' : 'border-card-border'"
       >
         <span

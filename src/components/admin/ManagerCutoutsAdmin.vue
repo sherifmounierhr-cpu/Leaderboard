@@ -95,7 +95,7 @@ const BTN =
   <section class="flex flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]">
     <header class="flex items-start justify-between gap-3">
       <div class="flex flex-col gap-1">
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.cutouts') }}</h2>
+        <h2 class="admin-card-title">{{ t('admin.cutouts') }}</h2>
         <p class="m-0 text-mute text-sm leading-relaxed">{{ t('admin.cutoutsHint') }}</p>
       </div>
       <button
@@ -118,7 +118,7 @@ const BTN =
       <li
         v-for="m in managers"
         :key="m.id"
-        class="flex flex-wrap items-center gap-3 rounded-xl border border-card-border bg-page px-4 py-3"
+        class="flex flex-wrap items-center gap-3 admin-row rounded-xl border border-card-border bg-page px-4 py-3"
       >
         <span
           class="size-14 shrink-0 rounded-lg bg-avatar bg-cover bg-center outline outline-1 -outline-offset-1 outline-strong/10"

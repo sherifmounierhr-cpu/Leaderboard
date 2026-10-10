@@ -88,7 +88,7 @@ const FIELD =
 <template>
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-center justify-between gap-3">
-      <h2 class="m-0 font-semibold text-strong text-lg">
+      <h2 class="admin-title">
         {{ t('admin.agents') }}
         <span class="font-medium text-mute text-sm">({{ agents.length }})</span>
       </h2>
@@ -113,7 +113,7 @@ const FIELD =
 
     <form
       v-if="editing"
-      class="flex flex-col gap-4 rounded-xl border border-accent/40 bg-card p-4 lg:p-5 shadow-[var(--shadow-card)]"
+      class="flex flex-col gap-4 admin-form rounded-xl border border-accent/40 bg-card p-4 lg:p-5 shadow-[var(--shadow-card)]"
       @submit.prevent="submit"
     >
       <PhotoField
@@ -175,15 +175,17 @@ const FIELD =
       </div>
     </form>
 
-    <ul class="m-0 p-0 list-none flex flex-col gap-2">
+    <p v-if="!filtered.length" class="admin-empty">{{ t('search.noResults', { q: search }) }}</p>
+
+    <ul class="m-0 p-0 list-none grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
       <li
         v-for="agent in filtered"
         :key="agent.id"
-        class="flex items-center gap-3 rounded-xl border border-card-border bg-card px-4 py-3"
+        class="flex items-center gap-3 admin-row rounded-xl border border-card-border bg-card px-4 py-3"
         :class="agent.active ? '' : 'opacity-60'"
       >
         <span
-          class="size-11 shrink-0 overflow-hidden rounded-xl bg-avatar bg-cover bg-center outline outline-1 -outline-offset-1 outline-strong/10 flex items-center justify-center font-bold text-avatar-text text-caption"
+          class="size-12 shrink-0 overflow-hidden rounded-xl bg-avatar bg-cover bg-[position:50%_12%] outline outline-1 -outline-offset-1 outline-strong/10 flex items-center justify-center font-bold text-avatar-text text-caption"
           :style="agent.photo_url ? { backgroundImage: `url('${agent.photo_url}')` } : undefined"
         >{{ agent.photo_url ? '' : agent.name.slice(0, 2).toUpperCase() }}</span>
 

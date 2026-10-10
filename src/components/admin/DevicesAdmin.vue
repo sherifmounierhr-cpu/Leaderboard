@@ -186,7 +186,7 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">
+        <h2 class="admin-title">
           {{ t('devices.title') }}
           <span class="font-medium text-mute text-sm">({{ t('devices.onlineCount', { n: onlineCount }) }})</span>
         </h2>
@@ -267,7 +267,7 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
       </div>
     </form>
 
-    <p v-if="!rows.length && !loading" class="m-0 rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-mute">
+    <p v-if="!rows.length && !loading" class="admin-empty">
       {{ t('devices.empty') }}
     </p>
 
@@ -275,7 +275,7 @@ const onlineCount = computed(() => rows.value.filter((r) => r.online).length)
       <li
         v-for="r in rows"
         :key="r.device.id"
-        class="flex flex-wrap items-center gap-3 rounded-xl border bg-card px-4 py-3"
+        class="flex flex-wrap items-center gap-3 admin-row rounded-xl border bg-card px-4 py-3"
         :class="r.device.revoked_at ? 'border-down/40 opacity-70' : r.online ? 'border-accent/40' : 'border-card-border'"
       >
         <span

@@ -270,7 +270,7 @@ const FIELD =
 <template>
   <section class="flex flex-col gap-4">
     <header>
-      <h2 class="m-0 font-semibold text-strong text-lg">{{ t('deals.title') }}</h2>
+      <h2 class="admin-title">{{ t('deals.title') }}</h2>
       <p class="m-0 mt-1 text-caption text-mute">{{ t('deals.hint') }}</p>
     </header>
 
@@ -561,7 +561,7 @@ const FIELD =
     </header>
 
     <p v-if="loading && !rows.length" class="m-0 text-mute text-sm">{{ t('admin.loading') }}</p>
-    <p v-else-if="!rows.length" class="m-0 rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-mute">
+    <p v-else-if="!rows.length" class="admin-empty">
       {{ t('deals.empty') }}
     </p>
 
@@ -569,7 +569,7 @@ const FIELD =
       <li
         v-for="r in rows"
         :key="r.deal.id"
-        class="flex flex-wrap items-center gap-3 rounded-xl border border-card-border bg-card px-4 py-3"
+        class="flex flex-wrap items-center gap-3 admin-row rounded-xl border border-card-border bg-card px-4 py-3"
       >
         <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/12 text-accent-text" aria-hidden="true">
           <iconify-icon icon="mdi:cash-plus" class="text-xl" />

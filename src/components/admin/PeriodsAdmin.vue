@@ -88,7 +88,7 @@ const NUM =
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.periods') }}</h2>
+        <h2 class="admin-title">{{ t('admin.periods') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('admin.periodsHint') }}</p>
         <p class="m-0 mt-1 flex items-center gap-1.5 text-caption text-mute">
           <iconify-icon icon="mdi:lock-outline" aria-hidden="true" />

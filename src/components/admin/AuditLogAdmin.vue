@@ -226,7 +226,7 @@ const FIELD =
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('audit.title') }}</h2>
+        <h2 class="admin-title">{{ t('audit.title') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('audit.hint') }}</p>
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -256,14 +256,14 @@ const FIELD =
     <p v-if="loading && !groups.length" class="m-0 text-mute text-sm">{{ t('admin.loading') }}</p>
     <p
       v-else-if="!rows.length"
-      class="m-0 rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-mute"
+      class="admin-empty"
     >{{ t('audit.empty') }}</p>
 
     <ul v-else class="m-0 flex list-none flex-col gap-2 p-0">
       <li
         v-for="r in rows"
         :key="r.group.last_id"
-        class="flex flex-col gap-2 rounded-xl border border-card-border bg-card px-4 py-3"
+        class="flex flex-col gap-2 admin-row rounded-xl border border-card-border bg-card px-4 py-3"
       >
         <div class="flex flex-wrap items-start gap-3">
           <span

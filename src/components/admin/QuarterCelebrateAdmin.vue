@@ -86,7 +86,7 @@ const FIELD =
     <div class="flex items-start gap-3">
       <iconify-icon icon="mdi:trophy-award" aria-hidden="true" class="mt-0.5 text-gold text-2xl" />
       <div class="flex flex-col gap-1">
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.quarterCelebrateTitle') }}</h2>
+        <h2 class="admin-card-title">{{ t('admin.quarterCelebrateTitle') }}</h2>
         <p class="m-0 text-mute text-sm leading-relaxed">{{ t('admin.quarterCelebrateHint') }}</p>
       </div>
     </div>

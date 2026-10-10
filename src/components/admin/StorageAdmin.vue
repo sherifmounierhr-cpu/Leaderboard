@@ -146,7 +146,7 @@ const FIELD =
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.storage.title') }}</h2>
+        <h2 class="admin-title">{{ t('admin.storage.title') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">
           {{ t('admin.storage.hint') }}
           <template v-if="usage"> · {{ t('admin.storage.checked', { when: ago(usage.checked_at) }) }}</template>

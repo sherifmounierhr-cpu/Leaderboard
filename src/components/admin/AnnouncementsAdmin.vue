@@ -226,7 +226,7 @@ const FIELD =
   <section class="flex flex-col gap-4">
     <header class="flex flex-wrap items-center justify-between gap-3">
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('messages.title') }}</h2>
+        <h2 class="admin-title">{{ t('messages.title') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('messages.hint') }}</p>
       </div>
       <div class="flex gap-2">
@@ -248,7 +248,7 @@ const FIELD =
     <!-- النموذج -->
     <form
       v-if="editing"
-      class="grid gap-5 rounded-xl border border-accent/40 bg-card p-5 shadow-[var(--shadow-card)] lg:grid-cols-[1.2fr_1fr]"
+      class="grid gap-5 admin-form rounded-xl border border-accent/40 bg-card p-5 shadow-[var(--shadow-card)] lg:grid-cols-[1.2fr_1fr]"
       @submit.prevent="submit"
     >
       <div class="flex flex-col gap-4">
@@ -391,7 +391,7 @@ const FIELD =
     </form>
 
     <!-- القائمة -->
-    <p v-if="!list.length && !editing" class="m-0 rounded-xl border border-dashed border-card-border px-4 py-10 text-center text-mute">
+    <p v-if="!list.length && !editing" class="admin-empty">
       {{ t('messages.empty') }}
     </p>
 
@@ -399,7 +399,7 @@ const FIELD =
       <li
         v-for="r in rows"
         :key="r.a.id"
-        class="flex flex-wrap items-center gap-3 rounded-xl border border-card-border bg-card px-4 py-3"
+        class="flex flex-wrap items-center gap-3 admin-row rounded-xl border border-card-border bg-card px-4 py-3"
         :class="r.a.active ? '' : 'opacity-70'"
       >
         <span

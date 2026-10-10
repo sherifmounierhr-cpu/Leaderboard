@@ -93,7 +93,7 @@ const FIELD =
   <section class="flex flex-col gap-4 rounded-xl border border-card-border bg-card p-6 shadow-[var(--shadow-panel)]">
     <header class="flex items-start justify-between gap-3">
       <div class="flex flex-col gap-1">
-        <h2 class="m-0 font-semibold text-strong text-lg">
+        <h2 class="admin-card-title">
           {{ t('admin.directors') }}
           <span class="font-medium text-mute text-sm">({{ directors.length }})</span>
         </h2>
@@ -170,7 +170,7 @@ const FIELD =
       <li
         v-for="d in directors"
         :key="d.id"
-        class="flex items-center gap-3 rounded-xl border border-card-border bg-page px-4 py-3"
+        class="flex items-center gap-3 admin-row rounded-xl border border-card-border bg-page px-4 py-3"
         :class="d.active ? '' : 'opacity-60'"
       >
         <span

@@ -191,7 +191,7 @@ const CARD = 'rounded-xl border border-card-border bg-card px-5 py-4'
     <!-- عناصر التحكم تختفي من الطباعة، فالورقة تحمل التقرير وحده -->
     <header class="flex flex-wrap items-end justify-between gap-3" data-export-hide>
       <div>
-        <h2 class="m-0 font-semibold text-strong text-lg">{{ t('admin.reports') }}</h2>
+        <h2 class="admin-title">{{ t('admin.reports') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('report.hint') }}</p>
       </div>
 

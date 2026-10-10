@@ -90,7 +90,7 @@ const FIELD =
 <template>
   <section class="flex max-w-xl flex-col gap-4 rounded-xl border border-card-border bg-card p-5 shadow-[var(--shadow-panel)]">
     <header class="flex flex-col gap-1">
-      <h2 class="m-0 font-semibold text-strong text-lg">{{ t('rates.title') }}</h2>
+      <h2 class="admin-card-title">{{ t('rates.title') }}</h2>
       <p class="m-0 text-caption text-mute leading-relaxed">{{ t('rates.hint') }}</p>
     </header>
 

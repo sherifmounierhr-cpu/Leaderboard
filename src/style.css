@@ -558,3 +558,98 @@ body { margin: 0; background: var(--color-page); }
 @media (prefers-reduced-motion: reduce) {
   .chart-draw, .chart-fade, .chart-bar { animation: none !important; }
 }
+
+/* ------------------------------------------------------------------
+   تبويبات الإدارة: عنوان الصفحة، صفوف القوائم، نماذج التعديل، الجداول
+   والحالات الفارغة — شكل واحد لكل التبويبات من هنا.
+------------------------------------------------------------------ */
+.admin-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.6rem;
+  margin: 0;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-strong);
+}
+/* نفس خط الهوية اللي جنب عناوين شاشات العرض */
+.admin-title::before {
+  content: "";
+  inline-size: 5px;
+  block-size: 1.15em;
+  border-radius: 99px;
+  background: linear-gradient(to bottom, var(--color-gold), var(--color-accent));
+}
+.admin-card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--color-strong);
+}
+
+.admin-row {
+  border-radius: 14px;
+  transition: border-color var(--dur-2) ease, box-shadow var(--dur-2) ease, background-color var(--dur-2) ease;
+}
+.admin-row:hover,
+.admin-row:focus-within {
+  border-color: color-mix(in oklab, var(--color-accent) 40%, var(--color-card-border));
+  box-shadow: var(--shadow-card);
+}
+
+.admin-form {
+  position: relative;
+  border-radius: 16px;
+  animation: rise-in var(--dur-3) var(--ease-out) backwards;
+}
+.admin-form::before {
+  content: "";
+  position: absolute;
+  inset-inline: 16px;
+  inset-block-start: -1px;
+  block-size: 3px;
+  border-radius: 0 0 4px 4px;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-summit));
+}
+
+.admin-empty {
+  margin: 0;
+  padding: 2.75rem 1rem;
+  border: 1px dashed var(--color-card-border);
+  border-radius: 16px;
+  background: var(--color-card-alt);
+  text-align: center;
+  font-weight: 500;
+  color: var(--color-mute);
+}
+
+/* الأزرار الثانوية (حدّ فقط): ردّ فعل واضح بدل تغيّر لون النص وحده */
+[data-admin] button.border-card-border:not(:disabled):hover,
+[data-admin] a.border-card-border:hover {
+  border-color: color-mix(in oklab, var(--color-accent) 45%, var(--color-card-border));
+  background: color-mix(in oklab, var(--color-accent) 7%, transparent);
+}
+[data-admin] button.hover\:text-down:not(:disabled):hover {
+  border-color: color-mix(in oklab, var(--color-down) 45%, var(--color-card-border));
+  background: color-mix(in oklab, var(--color-down) 8%, transparent);
+}
+[data-admin] button { transition-property: color, background-color, border-color, opacity, scale, box-shadow; transition-duration: var(--dur-2); }
+
+/* الجداول */
+[data-admin] table thead th {
+  font-weight: 700;
+  color: var(--color-mute);
+  background: var(--color-card-alt);
+}
+[data-admin] table tbody tr { transition: background-color var(--dur-2) ease; }
+[data-admin] table tbody tr:hover { background: color-mix(in oklab, var(--color-accent) 5%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-form { animation: none; }
+}
+@media print {
+  [data-admin] table tbody tr:hover { background: none; }
+}
