@@ -7,6 +7,8 @@ import { advanceView } from '@/composables/useBoardControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useNewsControls } from '@/composables/useNewsControls'
 import { dayKey } from '@/lib/region'
+import BrandLogo from '@/components/BrandLogo.vue'
+import StoryBar from '@/components/StoryBar.vue'
 
 /**
  * نوبة الأخبار في التبديل التلقائي: أخبار النهارده واحد ورا التاني بملء
@@ -15,7 +17,8 @@ import { dayKey } from '@/lib/region'
  * مفيش عرض اتنين مع بعض عن قصد: خبر واحد كبير بيتقرا من آخر الغرفة.
  */
 
-const TICK_MS = 100
+/** الشريط بقى حركة CSS، فالمؤقت للتبديل بين الأخبار بس. */
+const TICK_MS = 250
 /** لو مفيش أخبار النهارده، بنعرض آخر تلاتة بدل ما النوبة تعدّي فاضية. */
 const FALLBACK = 3
 /** مهلة انتظار الأخبار لو النوبة جت قبل ما توصل. */
@@ -49,7 +52,6 @@ const slides = computed(() => {
 })
 
 const current = computed(() => slides.value[index.value] ?? null)
-const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / slideMs.value) * 100))
 
 function show(at: number) {
   index.value = at
@@ -112,10 +114,11 @@ const when = computed(() => {
   <section
     dir="rtl"
     data-export-hide
-    class="fixed inset-0 z-40 flex items-end overflow-hidden bg-header"
+    data-surface="dark"
+    class="fixed inset-0 z-40 flex flex-col overflow-hidden bg-header text-white"
     :aria-label="t('news.label')"
   >
-    <p v-if="!current" class="m-0 w-full text-center text-white/60">{{ t('news.empty') }}</p>
+    <p v-if="!current" class="m-auto text-center text-white/60">{{ t('news.empty') }}</p>
 
     <template v-else>
       <Transition name="slide" mode="out-in">
@@ -129,39 +132,51 @@ const when = computed(() => {
           @error="broken.add(current.id)"
         />
       </Transition>
+      <!-- تعتيم بلون الهوية الغامق لا بالأسود: أسفل للنص، وأعلى للشعار والشريط -->
       <span
         aria-hidden="true"
-        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(10,14,18,0.96)_0%,rgba(10,14,18,0.82)_34%,rgba(10,14,18,0.22)_64%,rgba(10,14,18,0.5)_100%)]"
+        class="absolute inset-0 bg-[linear-gradient(to_top,rgba(6,22,23,0.97)_0%,rgba(6,22,23,0.86)_36%,rgba(6,22,23,0.2)_66%,rgba(6,22,23,0.72)_100%)]"
       />
+
+      <!-- إطار الهوية: الشعار، خبر كام من كام، واسم الشاشة -->
+      <header class="relative flex items-center gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
+        <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
+        <StoryBar class="flex-1" :count="slides.length" :index="index" :duration-ms="slideMs" />
+        <span class="flex shrink-0 items-center gap-[0.5em] rounded-full bg-gold px-[1.1em] py-[0.4em] font-bold text-[#0a2e2f] text-[clamp(13px,2vh,24px)]">
+          <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-[1.25em]" />
+          {{ t('news.label') }}
+        </span>
+      </header>
 
       <Transition name="slide" mode="out-in">
         <div
           :key="current.id"
-          class="relative flex w-full flex-col gap-[clamp(10px,2vh,24px)] px-[6vw] pb-[clamp(40px,9vh,120px)] pt-[6vh] text-white"
+          class="relative mt-auto flex w-full gap-[clamp(14px,1.8vw,34px)] px-[5vw] pb-[clamp(36px,8vh,110px)]"
         >
-          <span class="flex w-fit items-center gap-[0.5em] rounded-full bg-white/12 px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(13px,2vh,24px)]">
-            <iconify-icon icon="mdi:newspaper-variant-outline" aria-hidden="true" class="text-gold text-[1.3em]" />
-            {{ t('news.label') }}
-            <span class="text-white/50">{{ index + 1 }}/{{ slides.length }}</span>
-          </span>
+          <!-- خط الهوية بجانب العنوان: ذهبي للأخضر، بميل قمم الشعار في المعنى لا الشكل -->
+          <span
+            aria-hidden="true"
+            class="rise w-[clamp(5px,0.5vw,10px)] shrink-0 rounded-full bg-[linear-gradient(to_bottom,var(--color-gold),var(--color-accent-live))]"
+          />
+          <div class="flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)]">
+            <p class="rise m-0 flex items-center gap-[0.7em] font-semibold text-white/70 text-[clamp(13px,2vh,24px)]">
+              <span class="tabular-nums text-gold">{{ index + 1 }} / {{ slides.length }}</span>
+              <template v-if="when"><span aria-hidden="true">·</span>{{ when }}</template>
+            </p>
 
-          <h2
-            class="m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
-          >{{ current.title }}</h2>
+            <h2
+              class="rise m-0 max-w-[24ch] font-extrabold leading-[1.12] tracking-[-0.01em] text-balance break-words text-[clamp(32px,7.4vh,96px)] drop-shadow-[0_4px_24px_rgba(0,0,0,0.5)]"
+              style="--i: 1"
+            >{{ current.title }}</h2>
 
-          <p
-            v-if="current.excerpt"
-            class="m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
-          >{{ current.excerpt }}</p>
-
-          <p v-if="when" class="m-0 font-semibold text-white/55 text-[clamp(13px,1.9vh,22px)]">{{ when }}</p>
+            <p
+              v-if="current.excerpt"
+              class="rise m-0 max-w-[70ch] font-medium leading-snug text-white/85 text-balance break-words text-[clamp(16px,3vh,38px)]"
+              style="--i: 3"
+            >{{ current.excerpt }}</p>
+          </div>
         </div>
       </Transition>
-
-      <!-- الوقت الباقي للخبر الحالي -->
-      <div class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
-        <div class="h-full bg-gold transition-[width] duration-100 ease-linear" :style="{ width: `${progress}%` }" />
-      </div>
     </template>
   </section>
 </template>

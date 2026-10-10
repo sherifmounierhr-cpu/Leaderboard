@@ -32,6 +32,12 @@ const path = computed(() => {
     aria-hidden="true"
     fill="none"
   >
+    <!-- مساحة خفيفة تحت الخط: تدّي الشكل وزن من آخر الغرفة -->
+    <path
+      :d="`${path} L${W} ${H + 2} L0 ${H + 2} Z`"
+      :fill="up ? 'var(--color-accent-live)' : 'var(--color-down)'"
+      fill-opacity="0.12"
+    />
     <path
       :d="path"
       :stroke="up ? 'var(--color-accent-live)' : 'var(--color-down)'"

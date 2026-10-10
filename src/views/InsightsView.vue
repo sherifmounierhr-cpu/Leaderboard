@@ -37,9 +37,10 @@ const quarters = computed(() =>
 </script>
 
 <template>
-  <div data-scroll class="flex-1 min-h-0 overflow-y-auto px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(16px,3vh,44px)]">
+  <!-- على الشاشات العريضة الرسمان يملآن ارتفاع الشاشة؛ أضيق من كده الصفحة تتمرّر -->
+  <div data-scroll class="flex-1 min-h-0 flex flex-col overflow-y-auto px-4 py-6 sm:px-8 lg:px-16 lg:pt-[clamp(12px,2.2vh,28px)] lg:pb-[clamp(16px,3vh,44px)]">
     <h2 class="sr-only">{{ t('header.insightsTitle') }}</h2>
-    <div data-insights-grid class="grid gap-5 lg:gap-6 xl:grid-cols-2 items-start xl:items-stretch">
+    <div data-insights-grid class="grid gap-5 lg:gap-6 xl:grid-cols-2 xl:grid-rows-1 xl:flex-1 xl:min-h-0 items-start xl:items-stretch">
       <TrendChart :history="history" :leader-id="leaderId" :names="names" />
       <QuarterCompare :rows="quarterTotals" :quarters="quarters" />
     </div>

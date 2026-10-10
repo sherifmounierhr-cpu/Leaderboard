@@ -188,7 +188,9 @@
     "date": "Date",
     "showTable": "Table",
     "showChart": "Chart",
-    "trendHint": "Use the left and right arrow keys to step through dates"
+    "trendHint": "Use the left and right arrow keys to step through dates",
+    "leaderNow": "{name} — leading now",
+    "bestQuarter": "Strongest quarter: {quarter}"
   },
   "export": {
     "label": "Export",
@@ -692,7 +694,10 @@
     },
     "rateLabel": "Interest rate",
     "band": "Range",
-    "decidedOn": "Decision"
+    "decidedOn": "Decision",
+    "lastMonth": "Last month",
+    "high": "High",
+    "low": "Low"
   },
   "rates": {
     "tab": "Rates",

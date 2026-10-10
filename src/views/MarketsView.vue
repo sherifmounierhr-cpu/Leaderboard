@@ -6,6 +6,8 @@ import { useMarkets } from '@/composables/useMarkets'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { advanceView } from '@/composables/useBoardControls'
 import Sparkline from '@/components/Sparkline.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
+import StoryBar from '@/components/StoryBar.vue'
 import type { MarketQuote } from '@/lib/types'
 
 /**
@@ -20,7 +22,7 @@ import type { MarketQuote } from '@/lib/types'
 
 /** مدة الشريحة الواحدة. */
 const SLIDE_MS = 6_000
-const TICK_MS = 100
+const TICK_MS = 250
 /** تحت كده الحركة مش حركة — ضوضاء تداول. */
 const MIN_PCT = 0.25
 /** أسعار بتتعرض حتى لو ما اتحرّكتش، لأن المكتب بيسأل عنها كل يوم. */
@@ -77,7 +79,16 @@ const slides = computed<MarketQuote[]>(() => {
 const current = computed(() => slides.value[index.value] ?? null)
 const isRate = computed(() => current.value?.kind === 'rate')
 const up = computed(() => (current.value?.changePct ?? 0) > 0)
-const progress = computed(() => Math.min(100, ((now.value - startedAt.value) / SLIDE_MS) * 100))
+const hasSpark = computed(() => (current.value?.spark.length ?? 0) > 2)
+
+/** أعلى وأدنى إغلاق في الشهر — حدود خط الاتجاه بالأرقام. */
+const range = computed(() => {
+  const values = (current.value?.spark ?? []).filter((v) => Number.isFinite(v))
+  if (values.length < 3) return null
+  const digits = Math.max(...values) >= 1000 ? 0 : 2
+  const fmt = (v: number) => n(v, { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  return { high: fmt(Math.max(...values)), low: fmt(Math.min(...values)) }
+})
 
 const price = computed(() => {
   const quote = current.value
@@ -152,72 +163,104 @@ watch(slides, (list, before) => {
   <section
     dir="rtl"
     data-export-hide
-    class="fixed inset-0 z-40 flex flex-col items-center justify-center gap-[clamp(10px,2.2vh,30px)] overflow-hidden px-[6vw] text-center text-white"
+    data-surface="dark"
+    class="fixed inset-0 z-40 isolate flex flex-col overflow-hidden text-white"
     :class="!current
       ? 'bg-header'
       : isRate
-        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#1d3350_0%,#141f30_55%,#0b1119_100%)]'
+        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#1a4658_0%,#102a36_55%,#09161c_100%)]'
         : up
           ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#12615c_0%,#0c3231_55%,#0a1a1b_100%)]'
           : 'bg-[radial-gradient(120%_90%_at_50%_0%,#6b241f_0%,#361513_55%,#170b0a_100%)]'"
     :aria-label="ar('markets.label')"
   >
-    <p v-if="!current" class="m-0 text-white/60">{{ ar('markets.empty') }}</p>
+    <span class="peaks -z-10 !opacity-[0.035]" aria-hidden="true" />
 
-    <Transition v-else name="quote" mode="out-in">
-      <div :key="current.key" class="flex flex-col items-center gap-[clamp(10px,2.2vh,30px)]">
-        <span class="flex items-center gap-[0.5em] rounded-full border border-white/20 bg-white/10 px-[1.1em] py-[0.4em] font-bold tracking-[0.06em] text-[clamp(13px,2vh,24px)]">
-          <iconify-icon
-            :icon="isRate ? 'mdi:bank-outline' : up ? 'mdi:trending-up' : 'mdi:trending-down'"
-            aria-hidden="true"
-            class="text-[1.3em]"
-            :class="isRate ? 'text-gold' : up ? 'text-accent-live' : 'text-down'"
-          />
-          {{ isRate ? ar('markets.rateLabel') : ar(up ? 'markets.alert.up' : 'markets.alert.down') }}
-          <span class="text-white/50">{{ index + 1 }}/{{ slides.length }}</span>
-        </span>
+    <p v-if="!current" class="m-auto text-white/60">{{ ar('markets.empty') }}</p>
 
-        <h2 class="m-0 font-extrabold leading-[1.1] text-balance break-words text-[clamp(30px,6.5vh,86px)]">
-          {{ ar(`markets.name.${current.key}`) }}
-        </h2>
-
-        <p class="m-0 flex items-baseline justify-center gap-[0.4em] font-extrabold tabular-nums text-[clamp(40px,9vh,120px)] leading-none">
-          <span dir="ltr">{{ price }}</span>
-          <span class="font-semibold text-white/60 text-[0.3em]">
-            {{ current.currency
-            }}<template v-if="current.unit"> / {{ ar(`markets.unit.${current.unit}`) }}</template>
-          </span>
-        </p>
-
-        <p v-if="note" class="m-0 font-semibold text-white/60 text-[clamp(14px,2.4vh,30px)]">{{ note }}</p>
-
-        <p
-          v-if="!isRate"
-          class="m-0 font-extrabold tabular-nums text-[clamp(26px,5.5vh,70px)]"
-          :class="up ? 'text-accent-live' : 'text-down'"
-        >
-          <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
-          <bdi dir="ltr">{{ move }}</bdi>
-          <span class="ms-[0.4em] font-semibold text-white/50 text-[0.42em]">{{ ar('markets.sinceClose') }}</span>
-        </p>
-
-        <Sparkline
-          v-if="current.spark.length > 2"
-          :points="current.spark"
-          :up="up"
-          class="h-[clamp(40px,8vh,110px)] w-[min(70vw,40rem)] opacity-80"
+    <template v-else>
+      <!-- إطار الهوية: الشعار، سعر كام من كام، واسم الشاشة -->
+      <header class="relative flex items-center gap-[clamp(14px,2.4vw,40px)] px-[5vw] pt-[clamp(16px,3.6vh,44px)]">
+        <BrandLogo tone="white" class="h-[clamp(34px,6.4vh,72px)]" />
+        <StoryBar
+          class="flex-1"
+          :count="slides.length"
+          :index="index"
+          :duration-ms="SLIDE_MS"
+          :tone="isRate ? 'gold' : up ? 'up' : 'down'"
         />
-      </div>
-    </Transition>
+        <span class="flex shrink-0 items-center gap-[0.5em] rounded-full border border-white/20 bg-white/10 px-[1.1em] py-[0.4em] font-bold text-[clamp(13px,2vh,24px)]">
+          <iconify-icon icon="mdi:finance" aria-hidden="true" class="text-gold text-[1.25em]" />
+          {{ ar('markets.label') }}
+        </span>
+      </header>
 
-    <!-- الوقت الباقي للشريحة الحالية -->
-    <div v-if="current" class="absolute inset-x-0 bottom-0 h-[clamp(4px,0.7vh,8px)] bg-white/10" aria-hidden="true">
-      <div
-        class="h-full transition-[width] duration-100 ease-linear"
-        :class="isRate ? 'bg-gold' : up ? 'bg-accent-live' : 'bg-down'"
-        :style="{ width: `${progress}%` }"
-      />
-    </div>
+      <Transition name="quote" mode="out-in">
+        <div
+          :key="current.key"
+          class="relative grid min-h-0 flex-1 items-center gap-[clamp(20px,4vw,72px)] px-[6vw] pb-[clamp(24px,6vh,80px)]"
+          :class="hasSpark ? 'lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)]' : 'justify-items-center text-center'"
+        >
+          <div class="flex min-w-0 flex-col gap-[clamp(10px,2.2vh,30px)]" :class="hasSpark ? 'items-start max-lg:items-center max-lg:text-center' : 'items-center'">
+            <span class="rise flex items-center gap-[0.5em] rounded-full border border-white/20 bg-white/10 px-[1.1em] py-[0.4em] font-bold tracking-[0.04em] text-[clamp(13px,2vh,24px)]">
+              <iconify-icon
+                :icon="isRate ? 'mdi:bank-outline' : up ? 'mdi:trending-up' : 'mdi:trending-down'"
+                aria-hidden="true"
+                class="text-[1.3em]"
+                :class="isRate ? 'text-gold' : up ? 'text-accent-live' : 'text-down'"
+              />
+              {{ isRate ? ar('markets.rateLabel') : ar(up ? 'markets.alert.up' : 'markets.alert.down') }}
+              <span class="tabular-nums text-white/55">{{ index + 1 }}/{{ slides.length }}</span>
+            </span>
+
+            <h2 class="rise m-0 font-extrabold leading-[1.1] text-balance break-words text-[clamp(30px,6.5vh,86px)]" style="--i: 1">
+              {{ ar(`markets.name.${current.key}`) }}
+            </h2>
+
+            <p class="rise m-0 flex items-baseline gap-[0.4em] font-extrabold tabular-nums leading-none text-[clamp(44px,11vh,150px)]" style="--i: 2">
+              <span dir="ltr">{{ price }}</span>
+              <span class="font-semibold text-white/60 text-[0.26em]">
+                {{ current.currency
+                }}<template v-if="current.unit"> / {{ ar(`markets.unit.${current.unit}`) }}</template>
+              </span>
+            </p>
+
+            <p v-if="note" class="rise m-0 font-semibold text-white/65 text-[clamp(14px,2.4vh,30px)]" style="--i: 3">{{ note }}</p>
+
+            <p
+              v-if="!isRate"
+              class="rise m-0 flex items-center gap-[0.35em] rounded-[0.5em] px-[0.5em] py-[0.15em] font-extrabold tabular-nums text-[clamp(24px,5vh,64px)]"
+              :class="up ? 'bg-accent-live/15 text-accent-live' : 'bg-down/20 text-[#ff9d94]'"
+              style="--i: 3"
+            >
+              <iconify-icon :icon="up ? 'mdi:arrow-up-bold' : 'mdi:arrow-down-bold'" aria-hidden="true" class="text-[0.8em]" />
+              <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
+              <bdi dir="ltr">{{ move }}</bdi>
+              <span class="ms-[0.3em] font-semibold text-white/60 text-[0.42em]">{{ ar('markets.sinceClose') }}</span>
+            </p>
+          </div>
+
+          <!-- خط الشهر في لوحته: شكل الحركة وحدودها بالأرقام -->
+          <div
+            v-if="hasSpark"
+            class="rise flex min-w-0 flex-col gap-[clamp(10px,2vh,24px)] rounded-[clamp(18px,3vh,36px)] border border-white/12 bg-white/[0.06] p-[clamp(16px,3.2vh,44px)]"
+            style="--i: 2"
+          >
+            <div class="flex items-center justify-between gap-4 font-semibold text-white/65 text-[clamp(13px,2vh,24px)]">
+              <span class="flex items-center gap-[0.5em]">
+                <iconify-icon icon="mdi:chart-line" aria-hidden="true" class="text-[1.2em]" />
+                {{ ar('markets.lastMonth') }}
+              </span>
+              <span v-if="range" class="flex gap-[1.2em] tabular-nums">
+                <span>{{ ar('markets.high') }} <b class="text-white" dir="ltr">{{ range.high }}</b></span>
+                <span>{{ ar('markets.low') }} <b class="text-white" dir="ltr">{{ range.low }}</b></span>
+              </span>
+            </div>
+            <Sparkline :points="current.spark" :up="up" class="h-[clamp(110px,34vh,420px)] w-full" />
+          </div>
+        </div>
+      </Transition>
+    </template>
   </section>
 </template>
 

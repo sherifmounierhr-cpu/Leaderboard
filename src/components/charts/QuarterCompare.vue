@@ -12,7 +12,7 @@ const props = defineProps<{ rows: TeamStanding[]; quarters: number[] }>()
 const { t, locale } = useI18n()
 
 const host = ref<HTMLElement | null>(null)
-const { width } = useElementSize(host)
+const { width, height } = useElementSize(host)
 
 const rtl = computed(() => locale.value === 'ar')
 
@@ -21,11 +21,14 @@ const rtl = computed(() => locale.value === 'ar')
  * بالبكسل الحقيقي داخل SVG، فلا يكبر وحده مع الشاشة.
  */
 const wide = computed(() => width.value >= 720)
-const size = computed(() =>
-  wide.value
-    ? { label: 160, value: 88, bar: 18, rowPad: 26, name: 16, num: 14 }
-    : { label: 132, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
+const base = computed(() =>
+  width.value >= 820
+    ? { label: 190, value: 110, bar: 18, rowPad: 26, name: 19, num: 17 }
+    : wide.value
+      ? { label: 160, value: 88, bar: 18, rowPad: 26, name: 16, num: 14 }
+      : { label: 132, value: 64, bar: 14, rowPad: 20, name: 13, num: 12 },
 )
+const MAX_BAR = 34
 const GAP = 2 // فجوة بلون السطح بين القضبان المتلاصقة
 const TOP = 8
 const X_BAND = 26
@@ -79,11 +82,41 @@ const maxValue = computed(() => {
 
 const top = computed(() => niceScale(maxValue.value, 3).top)
 
+/** أقل ارتفاع يحتاجه الرسم بسُمك القضيب الأساسي — الحاوية لا تنزل تحته. */
+const naturalHeight = computed(() => {
+  const q = props.quarters.length
+  return TOP + X_BAND + teams.value.length * (q * base.value.bar + (q - 1) * GAP + base.value.rowPad)
+})
+
+/**
+ * لو البطاقة أطول من الحاجة (شاشة التلفزيون) القضبان تتخن لحد سقف، والباقي
+ * يتوزّع مسافات بين الفرق — الرسم يملأ البطاقة بدل ما يتكوّم فوق.
+ */
+const size = computed(() => {
+  const q = Math.max(props.quarters.length, 1)
+  const n = Math.max(teams.value.length, 1)
+  const perTeam = (Math.max(height.value, naturalHeight.value) - TOP - X_BAND) / n
+  const bar = Math.min(MAX_BAR, Math.max(base.value.bar, Math.floor((perTeam - base.value.rowPad - (q - 1) * GAP) / q)))
+  return { ...base.value, bar, rowPad: Math.max(base.value.rowPad, perTeam - q * bar - (q - 1) * GAP) }
+})
+
 /** ارتفاع مجموعة قضبان الفرع الواحد بدون الحشوة. */
 const stackHeight = computed(
   () => props.quarters.length * size.value.bar + (props.quarters.length - 1) * GAP,
 )
 const groupHeight = computed(() => stackHeight.value + size.value.rowPad)
+
+/** أقوى ربع للشركة كلها — الرقم الذي يلخّص المقارنة. */
+const stat = computed(() => {
+  let best: { quarter: number; total: number } | null = null
+  for (const q of props.quarters) {
+    const total = teams.value.reduce((s, team) => s + (team.values.find((v) => v.quarter === q)?.value ?? 0), 0)
+    if (!best || total > best.total) best = { quarter: q, total }
+  }
+  return best && best.total > 0
+    ? { value: compact(best.total), label: t('chart.bestQuarter', { quarter: t('quarter.short', { n: best.quarter }) }) }
+    : null
+})
 
 const plot = computed(() => {
   const w = Math.max(width.value, 320)
@@ -135,8 +168,8 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
 </script>
 
 <template>
-  <ChartFrame :title="t('chart.compare')" :subtitle="t('chart.compareSub')" :legend="legend">
-    <div ref="host" class="relative w-full min-w-0">
+  <ChartFrame :title="t('chart.compare')" :subtitle="t('chart.compareSub')" :legend="legend" icon="mdi:chart-bar" :stat="stat">
+    <div ref="host" class="relative w-full min-w-0 flex-1 xl:min-h-0" :style="{ minHeight: `${naturalHeight}px` }">
       <p v-if="!teams.length" class="m-0 py-12 text-center font-medium text-mute text-sm">
         {{ t('chart.noHistory') }}
       </p>
@@ -148,7 +181,7 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
         :viewBox="`0 0 ${plot.w} ${plot.h}`"
         role="img"
         :aria-label="t('chart.compare')"
-        class="block max-w-full"
+        class="absolute left-0 top-0 block max-w-full"
         style="direction: ltr"
       >
         <!--
@@ -179,9 +212,12 @@ const hovered = ref<{ team: string; quarter: number; value: number } | null>(nul
           >{{ team.name }}</text>
 
           <g v-for="(entry, j) in team.values" :key="entry.quarter">
+            <!-- القضيب ينمو من خط الأساس عند الدخول، فريق ورا فريق -->
             <path
               :d="pathFor(entry.value, barY(i, j))"
               :fill="QUARTER_COLORS[entry.quarter - 1]"
+              class="chart-bar"
+              :style="{ transformOrigin: `${plot.start}px 0px`, animationDelay: `${i * 70 + j * 25}ms` }"
             />
             <!-- منطقة التقاط بارتفاع الخانة كاملة: أكبر من القضيب نفسه -->
             <rect

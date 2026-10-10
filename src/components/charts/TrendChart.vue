@@ -19,7 +19,7 @@ const props = defineProps<{
 const { t, locale } = useI18n()
 
 const host = ref<HTMLElement | null>(null)
-const { width } = useElementSize(host)
+const { width, height } = useElementSize(host)
 
 const rtl = computed(() => locale.value === 'ar')
 
@@ -29,9 +29,11 @@ const rtl = computed(() => locale.value === 'ar')
  */
 const wide = computed(() => width.value >= 500)
 const size = computed(() =>
-  wide.value
-    ? { tick: 13, label: 14, axis: 64, endBand: width.value >= 720 ? 150 : 120, xBand: 36 }
-    : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
+  width.value >= 820
+    ? { tick: 15, label: 17, axis: 76, endBand: 170, xBand: 42 }
+    : wide.value
+      ? { tick: 13, label: 14, axis: 64, endBand: width.value >= 720 ? 150 : 120, xBand: 36 }
+      : { tick: 11, label: 12, axis: 52, endBand: 26, xBand: 30 },
 )
 
 /** التواريخ المتاحة مرتبة تصاعدياً. */
@@ -79,7 +81,8 @@ const maxValue = computed(() => {
 
 const plot = computed(() => {
   const w = Math.max(width.value, 320)
-  const h = wide.value ? Math.round(Math.min(Math.max(w * 0.55, 320), 500)) : 300
+  // الرسم يملأ ارتفاع البطاقة (الـ svg موضوع absolute فلا يدفع الحاوية هو نفسه)
+  const h = Math.round(Math.max(height.value, 300))
   // الطرف المقابل للمحور يحمل نهايات الخطوط وأسماءها، فيحتاج هامشاً لا يقصّها
   const { axis, endBand, xBand } = size.value
   return {
@@ -141,6 +144,24 @@ function lastPoint(s: TrendSeries) {
 
 const leader = computed(() => series.value.find((s) => s.isLeader) ?? null)
 const leaderEnd = computed(() => (leader.value ? lastPoint(leader.value) : null))
+
+/** مساحة خفيفة تحت خط المتصدّر فقط: تثبّت العين عليه من غير ما تزاحم بقية الخطوط. */
+const leaderArea = computed(() => {
+  const s = leader.value
+  if (!s) return ''
+  const points = s.values
+    .map((v, i) => (v == null ? null : { x: xScale.value(i), y: yScale.value(v) }))
+    .filter((p): p is { x: number; y: number } => p !== null)
+  if (points.length < 2) return ''
+  const base = plot.value.y1
+  return `${linePath(points)} L${points[points.length - 1].x.toFixed(2)},${base} L${points[0].x.toFixed(2)},${base} Z`
+})
+
+const stat = computed(() =>
+  leader.value && leaderEnd.value && dates.value.length >= 2
+    ? { value: compact(leaderEnd.value.value), label: t('chart.leaderNow', { name: leader.value.name }) }
+    : null,
+)
 
 /**
  * اسم كل فرع عند نهاية خطه، مع دفع الأسماء المتقاربة بعيداً عن بعضها حتى
@@ -220,8 +241,8 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
 </script>
 
 <template>
-  <ChartFrame :title="t('chart.trend')" :subtitle="t('chart.trendSub')" :legend="legend">
-    <div ref="host" class="relative w-full min-w-0">
+  <ChartFrame :title="t('chart.trend')" :subtitle="t('chart.trendSub')" :legend="legend" icon="mdi:chart-timeline-variant" :stat="stat">
+    <div ref="host" class="relative w-full min-w-0 flex-1 min-h-[320px] xl:min-h-0">
       <p v-if="dates.length < 2" class="m-0 py-12 text-center font-medium text-mute text-sm">
         {{ t('chart.noHistory') }}
       </p>
@@ -233,9 +254,15 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
           :viewBox="`0 0 ${plot.w} ${plot.h}`"
           role="img"
           :aria-label="t('chart.trend')"
-          class="block max-w-full overflow-visible"
+          class="absolute left-0 top-0 block max-w-full overflow-visible"
           style="direction: ltr"
         >
+          <defs>
+            <linearGradient id="trend-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--chart-emphasis)" stop-opacity="0.2" />
+              <stop offset="100%" stop-color="var(--chart-emphasis)" stop-opacity="0" />
+            </linearGradient>
+          </defs>
           <!-- direction: ltr: في RTL ينقلب معنى text-anchor فتُقصّ العلامات؛ الإحداثيات محسوبة لكل اتجاه -->
           <!-- شبكة أفقية: خطوط شعرية صلبة، متراجعة بصرياً -->
           <g>
@@ -289,15 +316,19 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             stroke-width="1"
           />
 
-          <!-- الخطوط: المتصدّر بلون الإبراز والبقية سياق رمادي -->
+          <path v-if="leaderArea" :d="leaderArea" fill="url(#trend-area)" class="chart-fade" />
+
+          <!-- الخطوط: المتصدّر بلون الإبراز والبقية سياق رمادي. تُرسم مرة عند الدخول. -->
           <g fill="none" stroke-linejoin="round" stroke-linecap="round">
             <path
               v-for="s in series"
               :key="s.id"
               :d="pathFor(s)"
+              pathLength="1"
+              class="chart-draw"
               :stroke="s.isLeader ? 'var(--chart-emphasis)' : 'var(--chart-context)'"
-              :stroke-width="s.isLeader ? 2.5 : 2"
-              :opacity="s.isLeader ? 1 : 0.55"
+              :stroke-width="s.isLeader ? (wide ? 3.5 : 2.5) : 2"
+              :opacity="s.isLeader ? 1 : 0.6"
             />
           </g>
 
@@ -306,7 +337,8 @@ const legend = computed<LegendItem[]>(() => dates.value.length < 2 ? [] : [
             v-if="leaderEnd"
             :cx="leaderEnd.x"
             :cy="leaderEnd.y"
-            r="4.5"
+            :r="wide ? 6 : 4.5"
+            class="chart-fade"
             fill="var(--chart-emphasis)"
             stroke="var(--chart-surface)"
             stroke-width="2"

@@ -188,7 +188,9 @@
     "date": "التاريخ",
     "showTable": "جدول",
     "showChart": "رسم",
-    "trendHint": "استخدم السهمين يميناً ويساراً لتصفّح التواريخ"
+    "trendHint": "استخدم السهمين يميناً ويساراً لتصفّح التواريخ",
+    "leaderNow": "{name} — المتصدّر الآن",
+    "bestQuarter": "أقوى ربع: {quarter}"
   },
   "export": {
     "label": "تصدير",
@@ -692,7 +694,10 @@
     },
     "rateLabel": "سعر الفائدة",
     "band": "النطاق",
-    "decidedOn": "قرار"
+    "decidedOn": "قرار",
+    "lastMonth": "آخر شهر",
+    "high": "أعلى",
+    "low": "أدنى"
   },
   "rates": {
     "tab": "الفائدة",
