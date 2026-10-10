@@ -189,7 +189,7 @@ const NUM =
                 :class="NUM"
                 :aria-label="`${t('table.target')} — ${agent.name}`"
               />
-              <span class="block mt-0.5 text-eyebrow text-dim tabular-nums">
+              <span class="block mt-0.5 text-xs text-dim tabular-nums">
                 {{ egp(drafts[agent.id]?.target ?? 0) }}
               </span>
             </td>
@@ -201,7 +201,7 @@ const NUM =
                 <iconify-icon icon="mdi:lock-outline" aria-hidden="true" class="text-dim" />
                 {{ egp(periods.get(agent.id)?.amount_egp ?? 0) }}
               </span>
-              <span class="block mt-0.5 text-eyebrow text-dim tabular-nums">
+              <span class="block mt-0.5 text-xs text-dim tabular-nums">
                 {{ compact(periods.get(agent.id)?.amount_egp ?? 0) }}
               </span>
             </td>
@@ -219,7 +219,7 @@ const NUM =
                 aria-hidden="true"
                 class="text-accent-live text-lg"
               />
-              <p v-if="rowError[agent.id]" role="alert" class="m-0 text-eyebrow text-down">
+              <p v-if="rowError[agent.id]" role="alert" class="m-0 text-xs text-down">
                 {{ rowError[agent.id] }}
               </p>
             </td>

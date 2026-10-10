@@ -653,3 +653,14 @@ body { margin: 0; background: var(--color-page); }
 @media print {
   [data-admin] table tbody tr:hover { background: none; }
 }
+
+/* الإدارة على الموبايل: كل ما يُضغط 44px على الأقل (الأزرار كانت 32–38) */
+@media (max-width: 639px) {
+  [data-admin] :is(button, select, input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"])) {
+    min-block-size: 44px;
+  }
+  [data-admin] button { min-inline-size: 44px; }
+  /* مجموعة أزرار الصف تنزل سطر لوحدها: خمس أزرار 44px كانوا بيعصروا الاسم في 80px */
+  .admin-row > div:last-child:has(> button) { flex-basis: 100%; justify-content: flex-end; }
+  .admin-title { font-size: 1.3rem; }
+}

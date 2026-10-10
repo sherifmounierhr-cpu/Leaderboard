@@ -92,17 +92,17 @@ const FIELD =
         {{ t('admin.agents') }}
         <span class="font-medium text-mute text-sm">({{ agents.length }})</span>
       </h2>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 max-sm:w-full">
         <input
           v-model="search"
           type="search"
           :placeholder="t('search.placeholder')"
           :aria-label="t('search.placeholder')"
-          :class="[FIELD, 'w-48 sm:w-64']"
+          :class="[FIELD, 'min-w-0 flex-1 sm:flex-none sm:w-64']"
         />
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
+          class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
           @click="editing = blank(); formError = null"
         >
           <iconify-icon icon="mdi:plus" aria-hidden="true" />
@@ -177,7 +177,7 @@ const FIELD =
 
     <p v-if="!filtered.length" class="admin-empty">{{ t('search.noResults', { q: search }) }}</p>
 
-    <ul class="m-0 p-0 list-none grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+    <ul class="m-0 p-0 list-none grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-3">
       <li
         v-for="agent in filtered"
         :key="agent.id"

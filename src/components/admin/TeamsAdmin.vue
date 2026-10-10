@@ -228,7 +228,7 @@ const FIELD =
     </form>
 
     <!-- القائمة -->
-    <ul class="m-0 p-0 list-none grid gap-3 xl:grid-cols-2">
+    <ul class="m-0 p-0 list-none grid grid-cols-1 gap-3 xl:grid-cols-2">
       <li
         v-for="team in teams"
         :key="team.id"

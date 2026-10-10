@@ -58,7 +58,20 @@ const tabs = computed<AdminTab[]>(() => {
 })
 const tab = ref<AdminTab>('periods')
 watch(tabs, (list) => { if (list.length && !list.includes(tab.value)) tab.value = list[0] }, { immediate: true })
+const tabList = ref<HTMLElement | null>(null)
 function goto(name: AdminTab) { if (tabs.value.includes(name)) tab.value = name }
+// شريط التبويبات على الموبايل بيتمرّر أفقياً: المختار يتجاب قدام العين
+watch(tab, () => {
+  void nextTick(() => {
+    const list = tabList.value
+    const el = list?.querySelector<HTMLElement>('[aria-selected="true"]')
+    if (!list || !el || list.scrollWidth <= list.clientWidth) return
+    // تمرير الشريط نفسه فقط (مش scrollIntoView): الصفحة ما تتحركش رأسياً. الفرق بين المركزين يشتغل في الاتجاهين.
+    const a = el.getBoundingClientRect()
+    const b = list.getBoundingClientRect()
+    list.scrollLeft += a.left + a.width / 2 - (b.left + b.width / 2)
+  })
+})
 
 const TAB_ICON: Record<AdminTab, string> = {
   periods: 'mdi:target',
@@ -77,7 +90,6 @@ const TAB_ICON: Record<AdminTab, string> = {
 }
 
 /** الأسهم تتنقّل بين التبويبات (نمط tablist): تركيز واحد يدخل القائمة والأسهم تكمّل. */
-const tabList = ref<HTMLElement | null>(null)
 function onTabKey(e: KeyboardEvent) {
   const list = tabs.value
   const at = list.indexOf(tab.value)
@@ -128,46 +140,53 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
   <div v-else data-admin class="min-h-screen flex flex-col bg-page text-strong font-sans">
     <a href="#admin-main" class="skip-link" data-export-hide>{{ t('a11y.skip') }}</a>
     <header
-      class="relative isolate flex flex-wrap items-center justify-between gap-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 lg:px-12"
+      class="relative isolate flex items-center justify-between gap-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 lg:px-12"
     >
       <span class="peaks -z-10" aria-hidden="true" data-export-hide />
       <div class="flex items-center gap-3 min-w-0">
-        <BrandLogo tone="white" class="h-10" />
-        <div class="w-px h-9 bg-white/15" />
-        <h1 class="m-0 font-extrabold text-lg lg:text-xl truncate">{{ t('admin.title') }}</h1>
+        <BrandLogo tone="white" class="h-9 sm:h-10" />
+        <div class="w-px h-9 bg-white/15 max-sm:hidden" />
+        <h1 class="m-0 font-extrabold text-lg lg:text-xl truncate max-sm:sr-only">{{ t('admin.title') }}</h1>
       </div>
 
       <!-- أزرار التنقّل تختفي عند طباعة تقرير؛ الشعار والعنوان يبقيان في الورقة -->
-      <div class="flex flex-wrap items-center justify-end gap-2" data-export-hide>
+      <div class="flex shrink-0 items-center justify-end gap-2" data-export-hide>
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
+          class="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
           :aria-label="t('settings.language')"
           @click="toggleLanguage"
         >
-          <iconify-icon icon="mdi:translate" aria-hidden="true" />
-          {{ locale === 'ar' ? 'English' : 'العربية' }}
+          <iconify-icon icon="mdi:translate" aria-hidden="true" class="text-lg" />
+          <span class="max-sm:sr-only">{{ locale === 'ar' ? 'English' : 'العربية' }}</span>
         </button>
         <a
           :href="boardUrl"
-          class="inline-flex items-center gap-1.5 min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
+          class="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
         >
-          <iconify-icon icon="mdi:view-dashboard-outline" aria-hidden="true" />
-          {{ t('admin.backToBoard') }}
+          <iconify-icon icon="mdi:view-dashboard-outline" aria-hidden="true" class="text-lg" />
+          <span class="max-sm:sr-only">{{ t('admin.backToBoard') }}</span>
         </a>
         <!-- حساب العرض مشترك بين المقيّمين: تغيير كلمته يقفله على الباقين -->
         <button
           v-if="isSignedIn && !isSharedDemo"
           type="button"
-          class="min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
+          class="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
+          :aria-expanded="showChangePassword"
           @click="showChangePassword = !showChangePassword"
-        >{{ t('admin.changePassword') }}</button>
+        >
+          <iconify-icon icon="mdi:key-variant" aria-hidden="true" class="text-lg" />
+          <span class="max-sm:sr-only">{{ t('admin.changePassword') }}</span>
+        </button>
         <button
           v-if="isSignedIn"
           type="button"
-          class="min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
+          class="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"
           @click="signOut"
-        >{{ t('admin.signOut') }}</button>
+        >
+          <iconify-icon icon="mdi:logout" aria-hidden="true" class="text-lg rtl:-scale-x-100" />
+          <span class="max-sm:sr-only">{{ t('admin.signOut') }}</span>
+        </button>
       </div>
     </header>
     <div class="h-1 bg-[linear-gradient(90deg,var(--color-accent),var(--color-summit))]" aria-hidden="true" />
@@ -265,7 +284,7 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         <PeriodsAdmin v-if="tab === 'periods'" />
         <DealsAdmin v-else-if="tab === 'deals'" />
         <!-- الاحتفال: التهنئة والإعدادات جنب مكتبة الصوت -->
-        <div v-else-if="tab === 'celebrate'" class="grid items-start gap-6 xl:grid-cols-2">
+        <div v-else-if="tab === 'celebrate'" class="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
           <div class="flex flex-col gap-6">
             <CelebrateAdmin />
             <QuarterCelebrateAdmin />
