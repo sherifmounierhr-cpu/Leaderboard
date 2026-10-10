@@ -924,6 +924,7 @@
     "title": "Install as an app",
     "button": "Install app",
     "ios": "In Safari: tap Share, then “Add to Home Screen”.",
-    "android": "From the browser menu (⋮ or ☰) choose “Install app” or “Add to Home screen”."
+    "android": "From the browser menu (⋮ or ☰) choose “Install app” or “Add to Home screen”.",
+    "samsung": "Installs from Samsung Internet get blocked by Google Play Protect. Open this link in Chrome and install from there (⋮ → “Add to Home screen” → “Install”)."
   }
 }

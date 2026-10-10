@@ -11,6 +11,11 @@ const ua = navigator.userAgent
 // iPadOS بيعرّف نفسه كـ Mac، فنميّزه باللمس
 const isIos = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
 const isAndroid = /Android/.test(ua)
+/**
+ * Samsung Internet بيبني حزمة التثبيت بنفسه على إصدار أندرويد قديم، فـ Google
+ * Play Protect بيحجبها («Unsafe app blocked»). الحل من Chrome: حزمته من Google.
+ */
+const isSamsung = /SamsungBrowser/.test(ua)
 const installed = ref(
   window.matchMedia('(display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true,
@@ -37,9 +42,10 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
  * الخطوات اليدوية (مشاركة ← إضافة إلى الشاشة الرئيسية).
  */
 export function useInstall() {
-  /** prompt: زرار يثبّت مباشرة · ios / android: خطوات يدوية · null: لا يُعرض شيء */
-  const mode = computed<'prompt' | 'ios' | 'android' | null>(() => {
+  /** prompt: زرار يثبّت مباشرة · ios / android / samsung: خطوات يدوية · null: لا يُعرض شيء */
+  const mode = computed<'prompt' | 'ios' | 'android' | 'samsung' | null>(() => {
     if (installed.value) return null
+    if (isSamsung) return 'samsung'
     if (deferred.value) return 'prompt'
     if (isIos) return 'ios'
     if (isAndroid) return 'android'
