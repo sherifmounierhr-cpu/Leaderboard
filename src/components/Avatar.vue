@@ -36,7 +36,7 @@ const initials = computed(() =>
 const generated = computed(() => {
   // بالإنجليزي الشعار المولَّد نفسه (CAP/CST/CAI) أوضح: الحرف الأول يتكرر (New Capital, New Cairo, North Coast)
   if (props.kind !== 'team' || locale.value !== 'ar' || !props.entity.photo.includes('ui-avatars.com')) return null
-  let color = '157a4a'
+  let color = '0f7e76'
   try {
     color = new URL(props.entity.photo).searchParams.get('background')?.replace(/[^0-9a-f]/gi, '') || color
   } catch { /* رابط غير صالح — اللون الافتراضي */ }

@@ -32,13 +32,16 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 </script>
 
 <template>
+  <!-- سطح الهوية الغامق: المتصدّر هو العنصر الوحيد الملوَّن بالكامل على الشاشة -->
   <div
-    class="relative flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 [@media(max-height:820px)]:pb-2 rounded-2xl border border-accent/70 bg-card px-6 pb-8 lg:pb-[clamp(12px,2.4vh,28px)] pt-0 lg:px-8 ring-1 ring-accent/15 shadow-[0_1px_2px_-1px_rgba(27,34,42,0.08),0_24px_50px_-28px_rgba(21,122,74,0.5)] animate-leader-pulse origin-bottom"
+    data-surface="dark"
+    class="on-brand relative isolate overflow-hidden flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 [@media(max-height:820px)]:pb-2 rounded-2xl px-6 pb-8 lg:pb-[clamp(12px,2.4vh,28px)] pt-0 lg:px-8 ring-1 ring-inset ring-white/15 shadow-[0_1px_2px_-1px_rgba(10,46,47,0.2),0_26px_50px_-26px_rgba(10,46,47,0.75)]"
   >
+    <span class="peaks -z-10" aria-hidden="true" />
     <div
-      class="flex items-center gap-2 rounded-b-lg bg-accent-strong px-6 py-2 font-semibold tracking-[0.12em] text-white text-xs lg:text-sm shadow-[0_5px_12px_-5px_rgba(15,99,56,0.6)]"
+      class="flex items-center gap-2 rounded-b-xl bg-gold px-6 py-2 font-bold tracking-[0.08em] text-[#0a2e2f] text-xs lg:text-[clamp(13px,1.6vh,16px)] shadow-[0_6px_14px_-6px_rgba(0,0,0,0.55)]"
     >
-      <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-gold text-base lg:text-lg" />
+      <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-base lg:text-lg" />
       {{ ribbon }}
     </div>
 
@@ -47,13 +50,13 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       :entity="entity"
       :kind="kind"
       size="large"
-      class="size-24 rounded-3xl ring-2 ring-accent/80 text-3xl"
+      class="size-24 rounded-3xl ring-[3px] ring-gold text-3xl shadow-[0_14px_30px_-14px_rgba(0,0,0,0.7)]"
       :class="entity.leads?.length ? 'lg:size-[clamp(72px,11.5vh,140px)]' : 'lg:size-[clamp(72px,11vh,128px)]'"
     />
 
     <div class="flex flex-col items-center gap-0.5 w-full">
       <div
-        class="w-full font-semibold tracking-[-0.01em] text-center text-strong text-2xl lg:text-[clamp(22px,3.3vh,30px)] text-balance break-words line-clamp-2"
+        class="w-full font-extrabold tracking-[-0.01em] text-center text-strong text-2xl lg:text-[clamp(22px,3.4vh,32px)] text-balance break-words line-clamp-2"
         :title="entity.name"
       >
         {{ entity.name }}
@@ -65,19 +68,19 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 
     <div class="flex items-baseline gap-2" :title="egp(entity.deals)">
       <span
-        class="font-bold leading-[0.85] tracking-[-0.02em] tabular-nums text-accent-text"
+        class="font-extrabold leading-[0.85] tracking-[-0.02em] tabular-nums text-strong"
         :class="statSize"
       >
         {{ compact(deals) }}
       </span>
-      <span class="font-medium uppercase text-accent-text/65 tracking-[0.16em] text-sm lg:text-label">
+      <span class="font-semibold uppercase text-accent-text tracking-[0.12em] text-sm lg:text-label">
         {{ t('card.sales') }}
       </span>
     </div>
 
     <ProgressTrack :pct="entity.pct" soft tall />
 
-    <div class="font-semibold text-accent-text/85 text-sm lg:text-[clamp(15px,1.9vh,21px)]">
+    <div class="font-semibold text-mute text-sm lg:text-[clamp(15px,1.9vh,21px)]">
       {{ t('card.ofTarget', { pct: entity.pct, target: compact(entity.target) }) }}
     </div>
   </div>

@@ -10,34 +10,42 @@
   --font-display: "Reem Kufi", "Tajawal", system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-  /* Brand / accent */
-  --color-accent: #157a4a;
-  --color-accent-strong: #0f6338;
-  --color-accent-live: #4bbd80;
-  --color-accent-text: #0f6438;
+  /*
+     ألوان الهوية من الشعار نفسه: تركواز الجبل #0F7E76 وأخضر القمة #54AC47.
+     التركواز لون الفعل والإبراز؛ الأخضر للحالة الحيّة والإيجابية فقط.
+     كل زوج نص/خلفية هنا مقيس على WCAG AA (4.5:1 للنص العادي).
+  */
+  --color-accent: #0f7e76;
+  --color-accent-strong: #0b635d;
+  --color-accent-live: #6cc45e;
+  --color-accent-text: #0b6660;
+  --color-summit: #54ac47;
+  --color-summit-text: #2f7a25;
 
-  /* Surfaces */
-  --color-page: #f3f4f2;
-  --color-header: #1e242c;
+  /* Surfaces — رمادي مائل للتركواز بدل الرمادي المحايد */
+  --color-page: #f2f5f4;
+  --color-header: #0c2a2b;
+  --color-header-2: #123a3a;
   --color-card: #ffffff;
-  --color-card-alt: #f7f8f6;
-  --color-card-border: #e7e9e6;
-  --color-divider: #eef0ec;
-  --color-track: #e9ebe8;
-  --color-avatar: #e9ece9;
+  --color-card-alt: #f6f8f7;
+  --color-card-border: #e1e8e6;
+  --color-divider: #ebefee;
+  --color-track: #e3eae8;
+  --color-avatar: #e4ebe9;
 
   /* Text */
-  --color-strong: #1b222a;
-  --color-mute: #5b6472;
-  /* كان #9aa0a8 (2.6:1 على الأبيض) — غُمّق ليُقرأ النص الصغير (4.6:1) */
-  --color-dim: #6f767f;
-  --color-avatar-text: #5b6472;
+  --color-strong: #14232a;
+  --color-mute: #56646a;
+  --color-dim: #616f75;
+  --color-avatar-text: #56646a;
 
   /* Semantic */
   --color-gold: #c39a4b;
-  --color-down: #cf4a41;
-  --color-silver: #7d8894;
-  --color-bronze: #a8683a;
+  /* الذهبي كنص على سطح فاتح: #c39a4b نفسه 2.6:1 فقط */
+  --color-gold-text: #8f6a1c;
+  --color-down: #c13c34;
+  --color-silver: #6c7780;
+  --color-bronze: #9a5b30;
 
   /* Typographic scale (يُكمل مقاييس Tailwind الافتراضية) */
   --text-eyebrow: 0.625rem;
@@ -53,7 +61,10 @@
   --text-stat-2: clamp(2rem, min(3.4vw, 5.4vh), 3.3rem);
   --text-stat-hero: clamp(3rem, min(5.2vw, 7.8vh), 5rem);
 
-  /* Motion */
+  /* Motion — منحنيان فقط: دخول هادئ، وحركة موضع. المدد في :root تحت. */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-move: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise: rise-in 0.52s var(--ease-out) both;
   --animate-bar-grow: bar-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
   --animate-leader-pulse: leader-pulse 4.5s ease-in-out infinite;
@@ -68,6 +79,17 @@
   --shadow-podium: 0 1px 2px -1px #1b222a0f, 0 18px 34px -20px #1b222a33;
   --shadow-card: 0 1px 2px -1px #1b222a0d, 0 10px 22px -18px #1b222a24;
 
+  /* مدد الحركة: ردّ الفعل، تغيّر الحالة، دخول عنصر، انتقال شاشة */
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --dur-4: 520ms;
+  --ring: var(--color-accent);
+
+  /* بطاقة المتصدّر والدخول: سطح الهوية الغامق */
+  --brand-surface: linear-gradient(155deg, #12615c 0%, #0c3f3e 55%, #0a2e2f 100%);
+  --brand-surface-line: #ffffff24;
+
   /* ------------------------------------------------------------------
      ألوان الرسوم البيانية.
      الأرباع تسلسل مرتّب (ordinal) لا هويات مستقلة، لذا تأخذ تدرّجاً بلون
@@ -76,15 +98,15 @@
      1920: Q2 و Q3 السابقان كانا متقاربين حتى يصعب تمييزهما من بعيد، والربع
      الأحدث صار الأغمق لأنه الأهم في المقارنة.
   ------------------------------------------------------------------ */
-  --chart-q1: #9ed5b6;
-  --chart-q2: #4fa87a;
-  --chart-q3: #17683f;
-  --chart-q4: #0b4428;
+  --chart-q1: #a6d8d2;
+  --chart-q2: #55aba2;
+  --chart-q3: #17736b;
+  --chart-q4: #0a4743;
 
   /* شكل "الإبراز": المتصدّر باللون الأساسي وبقية الفروع رمادية سياقية */
-  --chart-emphasis: #157a4a;
-  --chart-context: #a3aaa3;
-  --chart-grid: #eef0ec;
+  --chart-emphasis: #0f7e76;
+  --chart-context: #a3aaa8;
+  --chart-grid: #ebefee;
   --chart-surface: #ffffff;
 }
 
@@ -94,24 +116,24 @@
    بسطح فاتح ونص غامق، وليلي بالعكس.
 ------------------------------------------------------------------ */
 :root {
-  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #a3dbbd 0%, #d8efe2 55%, #f4f8f5 100%);
-  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #efd9a2 0%, #e4ece6 50%, #f5f7f4 100%);
-  --announce-accent-welcome: #0f6438;
+  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #a3dbd5 0%, #d8efec 55%, #f4f8f7 100%);
+  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #efd9a2 0%, #e4eceb 50%, #f5f7f6 100%);
+  --announce-accent-welcome: #0b6660;
   --announce-accent-motivation: #8a6a1e;
-  --announce-ink: #12241b;
-  --announce-ink-soft: #12241bd9;
-  --announce-chip: #12241b12;
-  --announce-chip-line: #12241b2e;
-  --announce-track: #12241b1a;
+  --announce-ink: #10262a;
+  --announce-ink-soft: #10262ad9;
+  --announce-chip: #10262a12;
+  --announce-chip-line: #10262a2e;
+  --announce-track: #10262a1a;
   --announce-halo: #ffffff8c;
   /* ظل العنوان بيتبع الخلفية مش النص: أبيض على فاتح بيختفي, وعلى غامق بيوهّج */
-  --announce-title-shadow: #12241b38;
+  --announce-title-shadow: #10262a38;
 }
 
 :root[data-theme="midnight"] {
-  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #2f7a55 0%, #123b2a 55%, #0b1f17 100%);
-  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #6b4f16 0%, #1d3a2b 50%, #0c1a14 100%);
-  --announce-accent-welcome: #4bbd80;
+  --announce-welcome: radial-gradient(120% 90% at 50% 0%, #1f7a72 0%, #0f3b38 55%, #0a1f1e 100%);
+  --announce-motivation: radial-gradient(120% 90% at 50% 100%, #6b4f16 0%, #17393a 50%, #0b1a1a 100%);
+  --announce-accent-welcome: #5ccfc3;
   --announce-accent-motivation: #d8b768;
   --announce-ink: #ffffff;
   --announce-ink-soft: #ffffffd9;
@@ -122,42 +144,128 @@
   --announce-title-shadow: #00000059;
 }
 
-/* نفس التدرّج مُعاد اختياره للسطح الداكن #232a33 (الطرف الفاتح 2.20:1) */
+/* نفس التدرّج مُعاد اختياره للسطح الداكن #172729 */
 :root[data-theme="midnight"] {
-  --chart-q1: #1f5a41;
-  --chart-q2: #3f9a6c;
-  --chart-q3: #86dcae;
-  --chart-q4: #c0f2d6;
+  --chart-q1: #24625c;
+  --chart-q2: #3f9f95;
+  --chart-q3: #86dcd2;
+  --chart-q4: #c8f4ee;
 
-  --chart-emphasis: #55c98c;
-  --chart-context: #6f7987;
+  --chart-emphasis: #5ccfc3;
+  --chart-context: #6f8384;
   --chart-grid: #ffffff14;
-  --chart-surface: #232a33;
+  --chart-surface: #172729;
 }
 
 :root[data-theme="midnight"] {
-  --color-accent-text: #55c98c;
-  --color-page: #171c22;
-  --color-header: #0f131a;
-  --color-card: #232a33;
-  --color-card-alt: #2a323c;
+  --color-accent-text: #5ccfc3;
+  --color-summit-text: #7ad06c;
+  --color-page: #0e1b1d;
+  --color-header: #081315;
+  --color-header-2: #0f2729;
+  --color-card: #172729;
+  --color-card-alt: #1d3032;
   --color-card-border: #ffffff14;
   --color-divider: #ffffff0f;
   --color-track: #ffffff17;
-  --color-avatar: #333c47;
-  --color-strong: #f3f5f7;
-  --color-mute: #9aa3b2;
-  --color-dim: #8590a2;
-  --color-avatar-text: #c7cdd6;
+  --color-avatar: #2a3f41;
+  --color-strong: #eef4f3;
+  --color-mute: #9db0b0;
+  --color-dim: #8a9e9e;
+  --color-avatar-text: #c5d2d1;
   --color-gold: #d8b768;
-  --color-silver: #b9c3cd;
+  --color-gold-text: #d8b768;
+  --color-down: #f0766c;
+  --color-silver: #b9c6c8;
   --color-bronze: #d49a68;
+  --ring: #5ccfc3;
+  --brand-surface: linear-gradient(155deg, #14706a 0%, #0d4544 55%, #0a3031 100%);
 
   --shadow-panel: 0 1px 2px -1px #00000080, 0 16px 30px -18px #0009;
   --shadow-podium: 0 1px 2px -1px #00000080, 0 20px 36px -18px #000000a8;
   --shadow-card: 0 1px 2px -1px #0000008c, 0 12px 24px -18px #000000a8;
   color-scheme: dark;
 }
+
+/* ------------------------------------------------------------------
+   أساس التفاعل: حلقة تركيز واحدة لكل ما يُضغط، مؤشّر يد، وردّ فعل
+   فوري عند الضغط. `scale` خاصية مستقلة عن transform فلا تتعارض مع
+   أي إزاحة موجودة على العنصر.
+------------------------------------------------------------------ */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [role="tab"], [role="button"], [tabindex]:not([tabindex="-1"])):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  /* على الترويسة والأسطح الغامقة التركواز لا يظهر: حلقة فاتحة */
+  :where(header, [data-surface="dark"]) :where(a, button, input, select, [role="tab"]):focus-visible {
+    outline-color: var(--color-accent-live);
+  }
+  :where(button, [role="tab"], [role="button"], summary, label[for], select):not(:disabled) { cursor: pointer; }
+  :where(button, [role="button"]):disabled { cursor: not-allowed; }
+  :where(button, [role="button"]):not(:disabled) { transition: scale var(--dur-1) var(--ease-out); }
+  :where(button, [role="button"]):not(:disabled):active { scale: 0.97; }
+}
+
+/* رابط «تخطَّ للمحتوى»: أول ما يوصله Tab، ويظهر عند التركيز فقط */
+.skip-link {
+  position: fixed;
+  inset-block-start: 8px;
+  inset-inline-start: 8px;
+  z-index: 100;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 700;
+  transform: translateY(-160%);
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.skip-link:focus-visible { transform: none; outline-color: #fff; }
+
+/* دخول متتابع: العنصر يطلع بترتيبه (--i) عند تبديل الشاشة */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.rise { animation: rise-in var(--dur-4) var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 55ms); }
+.fade-in { animation: fade-in var(--dur-3) ease-out both; }
+
+/* هيكل التحميل: لمعة تعبر الكتلة بدل نبض الشفافية */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-strong) 8%, transparent);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--color-card) 70%, transparent), transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* قمم الشعار كزخرفة خلفية: متوازيا أضلاع بميل الشعار نفسه */
+.peaks {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: min(46%, 520px);
+  pointer-events: none;
+  opacity: 0.07;
+  background:
+    linear-gradient(120deg, transparent 0 38%, #fff 38% 56%, transparent 56% 100%),
+    linear-gradient(120deg, transparent 0 62%, #fff 62% 80%, transparent 80% 100%);
+}
+[dir="rtl"] .peaks { transform: scaleX(-1); }
 
 /* transform-origin لا يقبل قيماً منطقية، لذا نضبط الجهة لكل اتجاه صراحةً */
 @keyframes bar-grow {
@@ -231,12 +339,18 @@
 .ticker-enter-from { opacity: 0; transform: translateY(8px); }
 .ticker-leave-to { opacity: 0; transform: translateY(-8px); }
 
-.view-enter-active,
-.view-leave-active {
-  transition: opacity 0.28s ease, transform 0.28s ease;
-}
-.view-enter-from { opacity: 0; transform: translateY(10px); }
-.view-leave-to { opacity: 0; transform: translateY(-10px); }
+/* الخروج أسرع من الدخول: الشاشة القديمة تختفي فوراً، والجديدة تدخل
+   بعناصرها واحداً واحداً (.rise) لا ككتلة واحدة. */
+.view-enter-active { transition: opacity var(--dur-3) ease-out; }
+.view-leave-active { transition: opacity var(--dur-2) ease-in, transform var(--dur-2) ease-in; }
+.view-enter-from { opacity: 0; }
+.view-leave-to { opacity: 0; transform: translateY(-8px); }
+
+/* قوائم منسدلة ونوافذ */
+.pop-enter-active { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
+.pop-leave-active { transition: opacity var(--dur-1) ease-in, transform var(--dur-1) ease-in; }
+.pop-enter-from,
+.pop-leave-to { opacity: 0; transform: translateY(-6px) scale(0.98); }
 
 /* شريط الأخبار: نسختان من العناوين، والحركة بنصف عرض المسار فتلتف بلا قفزة.
    العربية تقرأ يميناً→يساراً فالشريط يزحف ناحية اليمين، والعكس بالإنجليزية. */
@@ -251,14 +365,37 @@
 .animate-news-marquee { animation: news-marquee linear infinite; }
 [dir="rtl"] .animate-news-marquee { animation-name: news-marquee-rtl; }
 
+/*
+   تقليل الحركة متدرّج لا إلغاء شامل:
+   - ما يحرّك مساحة كبيرة أو يدور بلا توقف يتشال (قصاصات، نبض، زحف الأخبار، لمعة).
+   - الدخول والانتقال يبقى كتلاشٍ قصير بلا إزاحة، فالعناصر لا «تنطّ» فجأة.
+   - تغيّر اللون وحلقة التركيز كما هما.
+*/
 @media (prefers-reduced-motion: reduce) {
   .rank-move,
   .rank-enter-active,
-  .rank-leave-active,
-  .view-enter-active,
-  .view-leave-active {
+  .rank-leave-active {
     transition: none !important;
   }
+  .view-enter-active,
+  .view-leave-active,
+  .pop-enter-active,
+  .pop-leave-active,
+  .ticker-enter-active,
+  .ticker-leave-active {
+    transition: opacity 150ms ease !important;
+  }
+  .view-enter-from, .view-leave-to,
+  .pop-enter-from, .pop-leave-to,
+  .ticker-enter-from, .ticker-leave-to { transform: none !important; }
+
+  .rise { animation: fade-in 150ms ease both !important; animation-delay: 0ms !important; }
+  .skeleton::after,
+  .animate-leader-pulse,
+  .animate-pulse-dot,
+  .animate-bar-grow { animation: none !important; }
+  :where(button, [role="button"]):not(:disabled):active { scale: 1; }
+  .skip-link { transition: none; }
 
   /* الاحتفال يبقى ظاهراً، لكن بلا حركة: القصاصات تُخفى بالكامل */
   .animate-celebrate-in,
@@ -334,3 +471,55 @@ body { margin: 0; background: var(--color-page); }
   /* الرسوم البيانية جنباً إلى جنب تضيق على الورق — عمود واحد */
   [data-insights-grid] { grid-template-columns: 1fr !important; }
 }
+
+/* ------------------------------------------------------------------
+   سطح الهوية الغامق (بطاقة المتصدّر، لوحة الدخول).
+   بدل تلوين كل عنصر داخله يدوياً، نعيد تعريف ألوان النص والمسارات
+   على الشجرة الفرعية: المكوّنات نفسها (الأسماء، القيادة، شريط التقدم)
+   تُقرأ على الغامق من غير نسخة ثانية منها.
+------------------------------------------------------------------ */
+.on-brand {
+  background: var(--brand-surface);
+  color: #fff;
+  --color-strong: #ffffff;
+  --color-mute: #ffffffc2;
+  --color-dim: #ffffffa3;
+  --color-card: #0d4544;
+  --color-card-alt: #ffffff0f;
+  --color-card-border: #ffffff24;
+  --color-divider: #ffffff1f;
+  --color-track: #ffffff26;
+  --color-avatar: #ffffff24;
+  --color-avatar-text: #ffffff;
+  --color-accent: #6cc45e;
+  --color-accent-strong: #54ac47;
+  --color-accent-text: #b5ecac;
+  --color-gold-text: #e9cf8c;
+  --color-down: #ffa59c;
+  --ring: #ffffff;
+}
+
+/* درجات منصة التتويج: ارتفاع الدرجة هو الترتيب */
+.plinth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 14px 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--medal);
+  background: linear-gradient(180deg,
+    color-mix(in oklab, var(--medal) 24%, var(--color-card)),
+    color-mix(in oklab, var(--medal) 9%, var(--color-card)));
+  border: 1px solid color-mix(in oklab, var(--medal) 30%, var(--color-card-border));
+  border-top: 0;
+}
+.plinth-1 {
+  --medal: var(--color-gold);
+  color: var(--color-gold);
+  background: linear-gradient(180deg, #0a3031, #082526);
+  border-color: transparent;
+}
+.plinth-2 { --medal: var(--color-silver); }
+.plinth-3 { --medal: var(--color-bronze); }

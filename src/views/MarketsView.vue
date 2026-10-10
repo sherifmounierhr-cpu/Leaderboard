@@ -158,7 +158,7 @@ watch(slides, (list, before) => {
       : isRate
         ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#1d3350_0%,#141f30_55%,#0b1119_100%)]'
         : up
-          ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#18613f_0%,#0f2c1f_55%,#0a1712_100%)]'
+          ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#12615c_0%,#0c3231_55%,#0a1a1b_100%)]'
           : 'bg-[radial-gradient(120%_90%_at_50%_0%,#6b241f_0%,#361513_55%,#170b0a_100%)]'"
     :aria-label="ar('markets.label')"
   >

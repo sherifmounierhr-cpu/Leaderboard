@@ -46,6 +46,12 @@ const listed = computed(() => (searching.value ? filtered.value : filtered.value
  * «4.6 مليون» بدل «4.6M»، فالنص أعرض بأضعاف وكان يفيض على العمود المجاور.
  * الحد الأدنى يتبع أكبر خط ممكن، والـ vw يكبر مع الشاشة مثل حجم الخط نفسه.
  */
+/** الثاني والثالث بلون ميداليتهم؛ الأول له بطاقته الخاصة. */
+const MEDAL: Record<number, string> = {
+  2: 'bg-silver/18 text-silver ring-1 ring-silver/40',
+  3: 'bg-bronze/18 text-bronze ring-1 ring-bronze/40',
+}
+
 const GRID =
   'grid-cols-[60px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.2fr] gap-4 px-6 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 </script>
@@ -88,6 +94,7 @@ const GRID =
     >
       <div v-if="leader" class="flex flex-col gap-4 lg:gap-[clamp(10px,1.8vh,20px)] min-h-0">
         <LeaderCard
+          class="rise"
           :entity="leader.agent"
           kind="agent"
           size="compact"
@@ -95,7 +102,7 @@ const GRID =
           :subtitle="leader.agent.team || undefined"
         />
         <!-- كانت مساحة فاضية تحت بطاقة المتصدّر على الشاشات الكبيرة -->
-        <LatestDeals class="hidden lg:flex" :limit="5" />
+        <LatestDeals class="rise hidden lg:flex" style="--i: 2" :limit="5" />
       </div>
 
       <div class="flex flex-col min-h-0">
@@ -110,8 +117,9 @@ const GRID =
         v-for="{ agent, rank } in listed"
         :key="agent.id"
         role="listitem"
-        class="rounded-xl border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]"
+        class="rise rounded-2xl border bg-card p-4 sm:p-5 shadow-[var(--shadow-card)]"
         :class="rank === 1 ? 'border-accent/60 bg-accent/[0.07] ring-1 ring-accent/30' : 'border-card-border'"
+        :style="{ '--i': Math.min(rank, 8) }"
       >
         <div class="flex items-center gap-3">
           <div class="w-8 shrink-0 text-center">
@@ -170,12 +178,13 @@ const GRID =
     <div
       role="table"
       :aria-label="t('a11y.agentStandings')"
-      class="hidden lg:flex lg:flex-col lg:flex-1 rounded-xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
+      class="rise hidden lg:flex lg:flex-col lg:flex-1 rounded-2xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
+      style="--i: 1"
     >
       <div role="rowgroup">
         <div
           role="row"
-          class="grid items-center py-5 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
+          class="grid items-center py-3 2xl:py-4 bg-card-alt border-b border-card-border font-semibold tracking-[0.04em] text-mute text-sm 2xl:text-base whitespace-nowrap"
           :class="GRID"
         >
           <span role="columnheader">{{ t('table.rank') }}</span>
@@ -197,7 +206,7 @@ const GRID =
             GRID,
             rank === 1
               ? 'bg-accent/[0.06] border-b-0 shadow-[inset_3px_0_0_0_var(--color-accent)]'
-              : 'transition-colors duration-150 hover:bg-accent/[0.04] ' + (rank % 2 === 1 ? 'bg-card-alt' : ''),
+              : 'transition-colors duration-200 hover:bg-accent/[0.06]',
           ]"
         >
           <div role="cell">
@@ -205,7 +214,11 @@ const GRID =
               <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-gold text-xl 2xl:text-2xl" />
               <span class="font-bold tabular-nums text-accent-text text-2xl 2xl:text-metric">1</span>
             </div>
-            <span v-else class="font-bold tabular-nums text-strong text-2xl 2xl:text-rank">{{ rank }}</span>
+            <span
+              v-else
+              class="inline-flex items-center justify-center rounded-xl font-display font-bold tabular-nums size-10 text-xl 2xl:size-[clamp(44px,5vh,56px)] 2xl:text-2xl"
+              :class="MEDAL[rank] ?? 'bg-strong/[0.06] text-strong'"
+            >{{ rank }}</span>
           </div>
 
           <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">

@@ -8,7 +8,7 @@ import { useI18n } from 'vue-i18n'
 defineProps<{ podium?: boolean }>()
 const { t } = useI18n()
 
-const BLOCK = 'rounded-md bg-strong/[0.07] animate-pulse motion-reduce:animate-none'
+const BLOCK = 'rounded-md skeleton'
 </script>
 
 <template>

@@ -6,6 +6,7 @@ import { useBoardControls } from '@/composables/useBoardControls'
 import { useWakeLock } from '@/composables/useWakeLock'
 import SignInScreen from '@/components/SignInScreen.vue'
 import BoardHeader from '@/components/BoardHeader.vue'
+import BrandLogo from '@/components/BrandLogo.vue'
 import TeamsView from '@/views/TeamsView.vue'
 import AgentsView from '@/views/AgentsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
@@ -40,10 +41,14 @@ const board = ref<HTMLElement | null>(null)
 </script>
 
 <template>
-  <p
+  <div
     v-if="!ready"
-    class="min-h-screen flex items-center justify-center bg-page font-sans font-medium text-mute"
-  >{{ t('admin.checking') }}</p>
+    class="min-h-screen flex flex-col items-center justify-center gap-5 bg-page font-sans"
+    role="status"
+  >
+    <BrandLogo class="h-16 fade-in" />
+    <p class="m-0 font-medium text-mute">{{ t('admin.checking') }}</p>
+  </div>
 
   <!-- لا شيء يقرأ البيانات قبل الدخول: الترويسة والشاشات كلها تحت هذا الشرط -->
   <SignInScreen v-else-if="!isSignedIn" />
@@ -54,6 +59,7 @@ const board = ref<HTMLElement | null>(null)
     data-board
     class="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col bg-page text-strong font-sans"
   >
+    <a href="#board-main" class="skip-link" data-kiosk-hide data-export-hide>{{ t('a11y.skip') }}</a>
     <BoardHeader
       v-model:view="view"
       v-model:settings-open="settingsOpen"
@@ -62,14 +68,17 @@ const board = ref<HTMLElement | null>(null)
       @fullscreen="toggleFullscreen"
     />
     <!-- الوقت الباقي قبل الانتقال للشاشة التالية في التبديل التلقائي -->
-    <div v-if="settings.rotate" class="h-1 bg-header" aria-hidden="true" data-export-hide>
-      <div
-        :key="`${view}-${secondsFor(view)}`"
-        class="h-full bg-accent-live/80 animate-rotate-progress"
-        :style="{ animationDuration: `${secondsFor(view)}s` }"
-      />
+    <!-- خط الهوية تحت الترويسة؛ مع التبديل التلقائي يمتلئ بالأخضر لحد الانتقال -->
+    <div class="h-1 bg-[linear-gradient(90deg,var(--color-accent),var(--color-summit))]" aria-hidden="true">
+      <div v-if="settings.rotate" class="h-full bg-header/70" data-export-hide>
+        <div
+          :key="`${view}-${secondsFor(view)}`"
+          class="h-full bg-accent-live animate-rotate-progress"
+          :style="{ animationDuration: `${secondsFor(view)}s` }"
+        />
+      </div>
     </div>
-    <main class="flex-1 flex flex-col min-h-0">
+    <main id="board-main" tabindex="-1" class="flex-1 flex flex-col min-h-0 focus:outline-none">
       <!-- ملخص الشركة فوق شاشات الأرقام؛ شاشة الأخبار ليها الشاشة كاملة -->
       <div v-if="view !== 'news' && view !== 'markets'" class="px-4 pt-4 sm:px-8 lg:px-16 lg:pt-[clamp(10px,1.8vh,24px)]">
         <KpiStrip />

@@ -377,8 +377,8 @@ const FIELD =
       <div
         class="flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl px-6 py-8 text-center text-white"
         :class="editing.style === 'welcome'
-          ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#2f7a55_0%,#123b2a_55%,#0b1f17_100%)]'
-          : 'bg-[radial-gradient(120%_90%_at_50%_100%,#6b4f16_0%,#1d3a2b_50%,#0c1a14_100%)]'"
+          ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#1f7a72_0%,#0f3b38_55%,#0a1f1e_100%)]'
+          : 'bg-[radial-gradient(120%_90%_at_50%_100%,#6b4f16_0%,#17393a_50%,#0b1a1a_100%)]'"
         aria-hidden="true"
       >
         <span class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-caption font-bold">

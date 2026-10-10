@@ -15,15 +15,17 @@ const deals = useCountUp(computed(() => props.team.deals))
 /** فضي للثاني وبرونزي للثالث — الذهبي محجوز لشريط المتصدّر. */
 const medal = computed(() =>
   props.rank === 2
-    ? { text: 'text-silver', ring: 'ring-silver/70', bg: 'bg-silver/12', label: 'card.place2' }
-    : { text: 'text-bronze', ring: 'ring-bronze/70', bg: 'bg-bronze/12', label: 'card.place3' },
+    ? { text: 'text-silver', ring: 'ring-silver/70', bg: 'bg-silver/14', bar: 'bg-silver', label: 'card.place2' }
+    : { text: 'text-bronze', ring: 'ring-bronze/70', bg: 'bg-bronze/14', bar: 'bg-bronze', label: 'card.place3' },
 )
 </script>
 
 <template>
   <div
-    class="flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 rounded-xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(8px,1.6vh,28px)] [@media(max-height:820px)]:py-2 shadow-[var(--shadow-podium)]"
+    class="relative overflow-hidden flex flex-col items-center gap-3.5 lg:gap-[clamp(6px,1.3vh,12px)] [@media(max-height:820px)]:gap-1 rounded-2xl border border-card-border bg-card px-6 py-7 lg:px-7 lg:py-[clamp(10px,1.8vh,28px)] [@media(max-height:820px)]:py-2 shadow-[var(--shadow-podium)]"
   >
+    <!-- خط الميدالية أعلى البطاقة: اللون يقول الترتيب قبل قراءة النص -->
+    <span class="absolute inset-x-0 top-0 h-1" :class="medal.bar" aria-hidden="true" />
     <div
       class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-bold text-base lg:text-[clamp(15px,1.9vh,20px)]"
       :class="[medal.text, medal.bg]"
@@ -37,12 +39,12 @@ const medal = computed(() =>
       :entity="team"
       kind="team"
       size="large"
-      class="size-20 rounded-2xl ring-2 text-2xl"
+      class="size-20 rounded-2xl ring-[3px] text-2xl"
       :class="[medal.ring, team.leads?.length ? 'lg:size-[clamp(56px,8.6vh,104px)]' : 'lg:size-[clamp(60px,9vh,96px)]']"
     />
 
     <div
-      class="w-full font-semibold tracking-[-0.01em] text-center text-strong text-lg lg:text-[clamp(18px,2.7vh,24px)] text-balance break-words line-clamp-2"
+      class="w-full font-extrabold tracking-[-0.01em] text-center text-strong text-lg lg:text-[clamp(18px,2.8vh,26px)] text-balance break-words line-clamp-2"
       :title="team.name"
     >
       {{ team.name }}
@@ -51,7 +53,7 @@ const medal = computed(() =>
     <TeamLeads :leads="team.leads" />
 
     <div class="flex items-baseline gap-2" :title="egp(team.deals)">
-      <span class="font-bold leading-[0.9] tracking-[-0.02em] tabular-nums text-strong text-stat-2">
+      <span class="font-extrabold leading-[0.9] tracking-[-0.02em] tabular-nums text-strong text-stat-2">
         {{ compact(deals) }}
       </span>
       <span class="font-medium uppercase text-mute tracking-[0.14em] text-xs lg:text-note">

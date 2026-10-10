@@ -31,14 +31,15 @@ const GRID =
     <template v-if="teams.length">
       <!-- الموبايل: البطاقة الأولى ثم قائمة -->
       <div class="md:hidden flex flex-col gap-5">
-        <LeaderCard :entity="teams[0]" kind="team" />
+        <LeaderCard :entity="teams[0]" kind="team" class="rise" />
         <TransitionGroup
           v-if="teams.length > 1"
           tag="div"
           name="rank"
           role="table"
           :aria-label="t('a11y.teamStandingsRest', { from: 2 })"
-          class="rounded-xl border border-card-border bg-card overflow-hidden shadow-[var(--shadow-panel)]"
+          class="rise rounded-2xl border border-card-border bg-card overflow-hidden shadow-[var(--shadow-panel)]"
+          style="--i: 1"
         >
           <TeamRow
             v-for="(team, i) in teams.slice(1)"
@@ -52,12 +53,25 @@ const GRID =
       </div>
 
       <!-- الديسكتوب: منصة التتويج ثم جدول -->
-      <div class="hidden md:flex md:flex-col lg:flex-1 gap-6 lg:gap-[clamp(12px,2.2vh,28px)] min-h-0">
+      <div class="hidden md:flex md:flex-col lg:flex-1 lg:justify-center gap-6 lg:gap-[clamp(12px,2.2vh,28px)] min-h-0">
+        <!--
+          منصة تتويج فعلية: كل بطاقة واقفة على درجة، وارتفاع الدرجة هو الترتيب.
+          الدخول بترتيب إعلان النتائج: الثالث ثم الثاني ثم الأول.
+        -->
         <div class="grid grid-cols-[1fr_1.22fr_1fr] gap-5 lg:gap-7 items-end">
-          <PodiumCard v-if="teams[1]" :team="teams[1]" :rank="2" />
+          <div v-if="teams[1]" class="rise flex flex-col" style="--i: 2">
+            <PodiumCard :team="teams[1]" :rank="2" class="rounded-b-none" />
+            <div class="plinth plinth-2 h-9 lg:h-[clamp(30px,4.4vh,52px)] text-2xl lg:text-[clamp(22px,3.2vh,36px)]" aria-hidden="true">2</div>
+          </div>
           <div v-else aria-hidden="true" />
-          <LeaderCard :entity="teams[0]" kind="team" />
-          <PodiumCard v-if="teams[2]" :team="teams[2]" :rank="3" />
+          <div class="rise flex flex-col" style="--i: 3">
+            <LeaderCard :entity="teams[0]" kind="team" class="rounded-b-none" />
+            <div class="plinth plinth-1 h-14 lg:h-[clamp(44px,6.6vh,78px)] text-4xl lg:text-[clamp(30px,4.8vh,54px)]" aria-hidden="true">1</div>
+          </div>
+          <div v-if="teams[2]" class="rise flex flex-col" style="--i: 1">
+            <PodiumCard :team="teams[2]" :rank="3" class="rounded-b-none" />
+            <div class="plinth plinth-3 h-6 lg:h-[clamp(20px,2.8vh,34px)] text-lg lg:text-[clamp(16px,2.2vh,24px)]" aria-hidden="true">3</div>
+          </div>
           <div v-else aria-hidden="true" />
         </div>
 
@@ -65,12 +79,13 @@ const GRID =
           v-if="teams.length > 3"
           role="table"
           :aria-label="t('a11y.teamStandingsRest', { from: 4 })"
-          class="lg:flex-1 flex flex-col rounded-xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
+          class="rise lg:flex-[0_1_auto] flex flex-col rounded-2xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
+          style="--i: 4"
         >
           <div role="rowgroup">
             <div
               role="row"
-              class="grid items-center py-2.5 2xl:py-4 [@media(max-height:820px)]:py-1.5 bg-card-alt border-b border-card-border font-medium uppercase tracking-[0.08em] text-mute text-sm 2xl:text-base whitespace-nowrap"
+              class="grid items-center py-2.5 2xl:py-3 [@media(max-height:820px)]:py-1.5 bg-card-alt border-b border-card-border font-semibold tracking-[0.04em] text-mute text-sm 2xl:text-base whitespace-nowrap"
               :class="GRID"
             >
               <span role="columnheader">{{ t('table.rank') }}</span>
@@ -91,14 +106,12 @@ const GRID =
               v-for="(team, i) in teams.slice(3)"
               :key="team.id"
               role="row"
-              class="grid items-center flex-1 min-h-[clamp(2.75rem,6vh,4.5rem)] [@media(max-height:820px)]:min-h-10 border-b border-divider last:border-b-0 transition-colors duration-150 hover:bg-accent/[0.04]"
-              :class="[GRID, i % 2 === 0 ? 'bg-card-alt' : '']"
+              class="grid items-center shrink-0 h-[clamp(3.5rem,8vh,5.75rem)] [@media(max-height:820px)]:h-12 border-b border-divider last:border-b-0 transition-colors duration-200 hover:bg-accent/[0.06]"
+              :class="GRID"
             >
-              <span
-                role="cell"
-                :aria-label="t('a11y.rank', { n: i + 4 })"
-                class="font-bold tabular-nums text-strong text-2xl 2xl:text-rank"
-              >{{ i + 4 }}</span>
+              <span role="cell" :aria-label="t('a11y.rank', { n: i + 4 })">
+                <span class="inline-flex items-center justify-center rounded-xl bg-strong/[0.06] font-display font-bold tabular-nums text-strong size-10 text-xl 2xl:size-[clamp(44px,5vh,56px)] 2xl:text-2xl">{{ i + 4 }}</span>
+              </span>
 
               <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
                 <Avatar :entity="team" kind="team" class="size-12 2xl:size-[clamp(56px,6.2vh,74px)] rounded-xl 2xl:rounded-2xl shrink-0" />

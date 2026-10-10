@@ -68,7 +68,7 @@ const move = computed(() => {
       data-export-hide
       class="fixed inset-0 z-[54] flex cursor-pointer flex-col items-center justify-center gap-[clamp(10px,2.2vh,28px)] overflow-hidden px-[6vw] text-center text-white"
       :class="up
-        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#18613f_0%,#0f2c1f_55%,#0a1712_100%)]'
+        ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#12615c_0%,#0c3231_55%,#0a1a1b_100%)]'
         : 'bg-[radial-gradient(120%_90%_at_50%_0%,#6b241f_0%,#361513_55%,#170b0a_100%)]'"
       role="dialog"
       aria-modal="true"

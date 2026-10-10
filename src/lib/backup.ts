@@ -159,11 +159,11 @@ export function renderBackupHtml(d: BackupData): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>نسخة احتياطية — لوحة المبيعات — ${esc(d.created_at.slice(0, 10))}</title>
 <style>
-  :root { color-scheme: light; --accent: #0f6338; --line: #e3e8e5; --mute: #5b6b62; }
+  :root { color-scheme: light; --accent: #0b635d; --line: #e3e8e5; --mute: #5b6b62; }
   * { box-sizing: border-box; }
   body { margin: 0; padding: 24px 16px 64px; font: 15px/1.6 Tajawal, "Segoe UI", Tahoma, sans-serif; background: #f6f8f7; color: #13241b; }
   main { max-width: 1100px; margin: 0 auto; }
-  header { background: #0b2a1b; color: #fff; border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; }
+  header { background: #0c2a2b; color: #fff; border-radius: 14px; padding: 20px 24px; margin-bottom: 24px; }
   header h1 { margin: 0 0 4px; font-size: 24px; }
   header p { margin: 0; opacity: .8; }
   .stats { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }

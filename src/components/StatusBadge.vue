@@ -25,7 +25,7 @@ const isLive = computed(() => status.value === 'live')
       class="w-2.5 h-2.5 rounded-full"
       :class="
         isLive
-          ? 'bg-accent-live animate-pulse-dot shadow-[0_0_7px_rgba(75,189,128,0.55)]'
+          ? 'bg-accent-live animate-pulse-dot shadow-[0_0_7px_rgba(108,196,94,0.55)]'
           : 'bg-white/50'
       "
     />

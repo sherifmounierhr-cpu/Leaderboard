@@ -54,7 +54,7 @@ onBeforeUnmount(() => {
 })
 
 const BACKDROPS = {
-  dark: 'bg-[linear-gradient(160deg,#1d3a2c,#0c1410)]',
+  dark: 'bg-[linear-gradient(160deg,#17393a,#0b1415)]',
   light: 'bg-[#f3f4f6]',
   checker: 'review-checker',
 } as const

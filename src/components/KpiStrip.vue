@@ -29,7 +29,7 @@ const perDay = computed(() => {
 
 const TONE = {
   ahead: 'text-accent-text',
-  close: 'text-gold',
+  close: 'text-gold-text',
   behind: 'text-down',
 } as const
 </script>
@@ -38,10 +38,14 @@ const TONE = {
   <section
     v-if="teams.length && totals.target > 0"
     :aria-label="t('kpi.label')"
-    class="grid grid-cols-2 sm:grid-cols-4 rounded-xl border border-card-border bg-card shadow-[var(--shadow-card)] divide-card-border max-sm:[&>*:nth-child(odd)]:border-e max-sm:[&>*:nth-child(-n+2)]:border-b sm:divide-x sm:rtl:divide-x-reverse"
+    class="rise grid grid-cols-2 sm:grid-cols-4 rounded-2xl border border-card-border bg-card shadow-[var(--shadow-card)] divide-card-border max-sm:[&>*:nth-child(odd)]:border-e max-sm:[&>*:nth-child(-n+2)]:border-b sm:divide-x sm:rtl:divide-x-reverse"
   >
     <!-- الإجمالي مقابل المستهدف -->
-    <div class="flex flex-col justify-center gap-1 px-4 py-3 lg:px-6 lg:py-[clamp(6px,1vh,14px)] min-w-0">
+    <div class="flex items-center gap-3 lg:gap-4 px-4 py-3 lg:px-6 lg:py-[clamp(8px,1.2vh,16px)] min-w-0">
+      <span class="hidden sm:flex shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-text size-10 lg:size-[clamp(38px,4.6vh,52px)] text-xl lg:text-[clamp(20px,2.5vh,28px)]" aria-hidden="true">
+        <iconify-icon icon="mdi:cash-multiple" />
+      </span>
+      <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.total') }}</span>
       <span class="flex items-baseline gap-2 min-w-0" :title="`${egp(totals.deals)} / ${egp(totals.target)}`">
         <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none">{{ compact(shownDeals) }}</b>
@@ -49,10 +53,15 @@ const TONE = {
           {{ t('kpi.of', { target: compact(totals.target) }) }}
         </span>
       </span>
+      </div>
     </div>
 
     <!-- نسبة الإنجاز والإيقاع -->
-    <div class="flex flex-col justify-center gap-1 px-4 py-3 lg:px-6 lg:py-[clamp(6px,1vh,14px)] min-w-0">
+    <div class="flex items-center gap-3 lg:gap-4 px-4 py-3 lg:px-6 lg:py-[clamp(8px,1.2vh,16px)] min-w-0">
+      <span class="hidden sm:flex shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-text size-10 lg:size-[clamp(38px,4.6vh,52px)] text-xl lg:text-[clamp(20px,2.5vh,28px)]" aria-hidden="true">
+        <iconify-icon icon="mdi:target" />
+      </span>
+      <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.achieved') }}</span>
       <span class="flex items-baseline gap-2 min-w-0">
         <b class="font-bold tabular-nums text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none" :class="status ? TONE[status] : 'text-strong'">
@@ -62,10 +71,15 @@ const TONE = {
           {{ gap >= 0 ? t('pace.aheadBy', { n: gap }) : t('pace.behindBy', { n: -gap }) }}
         </span>
       </span>
+      </div>
     </div>
 
     <!-- الأيام المتبقية -->
-    <div class="flex flex-col justify-center gap-1 px-4 py-3 lg:px-6 lg:py-[clamp(6px,1vh,14px)] min-w-0">
+    <div class="flex items-center gap-3 lg:gap-4 px-4 py-3 lg:px-6 lg:py-[clamp(8px,1.2vh,16px)] min-w-0">
+      <span class="hidden sm:flex shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-text size-10 lg:size-[clamp(38px,4.6vh,52px)] text-xl lg:text-[clamp(20px,2.5vh,28px)]" aria-hidden="true">
+        <iconify-icon icon="mdi:calendar-clock-outline" />
+      </span>
+      <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.daysLeft') }}</span>
       <span class="flex items-baseline gap-2 min-w-0">
         <template v-if="progress.state === 'current'">
@@ -78,10 +92,15 @@ const TONE = {
           {{ progress.state === 'past' ? t('kpi.ended') : t('kpi.notStarted') }}
         </b>
       </span>
+      </div>
     </div>
 
     <!-- المطلوب يومياً -->
-    <div class="flex flex-col justify-center gap-1 px-4 py-3 lg:px-6 lg:py-[clamp(6px,1vh,14px)] min-w-0">
+    <div class="flex items-center gap-3 lg:gap-4 px-4 py-3 lg:px-6 lg:py-[clamp(8px,1.2vh,16px)] min-w-0">
+      <span class="hidden sm:flex shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent-text size-10 lg:size-[clamp(38px,4.6vh,52px)] text-xl lg:text-[clamp(20px,2.5vh,28px)]" aria-hidden="true">
+        <iconify-icon icon="mdi:speedometer" />
+      </span>
+      <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.perDay') }}</span>
       <span class="flex items-baseline gap-2 min-w-0">
         <template v-if="progress.state !== 'past' && perDay > 0">
@@ -93,6 +112,7 @@ const TONE = {
           {{ t('kpi.shortBy', { amount: compact(totals.target - totals.deals) }) }}
         </b>
       </span>
+      </div>
     </div>
   </section>
 </template>
