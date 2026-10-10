@@ -47,9 +47,9 @@ const TONE = {
       </span>
       <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.total') }}</span>
-      <span class="flex items-baseline gap-2 min-w-0" :title="`${egp(totals.deals)} / ${egp(totals.target)}`">
+      <span class="flex items-baseline gap-2 min-w-0 max-sm:flex-wrap max-sm:gap-y-0.5" :title="`${egp(totals.deals)} / ${egp(totals.target)}`">
         <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none">{{ compact(shownDeals) }}</b>
-        <span class="font-medium tabular-nums text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] truncate">
+        <span class="font-medium tabular-nums text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] sm:truncate">
           {{ t('kpi.of', { target: compact(totals.target) }) }}
         </span>
       </span>
@@ -63,11 +63,11 @@ const TONE = {
       </span>
       <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.achieved') }}</span>
-      <span class="flex items-baseline gap-2 min-w-0">
+      <span class="flex items-baseline gap-2 min-w-0 max-sm:flex-wrap max-sm:gap-y-0.5">
         <b class="font-bold tabular-nums text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none" :class="status ? TONE[status] : 'text-strong'">
           {{ totals.pct }}%
         </b>
-        <span v-if="expectedPct !== null && progress.state === 'current'" class="font-semibold text-sm lg:text-[clamp(14px,1.7vh,19px)] truncate" :class="status ? TONE[status] : 'text-mute'">
+        <span v-if="expectedPct !== null && progress.state === 'current'" class="font-semibold text-sm lg:text-[clamp(14px,1.7vh,19px)] sm:truncate" :class="status ? TONE[status] : 'text-mute'">
           {{ gap >= 0 ? t('pace.aheadBy', { n: gap }) : t('pace.behindBy', { n: -gap }) }}
         </span>
       </span>
@@ -81,10 +81,10 @@ const TONE = {
       </span>
       <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.daysLeft') }}</span>
-      <span class="flex items-baseline gap-2 min-w-0">
+      <span class="flex items-baseline gap-2 min-w-0 max-sm:flex-wrap max-sm:gap-y-0.5">
         <template v-if="progress.state === 'current'">
           <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none">{{ progress.daysLeft }}</b>
-          <span class="font-medium text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] truncate">
+          <span class="font-medium text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] sm:truncate">
             {{ t('kpi.ofDays', { n: progress.totalDays, elapsed: expectedPct }) }}
           </span>
         </template>
@@ -102,10 +102,10 @@ const TONE = {
       </span>
       <div class="flex flex-col justify-center gap-1 min-w-0 flex-1">
       <span class="font-medium text-mute text-caption lg:text-[clamp(12px,1.35vh,15px)]">{{ t('kpi.perDay') }}</span>
-      <span class="flex items-baseline gap-2 min-w-0">
+      <span class="flex items-baseline gap-2 min-w-0 max-sm:flex-wrap max-sm:gap-y-0.5">
         <template v-if="progress.state !== 'past' && perDay > 0">
           <b class="font-bold tabular-nums text-strong text-2xl lg:text-[clamp(22px,2.8vh,34px)] leading-none" :title="egp(perDay)">{{ compact(perDay) }}</b>
-          <span class="font-medium text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] truncate">{{ t('kpi.perDayUnit') }}</span>
+          <span class="font-medium text-mute text-sm lg:text-[clamp(14px,1.7vh,19px)] sm:truncate">{{ t('kpi.perDayUnit') }}</span>
         </template>
         <b v-else-if="perDay === 0" class="font-bold text-accent-text text-xl lg:text-[clamp(20px,2.6vh,30px)] leading-none">{{ t('kpi.reached') }}</b>
         <b v-else class="font-bold text-down text-xl lg:text-[clamp(20px,2.6vh,30px)] leading-none" :title="egp(totals.target - totals.deals)">

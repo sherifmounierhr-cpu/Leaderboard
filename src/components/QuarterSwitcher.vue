@@ -15,7 +15,7 @@ const { indicatorStyle, ready } = useIndicator(listEl, quarter)
 <template>
   <div
     ref="listEl"
-    class="relative flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.06] p-1"
+    class="relative flex items-center gap-0 sm:gap-1 rounded-lg border border-white/10 bg-white/[0.06] p-1"
     role="tablist"
     :aria-label="t('quarter.label')"
   >
@@ -34,7 +34,7 @@ const { indicatorStyle, ready } = useIndicator(listEl, quarter)
       :aria-selected="quarter === q"
       :aria-label="q > calendarQuarter ? t('quarter.notStarted', { n: q }) : t('quarter.short', { n: q })"
       :title="q > calendarQuarter ? t('quarter.notStarted', { n: q }) : undefined"
-      class="relative z-10 inline-flex items-center justify-center rounded-md px-2.5 sm:px-3 py-1.5 lg:py-2 min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 text-sm font-semibold tabular-nums transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-live focus-visible:ring-offset-2 focus-visible:ring-offset-header disabled:focus-visible:ring-0"
+      class="relative z-10 inline-flex items-center justify-center rounded-md px-0 sm:px-3 py-1.5 lg:py-2 min-h-11 min-w-11 justify-center lg:min-h-0 lg:min-w-0 text-sm font-semibold tabular-nums transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-live focus-visible:ring-offset-2 focus-visible:ring-offset-header disabled:focus-visible:ring-0"
       :class="
         quarter === q
           ? 'text-white'

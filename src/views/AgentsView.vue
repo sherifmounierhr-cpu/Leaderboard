@@ -76,7 +76,7 @@ const GRID =
         type="search"
         :placeholder="t('search.placeholder')"
         :aria-label="t('search.placeholder')"
-        class="w-full rounded-lg border border-card-border bg-card ps-10 pe-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        class="w-full min-h-11 rounded-xl border border-card-border bg-card ps-10 pe-3 py-2.5 text-base sm:text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       />
     </div>
 
@@ -138,7 +138,7 @@ const GRID =
           />
 
           <div class="min-w-0 flex-1">
-            <div class="font-semibold truncate text-strong text-base sm:text-lg">{{ agent.name }}</div>
+            <div class="font-semibold leading-tight text-strong text-base sm:text-lg line-clamp-2 break-words">{{ agent.name }}</div>
             <div class="font-medium truncate text-mute text-xs sm:text-sm">{{ agent.team }}</div>
           </div>
 
@@ -147,7 +147,7 @@ const GRID =
 
         <div class="mt-3.5 flex items-center gap-4">
           <div class="text-center" :title="egp(agent.deals)">
-            <div class="text-eyebrow font-medium uppercase tracking-[0.08em] text-mute">
+            <div class="text-xs font-medium text-mute">
               {{ t('card.sales') }}
             </div>
             <div
@@ -157,7 +157,7 @@ const GRID =
           </div>
 
           <div class="text-center" :title="egp(agent.target)">
-            <div class="text-eyebrow font-medium uppercase tracking-[0.08em] text-mute">
+            <div class="text-xs font-medium text-mute">
               {{ t('card.target') }}
             </div>
             <div class="font-medium tabular-nums text-mute text-lg">{{ compact(agent.target) }}</div>

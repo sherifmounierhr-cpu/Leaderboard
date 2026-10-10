@@ -66,7 +66,7 @@ const hero = computed(() => props.size === 'hero')
       <div class="flex flex-col items-start min-w-0 leading-tight text-start">
         <span
           class="font-medium text-mute whitespace-nowrap"
-          :class="hero ? 'text-[11px] lg:text-[clamp(11px,1.2vh,14px)]' : 'text-[10px] lg:text-[clamp(10px,1.05vh,12px)]'"
+          :class="hero ? 'text-xs lg:text-[clamp(11px,1.2vh,14px)]' : 'text-[11px] lg:text-[clamp(10px,1.05vh,12px)]'"
         >{{ group.label }}</span>
         <span
           class="font-semibold text-strong"

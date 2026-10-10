@@ -49,12 +49,12 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
 
 <template>
   <header
-    class="relative isolate z-30 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-8 2xl:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
+    class="relative isolate z-30 flex flex-wrap lg:flex-nowrap items-center justify-between gap-x-2 sm:gap-x-4 gap-y-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 sm:py-4 lg:px-8 2xl:px-16 lg:min-h-[clamp(80px,10.5vh,112px)] lg:py-2"
   >
     <span class="peaks -z-10" aria-hidden="true" data-export-hide />
     <h1 class="sr-only">{{ t('brand') }} — {{ heading.title }}</h1>
 
-    <div class="flex items-center gap-2.5 sm:gap-4 min-w-0">
+    <div class="flex items-center gap-2.5 sm:gap-4 min-w-0 max-sm:order-1">
       <BrandLogo tone="white" class="h-9 sm:h-10 lg:h-[clamp(38px,5.6vh,56px)]" />
       <div class="hidden md:block w-px h-10 bg-white/15 mx-1.5 lg:mx-2.5" />
       <div class="hidden md:flex flex-col gap-1.5 min-w-0" aria-hidden="true">
@@ -76,7 +76,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
       data-export-hide
     />
 
-    <div class="flex items-center gap-2 sm:gap-2.5 flex-wrap lg:flex-nowrap lg:shrink-0 justify-end ms-auto">
+    <div class="max-sm:contents flex items-center gap-2 sm:gap-2.5 flex-wrap lg:flex-nowrap lg:shrink-0 justify-end ms-auto">
       <!-- الفترة تبقى في التصدير: التقرير يجب أن يقول أي ربع يغطّي -->
       <div
         class="hidden min-[1500px]:flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-semibold text-sm lg:text-note text-white/85"
@@ -90,26 +90,27 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
       </div>
 
       <!-- تبقى في الكشك والتصدير: التقرير المطبوع يجب أن يقول متى أُخِذ -->
-      <BoardClock class="shrink-0" />
+      <BoardClock class="shrink-0 max-sm:hidden" />
 
-      <div class="shrink-0" data-kiosk-hide>
+      <!-- الموبايل: الصف الأول الشعار وأزرار الأيقونات، والتاني الأرباع والشاشات -->
+      <div class="shrink-0 max-sm:order-3" data-kiosk-hide>
         <QuarterSwitcher />
       </div>
 
-      <div data-kiosk-hide data-export-hide>
+      <div class="max-sm:order-3 max-sm:ms-auto" data-kiosk-hide data-export-hide>
         <ViewToggle :view="view" @update:view="emit('update:view', $event)" />
       </div>
 
-      <div v-if="!isKiosk" data-kiosk-hide data-export-hide>
+      <div v-if="!isKiosk" class="max-sm:order-2 max-sm:ms-auto" data-kiosk-hide data-export-hide>
         <ExportMenu :target="exportTarget" />
       </div>
 
       <!-- الاحتفالات تظهر في الكشك أيضاً؛ القائمة نفسها للشاشات التفاعلية فقط -->
-      <div v-if="!isKiosk" data-kiosk-hide data-export-hide>
+      <div v-if="!isKiosk" class="max-sm:order-2" data-kiosk-hide data-export-hide>
         <NotificationsMenu />
       </div>
 
-      <div v-if="!isKiosk" data-kiosk-hide data-export-hide>
+      <div v-if="!isKiosk" class="max-sm:order-2" data-kiosk-hide data-export-hide>
         <SettingsMenu
           :open="settingsOpen"
           :is-fullscreen="isFullscreen"
@@ -118,7 +119,7 @@ const period = computed(() => `${t(`quarter.range.${quarter.value}`)} ${year.val
         />
       </div>
 
-      <StatusBadge />
+      <StatusBadge class="max-sm:order-2" />
     </div>
   </header>
 </template>
