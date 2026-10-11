@@ -347,6 +347,12 @@
 .view-enter-from { opacity: 0; }
 .view-leave-to { opacity: 0; transform: translateY(-8px); }
 
+/* شاشات ملء الشاشة (أخبار، أسواق): تلاشي فقط — طبقة واحدة بـ opacity، خفيفة على التلفزيون */
+.cover-enter-active { transition: opacity var(--dur-3) ease-out; }
+.cover-leave-active { transition: opacity var(--dur-4) ease-in-out; }
+.cover-enter-from,
+.cover-leave-to { opacity: 0; }
+
 /* قوائم منسدلة ونوافذ */
 .pop-enter-active { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }
 .pop-leave-active { transition: opacity var(--dur-1) ease-in, transform var(--dur-1) ease-in; }
@@ -380,6 +386,8 @@
   }
   .view-enter-active,
   .view-leave-active,
+  .cover-enter-active,
+  .cover-leave-active,
   .pop-enter-active,
   .pop-leave-active,
   .ticker-enter-active,

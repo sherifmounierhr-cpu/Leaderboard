@@ -104,8 +104,11 @@ const board = ref<HTMLElement | null>(null)
       </div>
     </main>
 
-    <NewsView v-if="view === 'news'" />
-    <MarketsView v-if="view === 'markets'" />
+    <!-- الأخبار والأسواق بتغطّي الشاشة: بتدخل وتخرج بتلاشي، فالرجوع للفرق مش قطع مفاجئ -->
+    <Transition name="cover">
+      <NewsView v-if="view === 'news'" key="news" />
+      <MarketsView v-else-if="view === 'markets'" key="markets" />
+    </Transition>
 
     <CelebrationOverlay />
     <BreakingNewsOverlay />
