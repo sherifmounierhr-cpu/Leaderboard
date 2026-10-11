@@ -73,6 +73,11 @@ function step() {
     return
   }
   if (now.value - startedAt.value < slideMs.value) return
+  // مدة ثابتة وباقي منها أقل من نص خبر: الخبر الجاي هيلمع ثانية ويتقطع، فنسلّم دلوقتي
+  if (screenMs.value && screenMs.value - (now.value - mountedAt) < slideMs.value / 2) {
+    finish()
+    return
+  }
   if (index.value + 1 < slides.value.length) show(index.value + 1)
   else if (screenMs.value) show(0)
   else finish()
