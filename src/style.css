@@ -352,6 +352,13 @@
 .cover-leave-active { transition: opacity var(--dur-4) ease-in-out; }
 .cover-enter-from,
 .cover-leave-to { opacity: 0; }
+/*
+ * من شاشة مغطّية لأخرى (أخبار ← أسواق): لو الاتنين شفافين مع بعض اللوحة اللي
+ * تحتهم بتبان في النص. الخارجة تفضل معتمة لحد ما الداخلة تكمل فوقها، وبعدين تتشال.
+ */
+.cover-enter-active { z-index: 41; }
+.cover-leave-active:has(~ .cover-enter-active),
+.cover-enter-active ~ .cover-leave-active { transition: opacity 1ms linear var(--dur-3); }
 
 /* قوائم منسدلة ونوافذ */
 .pop-enter-active { transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out); }

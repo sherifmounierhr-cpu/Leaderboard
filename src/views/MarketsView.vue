@@ -219,7 +219,7 @@ watch(slides, (list, before) => {
 
             <p class="rise m-0 flex items-baseline gap-[0.4em] font-extrabold tabular-nums leading-none text-[clamp(44px,min(11vh,6.6vw),150px)]" style="--i: 2">
               <span dir="ltr">{{ price }}</span>
-              <span class="whitespace-nowrap font-semibold text-white/60 text-[0.26em]">
+              <span class="whitespace-nowrap font-semibold text-white/60 text-[max(0.26em,12px)]">
                 {{ current.currency
                 }}<template v-if="current.unit"> / {{ ar(`markets.unit.${current.unit}`) }}</template>
               </span>
@@ -236,7 +236,7 @@ watch(slides, (list, before) => {
               <iconify-icon :icon="up ? 'mdi:arrow-up-bold' : 'mdi:arrow-down-bold'" aria-hidden="true" class="text-[0.8em]" />
               <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
               <bdi dir="ltr">{{ move }}</bdi>
-              <span class="ms-[0.3em] font-semibold text-white/60 text-[0.42em]">{{ ar('markets.sinceClose') }}</span>
+              <span class="ms-[0.3em] font-semibold text-white/60 text-[max(0.42em,12px)]">{{ ar('markets.sinceClose') }}</span>
             </p>
           </div>
 

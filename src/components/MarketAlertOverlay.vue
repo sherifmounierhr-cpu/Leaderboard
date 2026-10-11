@@ -108,7 +108,7 @@ const move = computed(() => {
 
           <p class="rise m-0 flex items-baseline gap-[0.4em] font-extrabold tabular-nums leading-none text-[clamp(44px,min(11vh,6.6vw),150px)]" style="--i: 1">
             <span dir="ltr">{{ price }}</span>
-            <span class="whitespace-nowrap font-semibold text-white/60 text-[0.26em]">
+            <span class="whitespace-nowrap font-semibold text-white/60 text-[max(0.26em,12px)]">
               {{ shown.quote.currency }}<template v-if="shown.quote.unit"> / {{ ar(`markets.unit.${shown.quote.unit}`) }}</template>
             </span>
           </p>
@@ -121,7 +121,7 @@ const move = computed(() => {
             <iconify-icon :icon="up ? 'mdi:arrow-up-bold' : 'mdi:arrow-down-bold'" aria-hidden="true" class="text-[0.8em]" />
             <!-- بدون عزل، علامة السالب بتتنقل لآخر النسبة في الاتجاه العربي -->
             <bdi dir="ltr">{{ move }}</bdi>
-            <span class="ms-[0.3em] font-semibold text-white/60 text-[0.42em]">{{ ar('markets.sinceClose') }}</span>
+            <span class="ms-[0.3em] font-semibold text-white/60 text-[max(0.42em,12px)]">{{ ar('markets.sinceClose') }}</span>
           </p>
         </div>
 
