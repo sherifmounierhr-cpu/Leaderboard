@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { compact, egp, millions } from '@/lib/format'
 import { useBoardData } from '@/composables/useBoardData'
 import { isKiosk } from '@/composables/useSettings'
+import { isDesktop } from '@/composables/useBreakpoint'
 import Avatar from '@/components/Avatar.vue'
 import ProgressTrack from '@/components/ProgressTrack.vue'
 import RankDelta from '@/components/RankDelta.vue'
@@ -106,8 +107,13 @@ const GRID =
       </div>
 
       <div class="flex flex-col min-h-0">
+    <!--
+      نسخة واحدة بس بتترسم حسب عرض الشاشة: القائمتان معاً كانتا تضاعفان عدد
+      العناصر، وعلى تلفزيون ضعيف ده كان بيطوّل لحظة فتح الشاشة.
+    -->
     <!-- الموبايل -->
     <TransitionGroup
+      v-if="!isDesktop"
       tag="div"
       name="rank"
       role="list"
@@ -178,6 +184,7 @@ const GRID =
     <div
       role="table"
       :aria-label="t('a11y.agentStandings')"
+      v-if="isDesktop"
       class="rise hidden lg:flex lg:flex-col lg:flex-1 rounded-2xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
       style="--i: 1"
     >

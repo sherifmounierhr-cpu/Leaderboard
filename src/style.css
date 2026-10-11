@@ -341,8 +341,9 @@
 
 /* الخروج أسرع من الدخول: الشاشة القديمة تختفي فوراً، والجديدة تدخل
    بعناصرها واحداً واحداً (.rise) لا ككتلة واحدة. */
-.view-enter-active { transition: opacity var(--dur-3) ease-out; }
-.view-leave-active { transition: opacity var(--dur-2) ease-in, transform var(--dur-2) ease-in; }
+/* الداخلة تستنى الخارجة تخلص (تأخير بمدة الخروج)، والخارجة فوقها absolute فلا تزقّ التخطيط */
+.view-enter-active { transition: opacity var(--dur-3) ease-out var(--dur-2); }
+.view-leave-active { position: absolute; inset: 0; transition: opacity var(--dur-2) ease-in, transform var(--dur-2) ease-in; }
 .view-enter-from { opacity: 0; }
 .view-leave-to { opacity: 0; transform: translateY(-8px); }
 

@@ -87,11 +87,21 @@ const board = ref<HTMLElement | null>(null)
         شاشات الأرقام بتتبدّل جوه <main>. الأخبار والأسواق بتغطّي الشاشة كلها
         فبتتركّب برّه الانتقال: جواه كان الانتقال أحياناً يسيب المكان فاضي.
       -->
-      <Transition name="view" mode="out-in">
-        <AgentsView v-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
-        <InsightsView v-else-if="view === 'insights'" key="insights" class="flex-1 flex flex-col min-h-0" />
-        <TeamsView v-else key="teams" class="flex-1 flex flex-col min-h-0" />
-      </Transition>
+      <!--
+        من غير out-in: الشاشة القديمة تفضل ظاهرة لحد ما الجديدة تتبني، وبعدها
+        تتبدّل. على تلفزيون ضعيف بناء شاشة المستشارين بياخد أكتر من ثانية، ومع
+        out-in كانت الشاشة بتفضل بيضا طول المدة دي. KeepAlive: الشاشة بتتبني
+        مرة واحدة، وكل تبديل بعدها فوري.
+      -->
+      <div class="relative flex-1 flex flex-col min-h-0">
+        <Transition name="view">
+          <KeepAlive>
+            <AgentsView v-if="view === 'agents'" key="agents" class="flex-1 flex flex-col min-h-0" />
+            <InsightsView v-else-if="view === 'insights'" key="insights" class="flex-1 flex flex-col min-h-0" />
+            <TeamsView v-else key="teams" class="flex-1 flex flex-col min-h-0" />
+          </KeepAlive>
+        </Transition>
+      </div>
     </main>
 
     <NewsView v-if="view === 'news'" />
