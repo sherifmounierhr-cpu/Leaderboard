@@ -36,6 +36,12 @@ useWakeLock()
 // تسجيل الشاشة في صفحة الإدارة: مين متصل، ومنها يتقطع الاتصال
 watch(isSignedIn, (signed) => { if (signed) useDevice(() => view.value) }, { immediate: true })
 
+/*
+ * على الموبايل الصفحة نفسها بتتمرّر: لو التبديل حصل والواحد نازل في القائمة،
+ * الشاشة الجديدة كانت بتفتح من نص الصفحة والترويسة مقطوعة. كل شاشة تبدأ من فوق.
+ */
+watch(view, () => { if (window.scrollY > 0) window.scrollTo(0, 0) })
+
 /** هدف التصدير: اللوحة كاملة بترويستها. */
 const board = ref<HTMLElement | null>(null)
 </script>
