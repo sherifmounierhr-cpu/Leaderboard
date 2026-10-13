@@ -14,13 +14,30 @@ const CLOCK_MS = 30_000
 
 const { t, locale } = useI18n()
 const localName = useLocalName()
-const { events, unreadCount, markAllRead, replay } = useSaleEvents()
+const { events, unreadCount, markAllRead, replay, broadcastReplay } = useSaleEvents()
 
 /**
  * تنبيه المساحة: للمسؤول وحساب العرض فقط، مثبّت أول القائمة طول ما
  * الاستهلاك فوق الحد — لا يُعلَّم «مقروء» لأنه حالة مستمرة لا حدث.
  */
-const { canViewAdmin } = useAuth()
+const { canViewAdmin, permissions, isDemo } = useAuth()
+
+/**
+ * صاحب صلاحية «احتفال» بيعيد العرض على كل الشاشات (اللي بيضغط من موبايله عايز
+ * يشوفه على شاشة المكتب). غيره بيعيده على جهازه بس.
+ */
+const canBroadcast = computed(() => !isDemo.value && permissions.value.includes('celebrate'))
+async function onReplay(event: SaleEventRow) {
+  open.value = false
+  if (!canBroadcast.value) return replay(event)
+  try {
+    await broadcastReplay(event)
+  } catch (err) {
+    // الخادم رفض أو الشبكة وقعت: على الأقل يتعرض هنا
+    console.warn('[notifications:replay]', err)
+    replay(event)
+  }
+}
 const storage = useStorageHealth()
 let watchingStorage = false
 watch(
@@ -192,9 +209,9 @@ const badge = computed(() => (unreadCount.value > 9 ? '9+' : String(unreadCount.
           <button
             type="button"
             class="shrink-0 inline-flex size-9 items-center justify-center rounded-lg text-mute transition-colors hover:bg-accent/10 hover:text-accent-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            :aria-label="t('notifications.replay')"
-            :title="t('notifications.replay')"
-            @click="replay(item.event); open = false"
+            :aria-label="t(canBroadcast ? 'notifications.replayAll' : 'notifications.replay')"
+            :title="t(canBroadcast ? 'notifications.replayAll' : 'notifications.replay')"
+            @click="onReplay(item.event)"
           >
             <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="text-lg" />
           </button>

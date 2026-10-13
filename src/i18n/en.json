@@ -126,7 +126,8 @@
     "sale": "{name} closed a new deal worth {amount}",
     "manual": "Special congratulations to {name}",
     "replay": "Replay the celebration on this screen",
-    "saleShared": "{name} and {partner} closed a shared deal worth {amount}"
+    "saleShared": "{name} and {partner} closed a shared deal worth {amount}",
+    "replayAll": "Replay the celebration on every screen"
   },
   "spotlight": {
     "topAgent": "Top performer",

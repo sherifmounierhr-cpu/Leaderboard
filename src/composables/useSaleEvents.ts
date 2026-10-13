@@ -194,6 +194,56 @@ function replay(event: SaleEventRow) {
   celebrations.value = [...celebrations.value, { key: `agent:${event.id}:${Date.now()}`, scope: 'agent', event }]
 }
 
+/**
+ * إعادة العرض على كل الشاشات: طلب في القاعدة تسمعه الشاشات كلها (ومنها دي).
+ * لأصحاب صلاحية «احتفال» فقط — الخادم هو اللي بيتحقق.
+ */
+async function broadcastReplay(event: SaleEventRow) {
+  const { error } = await supabase.rpc('lb_admin_replay_event', { p_event_id: event.id })
+  if (error) throw new Error(error.message)
+  // لو البث اللحظي واقع على الجهاز ده، ما نستناش دورة التحميل الاحتياطية
+  void loadReplays()
+}
+
+/** أعلى طلب إعادة عرض اتشاف — كل طلب يتعرض مرة واحدة على الشاشة. */
+let lastSeenReplayId = 0
+/** القراءات بالدور: الطلب اللحظي وردّ الزرار ممكن يوصلوا مع بعض فيتعرض الاحتفال مرتين. */
+let replayQueue: Promise<void> = Promise.resolve()
+
+function loadReplays(): Promise<void> {
+  replayQueue = replayQueue.then(readReplays, readReplays)
+  return replayQueue
+}
+
+async function readReplays() {
+  const { data, error } = await supabase
+    .from('lb_event_replays')
+    .select('*')
+    .order('id', { ascending: false })
+    .limit(20)
+  if (error) {
+    console.warn('[useSaleEvents:replays]', error.message)
+    return
+  }
+  const rows = (data ?? []) as Array<{ id: number; event_id: number; created_at: string }>
+  const seen = lastSeenReplayId
+  lastSeenReplayId = Math.max(seen, rows[0]?.id ?? 0)
+  // نفس قاعدة الأحداث: اللي قبل فتح الصفحة أو القديم ما يتعرضش
+  const cutoff = Math.max(openedAt, Date.now() - STALE_MS)
+  const fresh = rows
+    .filter((r) => r.id > seen && new Date(r.created_at).getTime() >= cutoff)
+    .reverse()
+  for (const request of fresh) {
+    let event = events.value.find((e) => e.id === request.event_id)
+    if (!event) {
+      // حدث أقدم من آخر FEED_LIMIT في القائمة
+      const { data: row } = await supabase.from('lb_sale_events').select('*').eq('id', request.event_id).maybeSingle()
+      if (row) event = normalize(row as SaleEventRow)
+    }
+    if (event) replay(event)
+  }
+}
+
 function dismissCelebration() {
   celebrations.value = celebrations.value.slice(1)
 }
@@ -251,6 +301,8 @@ async function load() {
   if (fresh.length || freshTeams.length || freshIntros.length) enqueue(fresh, freshTeams, freshIntros)
   lastSeenId = Math.max(seen, rows[0]?.id ?? 0)
   events.value = rows
+  // بعد تحميل الأحداث: طلب إعادة العرض بيدوّر على حدثه في القائمة
+  await loadReplays()
 }
 
 /** تهنئة يدوية تظهر على كل الشاشات المفتوحة — المسؤولون فقط (يتحقق الخادم). */
@@ -318,6 +370,7 @@ function start() {
     .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'sale_events' }, scheduleLoad)
     .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'team_events' }, scheduleLoad)
     .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'celebration_intros' }, scheduleLoad)
+    .on('postgres_changes', { event: 'INSERT', schema: 'leaderboard', table: 'event_replays' }, () => void loadReplays())
     .subscribe()
 
   setInterval(() => void load(), FALLBACK_POLL_MS)
@@ -333,6 +386,7 @@ export function useSaleEvents() {
     celebrations,
     dismissCelebration,
     replay,
+    broadcastReplay,
   }
 }
 

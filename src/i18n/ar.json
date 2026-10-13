@@ -126,7 +126,8 @@
     "sale": "صفقة جديدة لـ {name} بقيمة {amount}",
     "manual": "تهنئة خاصة لـ {name}",
     "replay": "إعادة عرض الاحتفال على هذه الشاشة",
-    "saleShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}"
+    "saleShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}",
+    "replayAll": "إعادة عرض الاحتفال على كل الشاشات"
   },
   "spotlight": {
     "topAgent": "متصدّر المبيعات",
