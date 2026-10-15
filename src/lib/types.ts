@@ -284,10 +284,17 @@ export interface BoardSettings {
   celebration_lang?: 'auto' | 'ar' | 'en'
 }
 
+/** شعار شركة ضيف في رسالة الترحيب بالضيوف. */
+export interface AnnouncementLogo {
+  url: string
+  name: string
+}
+
 /** صف من public.lb_announcements */
 export interface Announcement {
   id: string
-  style: 'welcome' | 'motivation'
+  /** guests = ترحيب بضيوف (مطوّرين بشعاراتهم) · newhire = ترحيب بموظف جديد */
+  style: 'welcome' | 'motivation' | 'guests' | 'newhire'
   title: string
   body: string | null
   duration_s: number
@@ -301,6 +308,11 @@ export interface Announcement {
   active: boolean
   created_at: string
   updated_at: string
+  /** صورة الرسالة: للموظف الجديد صورته، ولباقي الأنواع اختيارية. */
+  image_url?: string | null
+  /** سطر تحت العنوان: المسمّى الوظيفي للموظف الجديد، أو اسم شركة الضيوف. */
+  subtitle?: string | null
+  logos?: AnnouncementLogo[]
 }
 
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'

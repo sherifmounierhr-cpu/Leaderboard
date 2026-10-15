@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { Announcement } from '@/lib/types'
+import type { Announcement, AnnouncementLogo } from '@/lib/types'
 import { useScreenAdmin, type AnnouncementDraft } from '@/composables/useScreenAdmin'
 import { activeOccurrence, cairoWallTime, nextOccurrence } from '@/composables/useAnnouncements'
 import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
@@ -11,11 +11,30 @@ import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
  * القاهرة أياً كان توقيت جهاز المسؤول.
  */
 const { t, locale } = useI18n()
-const { announcements, media, saveAnnouncement, deleteAnnouncement } = useScreenAdmin()
+const { announcements, media, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage } = useScreenAdmin()
 const { list, preview, reload } = announcements
 
 const TITLE_MAX = 80
 const BODY_MAX = 280
+const SUBTITLE_MAX = 80
+const LOGOS_MAX = 6
+
+const STYLES = ['welcome', 'motivation', 'guests', 'newhire'] as const
+const STYLE_ICON: Record<Announcement['style'], string> = {
+  welcome: 'mdi:hand-wave',
+  motivation: 'mdi:rocket-launch',
+  guests: 'mdi:handshake-outline',
+  newhire: 'mdi:account-star-outline',
+}
+const STYLE_TONE: Record<Announcement['style'], string> = {
+  welcome: 'bg-accent/12 text-accent-text',
+  motivation: 'bg-gold/15 text-gold-text',
+  guests: 'bg-[#c9a45c]/15 text-[#8a6a1e]',
+  newhire: 'bg-summit/15 text-summit-text',
+}
+/** الصورة: للموظف الجديد صورته، وللترحيب والتحفيز اختيارية. الضيوف ليهم شعارات. */
+const usesImage = (style: Announcement['style']) => style !== 'guests'
+const usesSubtitle = (style: Announcement['style']) => style === 'guests' || style === 'newhire'
 /** أسبوع العمل في مصر: الأحد–الخميس. */
 const WORKWEEK = [0, 1, 2, 3, 4]
 
@@ -64,6 +83,9 @@ function blank(style: Announcement['style'] = 'welcome') {
     daily_time: '09:00',
     weekdays: [...WORKWEEK],
     active: true,
+    image_url: null,
+    subtitle: '',
+    logos: [],
     when: 'now',
     localDateTime: cairoLocalInput(),
   }
@@ -84,6 +106,9 @@ function edit(a: Announcement) {
     daily_time: a.daily_time ?? '09:00',
     weekdays: a.weekdays.length ? [...a.weekdays] : [...WORKWEEK],
     active: a.active,
+    image_url: a.image_url ?? null,
+    subtitle: a.subtitle ?? '',
+    logos: (a.logos ?? []).map((l) => ({ ...l })),
     when: a.schedule === 'daily' ? 'daily' : 'once',
     localDateTime: a.starts_at ? toCairoInput(a.starts_at) : cairoLocalInput(),
   }
@@ -116,6 +141,10 @@ async function submit() {
   try {
     await saveAnnouncement({
       ...e,
+      // نوع ما بيستخدمش الحقل ما يحفظهوش: تغيير النوع بعد رفع صورة ما يسيبش بقايا
+      image_url: usesImage(e.style) ? e.image_url : null,
+      subtitle: usesSubtitle(e.style) ? e.subtitle : '',
+      logos: e.style === 'guests' ? e.logos.filter((l) => l.url) : [],
       schedule: e.when === 'daily' ? 'daily' : 'once',
       // «الآن»: الخادم يستخدم وقت الحفظ
       starts_at: e.when === 'now' ? new Date().toISOString() : startsAt,
@@ -160,7 +189,59 @@ function draftOf(a: Announcement): AnnouncementDraft {
   return {
     id: a.id, style: a.style, title: a.title, body: a.body ?? '', duration_s: a.duration_s, clip_id: a.clip_id,
     schedule: a.schedule, starts_at: a.starts_at, daily_time: a.daily_time ?? '09:00', weekdays: a.weekdays, active: a.active,
+    image_url: a.image_url ?? null, subtitle: a.subtitle ?? '', logos: a.logos ?? [],
   }
+}
+
+// ------------------------------------------------------------ الصور والشعارات
+const uploading = ref<'image' | 'logo' | null>(null)
+const uploadError = ref<string | null>(null)
+
+function uploadMessage(err: unknown) {
+  const code = err instanceof Error ? err.message : String(err)
+  if (code === 'IMAGE_TYPE' || code === 'IMAGE_READ') return t('messages.imageType')
+  return code
+}
+
+async function pickImage(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file || !editing.value) return
+  uploading.value = 'image'
+  uploadError.value = null
+  try {
+    editing.value.image_url = await uploadAnnouncementImage(file, 'image')
+  } catch (err) {
+    uploadError.value = uploadMessage(err)
+  } finally {
+    uploading.value = null
+  }
+}
+
+async function pickLogos(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  const e = editing.value
+  if (!files.length || !e) return
+  uploading.value = 'logo'
+  uploadError.value = null
+  try {
+    for (const file of files.slice(0, LOGOS_MAX - e.logos.length)) {
+      const url = await uploadAnnouncementImage(file, 'logo')
+      // اسم الملف من غير الامتداد كبداية لاسم الشركة — يتعدّل من الخانة
+      e.logos.push({ url, name: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 60) })
+    }
+  } catch (err) {
+    uploadError.value = uploadMessage(err)
+  } finally {
+    uploading.value = null
+  }
+}
+
+function removeLogo(logo: AnnouncementLogo) {
+  if (editing.value) editing.value.logos = editing.value.logos.filter((l) => l !== logo)
 }
 
 /** معاينة شكل النموذج الحالي على الشاشة دي. */
@@ -171,6 +252,9 @@ function previewDraft() {
     id: 'preview', style: e.style, title: e.title, body: e.body || null, duration_s: Math.min(e.duration_s, 20),
     clip_id: e.clip_id, schedule: 'once', starts_at: null, daily_time: null, weekdays: [], active: true,
     created_at: '', updated_at: '',
+    image_url: usesImage(e.style) ? e.image_url : null,
+    subtitle: usesSubtitle(e.style) ? e.subtitle || null : null,
+    logos: e.style === 'guests' ? e.logos : [],
   })
 }
 
@@ -229,15 +313,15 @@ const FIELD =
         <h2 class="admin-title">{{ t('messages.title') }}</h2>
         <p class="m-0 mt-1 text-caption text-mute">{{ t('messages.hint') }}</p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button
-          v-for="s in (['welcome', 'motivation'] as const)"
+          v-for="s in STYLES"
           :key="s"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
           @click="blank(s)"
         >
-          <iconify-icon :icon="s === 'welcome' ? 'mdi:hand-wave' : 'mdi:rocket-launch'" aria-hidden="true" />
+          <iconify-icon :icon="STYLE_ICON[s]" aria-hidden="true" />
           {{ t(`messages.new_${s}`) }}
         </button>
       </div>
@@ -256,7 +340,7 @@ const FIELD =
           <legend class="mb-1.5 font-semibold text-caption text-mute">{{ t('messages.style') }}</legend>
           <div class="grid grid-cols-2 gap-2">
             <button
-              v-for="s in (['welcome', 'motivation'] as const)"
+              v-for="s in STYLES"
               :key="s"
               type="button"
               class="flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors"
@@ -264,7 +348,7 @@ const FIELD =
               :aria-pressed="editing.style === s"
               @click="editing.style = s"
             >
-              <iconify-icon :icon="s === 'welcome' ? 'mdi:hand-wave' : 'mdi:rocket-launch'" aria-hidden="true" class="text-lg" />
+              <iconify-icon :icon="STYLE_ICON[s]" aria-hidden="true" class="text-lg" />
               {{ t(`announce.${s}`) }}
             </button>
           </div>
@@ -272,7 +356,7 @@ const FIELD =
 
         <label class="flex flex-col gap-1.5">
           <span class="flex justify-between font-semibold text-caption text-mute">
-            <span>{{ t('messages.titleField') }} *</span>
+            <span>{{ t(editing.style === 'newhire' ? 'messages.nameField' : 'messages.titleField') }} *</span>
             <span class="tabular-nums text-dim">{{ editing.title.length }}/{{ TITLE_MAX }}</span>
           </span>
           <input v-model="editing.title" :maxlength="TITLE_MAX" required dir="auto" :class="FIELD" :placeholder="t(`messages.titlePlaceholder_${editing.style}`)" />
@@ -285,6 +369,85 @@ const FIELD =
           </span>
           <textarea v-model="editing.body" :maxlength="BODY_MAX" rows="3" dir="auto" :class="FIELD" :placeholder="t(`messages.bodyPlaceholder_${editing.style}`)" />
         </label>
+
+        <label v-if="usesSubtitle(editing.style)" class="flex flex-col gap-1.5">
+          <span class="flex justify-between font-semibold text-caption text-mute">
+            <span>{{ t(`messages.subtitleField_${editing.style}`) }}</span>
+            <span class="tabular-nums text-dim">{{ editing.subtitle.length }}/{{ SUBTITLE_MAX }}</span>
+          </span>
+          <input v-model="editing.subtitle" :maxlength="SUBTITLE_MAX" dir="auto" :class="FIELD" :placeholder="t(`messages.subtitlePlaceholder_${editing.style}`)" />
+        </label>
+
+        <!-- الصورة: ملف من الجهاز، بيتصغّر قبل الرفع -->
+        <div v-if="usesImage(editing.style)" class="flex flex-col gap-1.5">
+          <span class="font-semibold text-caption text-mute">{{ t(editing.style === 'newhire' ? 'messages.photoField' : 'messages.imageField') }}</span>
+          <div class="flex flex-wrap items-center gap-3">
+            <img
+              v-if="editing.image_url"
+              :src="editing.image_url"
+              alt=""
+              class="size-20 rounded-lg border border-card-border object-cover"
+              :class="editing.style === 'newhire' ? 'rounded-t-full' : ''"
+            />
+            <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-card-border px-4 py-2 text-sm font-semibold text-mute transition-colors hover:border-accent/50 hover:text-strong focus-within:ring-2 focus-within:ring-accent">
+              <iconify-icon icon="mdi:image-plus-outline" aria-hidden="true" class="text-lg" />
+              {{ uploading === 'image' ? t('messages.uploading') : editing.image_url ? t('messages.replaceImage') : t('messages.addImage') }}
+              <input type="file" accept="image/*" class="sr-only" :disabled="uploading !== null" @change="pickImage" />
+            </label>
+            <button
+              v-if="editing.image_url"
+              type="button"
+              class="min-h-11 rounded-lg px-3 text-sm font-semibold text-mute transition-colors hover:text-down"
+              @click="editing.image_url = null"
+            >{{ t('messages.removeImage') }}</button>
+          </div>
+        </div>
+
+        <!-- شعارات الضيوف: لحد ستة، كل شعار باسم شركته -->
+        <div v-if="editing.style === 'guests'" class="flex flex-col gap-2">
+          <span class="flex justify-between font-semibold text-caption text-mute">
+            <span>{{ t('messages.logosField') }}</span>
+            <span class="tabular-nums text-dim">{{ editing.logos.length }}/{{ LOGOS_MAX }}</span>
+          </span>
+          <ul v-if="editing.logos.length" class="m-0 grid list-none gap-2 p-0 sm:grid-cols-2">
+            <li
+              v-for="(logo, i) in editing.logos"
+              :key="logo.url"
+              class="flex items-center gap-2 rounded-lg border border-card-border bg-page p-2"
+            >
+              <span class="flex h-12 w-16 shrink-0 items-center justify-center rounded-md bg-[#fbf7ee] p-1.5 ring-1 ring-[#c9a45c]/50">
+                <img :src="logo.url" alt="" class="max-h-full max-w-full object-contain" />
+              </span>
+              <input
+                v-model="logo.name"
+                maxlength="60"
+                dir="auto"
+                :aria-label="t('messages.logoName', { n: i + 1 })"
+                :placeholder="t('messages.logoNamePlaceholder')"
+                class="min-w-0 flex-1 rounded-md border border-card-border bg-card px-2 py-2 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              />
+              <button
+                type="button"
+                class="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-mute transition-colors hover:text-down"
+                :aria-label="t('messages.removeLogo', { name: logo.name || i + 1 })"
+                @click="removeLogo(logo)"
+              >
+                <iconify-icon icon="mdi:close" aria-hidden="true" class="text-lg" />
+              </button>
+            </li>
+          </ul>
+          <label
+            v-if="editing.logos.length < LOGOS_MAX"
+            class="inline-flex min-h-11 cursor-pointer items-center gap-2 self-start rounded-lg border border-dashed border-card-border px-4 py-2 text-sm font-semibold text-mute transition-colors hover:border-accent/50 hover:text-strong focus-within:ring-2 focus-within:ring-accent"
+          >
+            <iconify-icon icon="mdi:domain-plus" aria-hidden="true" class="text-lg" />
+            {{ uploading === 'logo' ? t('messages.uploading') : t('messages.addLogo') }}
+            <input type="file" accept="image/*" multiple class="sr-only" :disabled="uploading !== null" @change="pickLogos" />
+          </label>
+          <p class="m-0 text-caption text-dim">{{ t('messages.logosHint') }}</p>
+        </div>
+
+        <p v-if="uploadError" role="alert" class="m-0 text-sm text-down">{{ uploadError }}</p>
 
         <div class="grid gap-4 sm:grid-cols-2">
           <label class="flex flex-col gap-2">
@@ -353,7 +516,7 @@ const FIELD =
           <button
             type="submit"
             class="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-accent-strong disabled:opacity-50"
-            :disabled="saving || !editing.title.trim()"
+            :disabled="saving || uploading !== null || !editing.title.trim()"
           >
             <iconify-icon :icon="editing.when === 'now' ? 'mdi:television-play' : 'mdi:calendar-check'" aria-hidden="true" class="text-lg" />
             {{ saving ? t('admin.saving') : editing.when === 'now' ? t('messages.sendNow') : t('messages.schedule') }}
@@ -375,17 +538,41 @@ const FIELD =
 
       <!-- معاينة مصغّرة حية -->
       <div
-        class="flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl px-6 py-8 text-center text-white"
-        :class="editing.style === 'welcome'
-          ? 'bg-[radial-gradient(120%_90%_at_50%_0%,#1f7a72_0%,#0f3b38_55%,#0a1f1e_100%)]'
-          : 'bg-[radial-gradient(120%_90%_at_50%_100%,#6b4f16_0%,#17393a_50%,#0b1a1a_100%)]'"
+        class="relative flex min-h-64 flex-col items-center justify-center gap-3 overflow-hidden rounded-xl px-6 py-8 text-center text-white lg:sticky lg:top-4 lg:self-start lg:min-h-96"
+        :class="{
+          'bg-[radial-gradient(120%_90%_at_50%_0%,#1f7a72_0%,#0f3b38_55%,#0a1f1e_100%)]': editing.style === 'welcome',
+          'bg-[radial-gradient(120%_90%_at_50%_100%,#6b4f16_0%,#17393a_50%,#0b1a1a_100%)]': editing.style === 'motivation',
+          'bg-[radial-gradient(70%_55%_at_50%_-8%,#0f7e7655_0%,transparent_70%),linear-gradient(180deg,#071c1d,#040f10)] ring-1 ring-inset ring-[#c9a45c]/30': editing.style === 'guests' || editing.style === 'newhire',
+        }"
         aria-hidden="true"
       >
-        <span class="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-caption font-bold">
-          <iconify-icon :icon="editing.style === 'welcome' ? 'mdi:hand-wave' : 'mdi:rocket-launch'" :class="editing.style === 'welcome' ? 'text-accent-live' : 'text-gold'" />
-          {{ t(`announce.${editing.style}`) }}
+        <img
+          v-if="usesImage(editing.style) && editing.image_url"
+          :src="editing.image_url"
+          alt=""
+          class="object-cover"
+          :class="editing.style === 'newhire'
+            ? 'h-28 w-[5.4rem] rounded-t-full ring-1 ring-[#f0dca8] ring-offset-4 ring-offset-[#061617]'
+            : 'h-24 w-36 rounded-lg'"
+        />
+        <span
+          class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-caption font-bold"
+          :class="editing.style === 'guests' || editing.style === 'newhire' ? 'border-[#c9a45c]/60 bg-[#c9a45c]/10 text-[#f6efdf]' : 'border-white/20 bg-white/10'"
+        >
+          <iconify-icon :icon="STYLE_ICON[editing.style]" :class="editing.style === 'welcome' ? 'text-accent-live' : editing.style === 'motivation' ? 'text-gold' : 'text-[#f0dca8]'" />
+          {{ t(editing.style === 'guests' ? 'announce.chip_guests' : editing.style === 'newhire' ? 'announce.chip_newhire' : `announce.${editing.style}`) }}
         </span>
+        <div v-if="editing.style === 'guests' && editing.logos.length" class="flex flex-wrap justify-center gap-2">
+          <span
+            v-for="logo in editing.logos"
+            :key="logo.url"
+            class="flex h-12 w-20 items-center justify-center rounded-md bg-[#fbf7ee] p-1.5 ring-1 ring-[#c9a45c]/70"
+          >
+            <img :src="logo.url" alt="" class="max-h-full max-w-full object-contain" />
+          </span>
+        </div>
         <p dir="auto" class="m-0 text-balance break-words text-3xl font-extrabold leading-tight">{{ editing.title || t(`messages.titlePlaceholder_${editing.style}`) }}</p>
+        <p v-if="usesSubtitle(editing.style) && editing.subtitle" dir="auto" class="m-0 font-bold text-[#f0dca8]">{{ editing.subtitle }}</p>
         <p v-if="editing.body" dir="auto" class="m-0 text-balance break-words text-base text-white/85">{{ editing.body }}</p>
       </div>
     </form>
@@ -402,17 +589,32 @@ const FIELD =
         class="flex flex-wrap items-center gap-3 admin-row rounded-xl border border-card-border bg-card px-4 py-3"
         :class="r.a.active ? '' : 'opacity-70'"
       >
+        <img
+          v-if="r.a.image_url"
+          :src="r.a.image_url"
+          alt=""
+          class="size-11 shrink-0 rounded-xl object-cover"
+          :class="r.a.style === 'newhire' ? 'rounded-t-full' : ''"
+        />
         <span
-          class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-xl"
-          :class="r.a.style === 'welcome' ? 'bg-accent/12 text-accent-text' : 'bg-gold/15 text-gold'"
+          v-else-if="r.a.style === 'guests' && r.a.logos?.length"
+          class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#fbf7ee] p-1 ring-1 ring-[#c9a45c]/50"
           aria-hidden="true"
         >
-          <iconify-icon :icon="r.a.style === 'welcome' ? 'mdi:hand-wave' : 'mdi:rocket-launch'" />
+          <img :src="r.a.logos[0].url" alt="" class="max-h-full max-w-full object-contain" />
+        </span>
+        <span
+          v-else
+          class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-xl"
+          :class="STYLE_TONE[r.a.style]"
+          aria-hidden="true"
+        >
+          <iconify-icon :icon="STYLE_ICON[r.a.style]" />
         </span>
 
         <div class="flex min-w-0 flex-1 flex-col">
           <!-- bdi: عنوان إنجليزي يحتفظ باتجاهه من غير ما يغيّر محاذاة الصف -->
-          <p class="m-0 truncate font-semibold text-strong"><bdi>{{ r.a.title }}</bdi></p>
+          <p class="m-0 truncate font-semibold text-strong"><bdi>{{ r.a.title }}</bdi><template v-if="r.a.subtitle"> · <bdi class="font-medium text-mute">{{ r.a.subtitle }}</bdi></template></p>
           <p class="m-0 truncate text-caption text-mute">
             {{ r.schedule }} · {{ t('screen.seconds', { n: r.a.duration_s }) }}<template v-if="r.clip"> · 🔊 {{ r.clip }}</template>
           </p>

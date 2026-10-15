@@ -106,7 +106,7 @@ export function nextOccurrence(a: Announcement, now = Date.now()): number | null
 
 // ------------------------------------------------------------ التحميل والفحص
 function normalize(a: Announcement): Announcement {
-  return { ...a, duration_s: Number(a.duration_s), weekdays: (a.weekdays ?? []).map(Number) }
+  return { ...a, duration_s: Number(a.duration_s), weekdays: (a.weekdays ?? []).map(Number), logos: Array.isArray(a.logos) ? a.logos : [] }
 }
 
 async function load() {

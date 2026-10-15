@@ -464,7 +464,12 @@
   "announce": {
     "welcome": "Welcome",
     "motivation": "Motivation",
-    "enableSound": "Tap to enable sound"
+    "enableSound": "Tap to enable sound",
+    "guests": "Guest welcome",
+    "newhire": "New team member",
+    "chip_guests": "Our honoured guests",
+    "chip_newhire": "Joining our team",
+    "newhireSignoff": "Welcome to the Everest family"
   },
   "screen": {
     "celebrationLang": "Celebration language",
@@ -509,7 +514,7 @@
   "messages": {
     "tab": "Screen messages",
     "title": "Welcome & motivation messages",
-    "hint": "Shown full screen on every open board: now, at a set time, or every day at the same hour.",
+    "hint": "Shown full screen on every open board: now, at a set time, or daily at the same hour. You can add a photo, or your guests' logos.",
     "new_welcome": "Welcome message",
     "new_motivation": "Motivation message",
     "style": "Message type",
@@ -547,7 +552,31 @@
     "onceAt": "Once · {when}",
     "workdays": "Sun–Thu",
     "everyDay": "Every day",
-    "resend": "Send again now"
+    "resend": "Send again now",
+    "new_guests": "Welcome guests",
+    "new_newhire": "New team member",
+    "titlePlaceholder_guests": "Welcome, our honoured guests",
+    "titlePlaceholder_newhire": "Ahmed Mahmoud",
+    "bodyPlaceholder_guests": "We're glad to host you at Everest today",
+    "bodyPlaceholder_newhire": "Wishing you a great start and a career full of wins",
+    "nameField": "Employee name",
+    "subtitleField_guests": "Company or developer name (optional)",
+    "subtitleField_newhire": "Job title (optional)",
+    "subtitlePlaceholder_guests": "Talaat Moustafa Group",
+    "subtitlePlaceholder_newhire": "Sales consultant · Team F1",
+    "imageField": "Photo (optional)",
+    "photoField": "Employee photo",
+    "addImage": "Choose a photo",
+    "replaceImage": "Change photo",
+    "removeImage": "Remove photo",
+    "uploading": "Uploading…",
+    "imageType": "The browser can't read this file as an image. Try JPG or PNG.",
+    "logosField": "Guest logos",
+    "addLogo": "Add a logo",
+    "logoName": "Company name for logo {n}",
+    "logoNamePlaceholder": "Company name",
+    "removeLogo": "Remove logo {name}",
+    "logosHint": "A PNG with a transparent background looks cleanest. Logos sit on a light plaque; a single logo is shown beside the Everest logo."
   },
   "deals": {
     "title": "Deals",

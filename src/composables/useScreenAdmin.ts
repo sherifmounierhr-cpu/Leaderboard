@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Announcement, MediaFile } from '@/lib/types'
+import type { Announcement, AnnouncementLogo, MediaFile } from '@/lib/types'
 import { MEDIA_BUCKET, useBoardMedia } from './useBoardMedia'
 import { useAnnouncements } from './useAnnouncements'
 
@@ -43,6 +43,32 @@ export interface AnnouncementDraft {
   daily_time: string
   weekdays: number[]
   active: boolean
+  image_url: string | null
+  subtitle: string
+  logos: AnnouncementLogo[]
+}
+
+const ANNOUNCE_BUCKET = 'announcements'
+/** أطول ضلع بعد التصغير: صورة الرسالة تملأ نص شاشة 1080، والشعار أصغر بكتير. */
+const IMAGE_EDGE = { image: 1600, logo: 720 } as const
+
+/**
+ * تصغير الصورة في المتصفح قبل الرفع: صورة موبايل 12 ميجابكسل كانت هتتحمّل
+ * كاملة على جهاز التلفزيون الضعيف. WebP بيحافظ على شفافية الشعارات.
+ */
+async function shrinkImage(file: File, edge: number): Promise<Blob> {
+  const bitmap = await createImageBitmap(file)
+  const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height))
+  const w = Math.max(1, Math.round(bitmap.width * scale))
+  const h = Math.max(1, Math.round(bitmap.height * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, w, h)
+  bitmap.close()
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', 0.88))
+  if (!blob) throw new Error('IMAGE_READ')
+  return blob
 }
 
 export function useScreenAdmin() {
@@ -111,10 +137,25 @@ export function useScreenAdmin() {
       p_daily_time: d.schedule === 'daily' ? d.daily_time : null,
       p_weekdays: d.schedule === 'daily' ? d.weekdays : null,
       p_active: d.active,
+      p_extra: { image_url: d.image_url, subtitle: d.subtitle, logos: d.logos },
     })
     fail(error)
     await announcements.reload()
     return data as string
+  }
+
+  /** يرفع صورة رسالة أو شعار ضيف ويرجّع رابطها العام. */
+  async function uploadAnnouncementImage(file: File, kind: keyof typeof IMAGE_EDGE) {
+    if (!file.type.startsWith('image/')) throw new Error('IMAGE_TYPE')
+    const blob = await shrinkImage(file, IMAGE_EDGE[kind])
+    // Safari القديم ما بيكتبش WebP فبيرجّع PNG: الامتداد والنوع من الناتج الفعلي
+    const ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/jpeg' ? 'jpg' : 'png'
+    const path = `${kind}s/${crypto.randomUUID()}.${ext}`
+    const { error } = await supabase.storage
+      .from(ANNOUNCE_BUCKET)
+      .upload(path, blob, { contentType: blob.type || 'image/png', upsert: false })
+    fail(error)
+    return supabase.storage.from(ANNOUNCE_BUCKET).getPublicUrl(path).data.publicUrl
   }
 
   async function deleteAnnouncement(id: string) {
@@ -123,5 +164,5 @@ export function useScreenAdmin() {
     await announcements.reload()
   }
 
-  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveAnnouncement, deleteAnnouncement }
+  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage }
 }

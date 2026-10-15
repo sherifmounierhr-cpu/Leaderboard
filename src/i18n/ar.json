@@ -464,7 +464,12 @@
   "announce": {
     "welcome": "رسالة ترحيب",
     "motivation": "رسالة تحفيز",
-    "enableSound": "اضغط لتفعيل الصوت"
+    "enableSound": "اضغط لتفعيل الصوت",
+    "guests": "ترحيب بالضيوف",
+    "newhire": "موظف جديد",
+    "chip_guests": "ضيوفنا الكرام",
+    "chip_newhire": "انضم إلى فريقنا",
+    "newhireSignoff": "أهلاً بك في عائلة إيفرست"
   },
   "screen": {
     "celebrationLang": "لغة الاحتفال",
@@ -509,7 +514,7 @@
   "messages": {
     "tab": "رسائل الشاشة",
     "title": "رسائل الترحيب والتحفيز",
-    "hint": "تظهر بملء الشاشة على كل اللوحات المفتوحة: الآن، أو في موعد محدد، أو كل يوم في نفس الساعة.",
+    "hint": "تظهر بملء الشاشة على كل اللوحات المفتوحة: الآن، أو في موعد محدد، أو كل يوم في نفس الساعة. تقدر تضيف صورة، أو شعارات الضيوف.",
     "new_welcome": "رسالة ترحيب",
     "new_motivation": "رسالة تحفيز",
     "style": "نوع الرسالة",
@@ -547,7 +552,31 @@
     "onceAt": "مرة واحدة · {when}",
     "workdays": "الأحد–الخميس",
     "everyDay": "كل يوم",
-    "resend": "إعادة الإرسال الآن"
+    "resend": "إعادة الإرسال الآن",
+    "new_guests": "ترحيب بضيوف",
+    "new_newhire": "موظف جديد",
+    "titlePlaceholder_guests": "أهلاً بضيوفنا الكرام",
+    "titlePlaceholder_newhire": "أحمد محمود",
+    "bodyPlaceholder_guests": "سعداء باستضافتكم اليوم في إيفرست",
+    "bodyPlaceholder_newhire": "نتمنى لك بداية موفقة ومسيرة مليانة نجاحات",
+    "nameField": "اسم الموظف",
+    "subtitleField_guests": "اسم الشركة أو المطوّر (اختياري)",
+    "subtitleField_newhire": "المسمّى الوظيفي (اختياري)",
+    "subtitlePlaceholder_guests": "شركة طلعت مصطفى",
+    "subtitlePlaceholder_newhire": "مستشار مبيعات · فريق F1",
+    "imageField": "صورة (اختيارية)",
+    "photoField": "صورة الموظف",
+    "addImage": "اختر صورة",
+    "replaceImage": "تغيير الصورة",
+    "removeImage": "إزالة الصورة",
+    "uploading": "جارٍ الرفع…",
+    "imageType": "الملف ده مش صورة يقدر المتصفح يقراها. جرّب JPG أو PNG.",
+    "logosField": "شعارات الضيوف",
+    "addLogo": "إضافة شعار",
+    "logoName": "اسم الشركة للشعار {n}",
+    "logoNamePlaceholder": "اسم الشركة",
+    "removeLogo": "إزالة شعار {name}",
+    "logosHint": "PNG بخلفية شفافة بيطلع أنضف. الشعار بيتعرض على لوحة فاتحة، وشعار واحد بيتعرض جنب شعار إيفرست."
   },
   "deals": {
     "title": "الصفقات",
