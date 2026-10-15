@@ -444,6 +444,10 @@ const FIELD =
               @click="editing.image_url = null"
             >{{ t('messages.removeImage') }}</button>
           </div>
+          <p v-if="editing.style === 'motivation'" class="m-0 flex items-center gap-1.5 text-caption text-dim">
+            <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="text-gold-text" />
+            {{ t('messages.spotlightHint') }}
+          </p>
         </div>
 
         <!-- شعارات الضيوف: لحد ستة، كل شعار باسم شركته -->

@@ -576,7 +576,8 @@
     "logoName": "Company name for logo {n}",
     "logoNamePlaceholder": "Company name",
     "removeLogo": "Remove logo {name}",
-    "logosHint": "A PNG with a transparent background looks cleanest. Logos sit on a light plaque; a single logo is shown beside the Everest logo."
+    "logosHint": "A PNG with a transparent background looks cleanest. Logos sit on a light plaque; a single logo is shown beside the Everest logo.",
+    "spotlightHint": "With a photo, the motivation message becomes a celebration stage: a large gold-framed photo with confetti, rays and sparkles. A cut-out photo stands at full height."
   },
   "deals": {
     "title": "Deals",

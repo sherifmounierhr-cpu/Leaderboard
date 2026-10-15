@@ -97,6 +97,77 @@ function markBroken(url: string) {
   broken.value = new Set([...broken.value, url])
 }
 
+/**
+ * رسالة تحفيز بصورة: مسرح احتفالي — الصورة كبيرة في إطار ذهبي (أو الشخص
+ * المعزول واقف بطول الشاشة)، وراها أشعة بتلف، وقصاصات ونجوم بتلمع.
+ */
+const spotlight = computed(() => style.value === 'motivation' && Boolean(image.value))
+
+/**
+ * الصورة معزولة (أركانها شفافة)؟ الشخص يقف كبير من غير إطار. قراءة أركان
+ * نسخة 64px — لو المصدر ما بيسمحش بالقراءة بتتعامل كصورة عادية في إطار.
+ */
+const imageCutout = ref(false)
+const imageRatio = ref(4 / 3)
+watch(
+  image,
+  (url) => {
+    imageCutout.value = false
+    imageRatio.value = 4 / 3
+    if (!url) return
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      if (image.value !== url) return
+      imageRatio.value = (img.naturalWidth || 4) / (img.naturalHeight || 3)
+      try {
+        const c = document.createElement('canvas')
+        c.width = c.height = 64
+        const ctx = c.getContext('2d', { willReadFrequently: true })!
+        ctx.drawImage(img, 0, 0, 64, 64)
+        const d = ctx.getImageData(0, 0, 64, 64).data
+        const a = (x: number, y: number) => d[(y * 64 + x) * 4 + 3]
+        imageCutout.value = [a(0, 0), a(63, 0), a(0, 63), a(63, 63)].some((v) => v < 16)
+      } catch {
+        imageCutout.value = false
+      }
+    }
+    img.src = url
+  },
+  { immediate: true },
+)
+
+/** إطار الصورة على قدّ نسبتها: عريضة تاخد عرض أكتر، طولية تاخد ارتفاع أكتر. */
+const frameStyle = computed(() => {
+  const r = Math.min(1.9, Math.max(0.62, imageRatio.value))
+  return { '--r': String(r) }
+})
+
+/* قصاصات الاحتفال: نفس حركة شاشة الاحتفال (confetti) بألوان التحفيز الدافية */
+const CONFETTI = ['#f0d38a', '#d9ad55', '#5ccfc3', '#ffffff', '#6cc45e']
+const confetti = computed(() => {
+  void shown.value?.key
+  return Array.from({ length: 34 }, (_, i) => ({
+    left: `${Math.random() * 100}%`,
+    drift: `${(Math.random() - 0.5) * 24}vw`,
+    delay: `${Math.random() * 3}s`,
+    duration: `${3 + Math.random() * 2}s`,
+    size: `clamp(${6 + Math.random() * 5}px, ${0.7 + Math.random() * 0.7}vw, ${12 + Math.random() * 10}px)`,
+    color: CONFETTI[i % CONFETTI.length],
+    radius: i % 3 === 0 ? '50%' : '2px',
+  }))
+})
+
+/** نجوم بتلمع حوالين الصورة — أماكن ثابتة على حواف الإطار. */
+const SPARKS = [
+  { top: '4%', left: '8%', size: 1.1, delay: '0s' },
+  { top: '12%', left: '94%', size: 0.8, delay: '0.7s' },
+  { top: '46%', left: '-4%', size: 0.7, delay: '1.3s' },
+  { top: '88%', left: '90%', size: 1, delay: '0.4s' },
+  { top: '96%', left: '18%', size: 0.75, delay: '1.8s' },
+  { top: '-5%', left: '58%', size: 0.9, delay: '2.3s' },
+]
+
 const CHIP_ICON: Record<string, string> = {
   welcome: 'mdi:hand-wave',
   motivation: 'mdi:rocket-launch',
@@ -126,8 +197,8 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
       v-if="shown && a"
       data-export-hide
       class="announce-root fixed inset-0 z-[58] flex cursor-pointer flex-col overflow-hidden"
-      :class="[`is-${style}`, luxe ? 'is-luxe' : '']"
-      :data-surface="luxe ? 'dark' : undefined"
+      :class="[`is-${style}`, luxe ? 'is-luxe' : '', spotlight ? 'is-spotlight' : '']"
+      :data-surface="luxe || spotlight ? 'dark' : undefined"
       role="dialog"
       aria-modal="true"
       :aria-label="a.title"
@@ -154,7 +225,7 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
       </template>
 
       <BrandLogo
-        :tone="luxe ? 'white' : 'auto'"
+        :tone="luxe || spotlight ? 'white' : 'auto'"
         class="absolute top-[clamp(16px,3.6vh,44px)] start-[5vw] z-10 h-[clamp(34px,6.4vh,72px)]"
       />
 
@@ -235,9 +306,63 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
         </div>
       </div>
 
+      <!-- ============================ تحفيز بصورة: مسرح احتفالي ============================ -->
+      <template v-if="spotlight">
+        <div data-confetti aria-hidden="true" class="pointer-events-none absolute inset-0 z-[2] overflow-hidden">
+          <span
+            v-for="(p, i) in confetti"
+            :key="i"
+            class="absolute top-0 animate-confetti"
+            :style="{
+              left: p.left, width: p.size, height: p.size, background: p.color, borderRadius: p.radius,
+              animationDelay: p.delay, animationDuration: p.duration, '--drift': p.drift,
+            }"
+          />
+        </div>
+      </template>
+      <div
+        v-if="spotlight && image"
+        class="relative z-[1] m-auto grid w-full max-w-[min(96vw,112rem)] grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] items-center gap-[clamp(20px,3.5vw,72px)] px-[5vw] portrait:grid-cols-1 portrait:justify-items-center portrait:gap-[3vh] portrait:text-center"
+      >
+        <div class="flex min-w-0 flex-col items-start gap-[clamp(14px,3vh,40px)] text-start portrait:order-2 portrait:items-center portrait:text-center">
+          <div class="rise an-chip sp-chip" style="animation-delay: 650ms">
+            <iconify-icon icon="mdi:party-popper" aria-hidden="true" class="an-accent text-[1.3em]" />
+            {{ t('announce.motivation') }}
+          </div>
+          <h2 dir="auto" class="rise an-title sp-title m-0" style="animation-delay: 780ms">{{ a.title }}</h2>
+          <span class="sp-underline" aria-hidden="true" />
+          <p v-if="a.body" dir="auto" class="rise an-body m-0 max-w-[40ch]" style="animation-delay: 1000ms">{{ a.body }}</p>
+        </div>
+
+        <div class="relative flex items-center justify-center portrait:order-1">
+          <!-- أشعة شمس بتلف ببطء ورا الصورة + حلقة بتتمدّ مرة عند الظهور -->
+          <span class="sp-rays" aria-hidden="true" />
+          <span class="sp-burst" aria-hidden="true" />
+          <span class="sp-glow" aria-hidden="true" />
+
+          <figure v-if="imageCutout" class="sp-figure m-0">
+            <img :src="image" alt="" referrerpolicy="no-referrer" @error="markBroken(image)" />
+          </figure>
+          <figure v-else class="sp-frame m-0" :style="frameStyle">
+            <div class="sp-frame-inner">
+              <img :src="image" alt="" class="sp-kenburns" referrerpolicy="no-referrer" @error="markBroken(image)" />
+              <span class="sp-sheen" aria-hidden="true" />
+            </div>
+          </figure>
+
+          <span
+            v-for="(sp, i) in SPARKS"
+            :key="i"
+            class="sp-spark"
+            aria-hidden="true"
+            :style="{ top: sp.top, left: sp.left, '--s': sp.size, animationDelay: sp.delay }"
+          />
+        </div>
+      </div>
+
       <!-- ============================ ترحيب وتحفيز ============================ -->
       <div
-        v-else
+        v-else-if="!spotlight"
         class="relative z-[1] m-auto grid w-full items-center gap-[clamp(20px,4vw,80px)] px-[6vw] portrait:grid-cols-1 portrait:justify-items-center portrait:text-center"
         :class="image ? 'max-w-[min(94vw,104rem)] grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' : 'max-w-[min(90vw,80rem)] grid-cols-1 justify-items-center text-center'"
       >
@@ -545,6 +670,150 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
   animation: an-rise linear infinite;
 }
 
+/* ------------------------------------------------------------ مسرح التحفيز */
+.announce-root.is-spotlight {
+  --gold: #f0d38a;
+  --gold-deep: #c9a45c;
+  --an-accent: var(--gold);
+  --an-ink-soft: #ffffffd6;
+  --an-chip: #f0d38a1f;
+  --an-chip-line: #f0d38a66;
+  --an-title-shadow: #00000099;
+  color: #fff;
+  background-image:
+    radial-gradient(60% 70% at 72% 50%, #0f7e7666 0%, transparent 70%),
+    radial-gradient(50% 50% at 15% 100%, #c9a45c33 0%, transparent 70%),
+    linear-gradient(160deg, #0b2f2e 0%, #061617 60%, #040f10 100%);
+}
+.is-spotlight:dir(rtl) {
+  background-image:
+    radial-gradient(60% 70% at 28% 50%, #0f7e7666 0%, transparent 70%),
+    radial-gradient(50% 50% at 85% 100%, #c9a45c33 0%, transparent 70%),
+    linear-gradient(200deg, #0b2f2e 0%, #061617 60%, #040f10 100%);
+}
+.is-spotlight .announce-halo { background: radial-gradient(closest-side, #0f7e7640, transparent); }
+.is-spotlight .announce-tint { background: radial-gradient(closest-side, #c9a45c33, transparent); }
+.is-spotlight .announce-track { background: #f0d38a26; }
+.sp-chip { color: #fff7e2; font-size: clamp(16px, min(2.7vh, 1.62vw), 34px); }
+.sp-title { font-size: clamp(36px, min(9vh, 5.4vw), 124px); }
+.sp-underline {
+  display: block;
+  width: clamp(90px, 14vw, 300px);
+  height: clamp(4px, 0.6vh, 8px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), #5ccfc3);
+  transform-origin: left center;
+  animation: an-grow 900ms var(--ease-out) 900ms backwards;
+}
+:dir(rtl) .sp-underline { transform-origin: right center; background: linear-gradient(270deg, var(--gold), #5ccfc3); }
+@media (orientation: portrait) {
+  .sp-underline { transform-origin: center; }
+}
+
+/* الإطار: حدّ ذهبي متدرّج (طبقة تحت الصورة)، ميلان خفيف وهو داخل */
+.sp-frame {
+  position: relative;
+  z-index: 1;
+  /* العرض من الارتفاع المسموح × نسبة الصورة: ما تعدّيش 76vh من غير تشويه */
+  width: min(100%, calc(76vh * var(--r, 1.33)));
+  aspect-ratio: var(--r, 1.33);
+  padding: clamp(6px, 0.9vh, 12px);
+  border-radius: clamp(20px, 3vh, 36px);
+  background: linear-gradient(135deg, #fff1c9 0%, #d9ad55 30%, #8a6a1e 55%, #f0d38a 80%, #fff1c9 100%);
+  box-shadow: 0 50px 120px -40px #000000f2, 0 0 0 1px #f0d38a55;
+  animation: sp-frame-in 1100ms cubic-bezier(0.2, 1.2, 0.3, 1) 150ms backwards;
+}
+.sp-frame-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: calc(clamp(20px, 3vh, 36px) - clamp(6px, 0.9vh, 12px));
+}
+.sp-kenburns {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 60% 40%;
+  animation: sp-kenburns 16s ease-in-out infinite alternate;
+}
+.sp-sheen {
+  position: absolute;
+  inset: -10% auto -10% 0;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, #ffffff73 50%, transparent);
+  transform: translateX(-160%) skewX(-16deg);
+  animation: an-sheen 7s ease-in-out 1.6s infinite;
+}
+@media (orientation: portrait) {
+  .sp-frame { width: min(88vw, calc(50vh * var(--r, 1.33))); }
+}
+
+/* الشخص المعزول: واقف بطول المسرح، طالع من تحت */
+.sp-figure {
+  position: relative;
+  z-index: 1;
+  height: min(84vh, 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: sp-figure-in 1200ms var(--ease-out) 150ms backwards;
+}
+.sp-figure img {
+  height: min(84vh, 62vw);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: bottom;
+}
+@media (orientation: portrait) {
+  .sp-figure img { height: min(52vh, 90vw); }
+}
+
+/* أشعة: قرص بتدرّج مخروطي بيلف — transform بس */
+.sp-rays {
+  position: absolute;
+  z-index: 0;
+  width: min(120vh, 120%);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: repeating-conic-gradient(from 0deg, #f0d38a2e 0deg 7deg, transparent 7deg 18deg);
+  -webkit-mask: radial-gradient(closest-side, #000 20%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 20%, transparent 100%);
+  animation: sp-rays 40s linear infinite, fade 1200ms ease 300ms backwards;
+}
+.sp-glow {
+  position: absolute;
+  z-index: 0;
+  width: min(80vh, 90%);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, #f0d38a40, #0f7e7622 55%, transparent);
+}
+.sp-burst {
+  position: absolute;
+  z-index: 0;
+  width: min(70vh, 80%);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: clamp(2px, 0.4vh, 5px) solid #f0d38a;
+  opacity: 0;
+  animation: sp-burst 1600ms var(--ease-out) 350ms;
+}
+/* نجمة رباعية بتلمع */
+.sp-spark {
+  position: absolute;
+  z-index: 2;
+  width: calc(clamp(18px, 3vh, 40px) * var(--s, 1));
+  aspect-ratio: 1;
+  background: #fff4cf;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 6px #f0d38a);
+  opacity: 0;
+  animation: sp-twinkle 2.6s ease-in-out infinite;
+}
+
 .announce-track { background: var(--announce-track); }
 .is-luxe .announce-track { background: #c9a45c26; }
 .announce-fill { background: var(--an-accent); }
@@ -588,6 +857,27 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
   from { rotate: -4deg; }
   to { rotate: 5deg; }
 }
+@keyframes sp-frame-in {
+  from { opacity: 0; transform: scale(0.82) rotate(-4deg); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sp-figure-in {
+  from { opacity: 0; transform: translateY(12vh) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes sp-kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.1) translate(-1.5%, 1%); }
+}
+@keyframes sp-rays { to { transform: rotate(1turn); } }
+@keyframes sp-burst {
+  from { opacity: 0.9; transform: scale(0.4); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+@keyframes sp-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(45deg); }
+}
 @keyframes an-rise {
   0% { opacity: 0; transform: translate(0, 0); }
   12% { opacity: 0.9; }
@@ -602,7 +892,12 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
 @media (prefers-reduced-motion: reduce) {
   .announce-glow,
   .an-beam,
-  .an-plaque::after { animation: none; }
+  .an-plaque::after,
+  .sp-rays,
+  .sp-kenburns,
+  .sp-sheen { animation: none; }
+  .sp-burst, .sp-spark { display: none; }
+  .sp-frame, .sp-figure, .sp-underline { animation: fade 200ms ease both; }
   .an-dust { display: none; }
   .an-plaque,
   .an-arch-photo,
