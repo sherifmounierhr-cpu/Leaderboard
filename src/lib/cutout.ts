@@ -38,9 +38,13 @@ function loadSegmenter(): Promise<Segmenter> {
   return segmenter
 }
 
-export async function isolate(url: string): Promise<RawCutout> {
+/**
+ * @param input رابط https، أو canvas للصور اللي لسه على الجهاز: سياسة الأمان
+ * بتمنع fetch لروابط blob:، والـ canvas بيتقري مباشرة من غير تحميل.
+ */
+export async function isolate(input: string | HTMLCanvasElement): Promise<RawCutout> {
   const seg = await loadSegmenter()
-  const out = await seg(url)
+  const out = await seg(input as string)
   if (out.channels !== 4) throw new Error('unexpected image channels')
   return { data: new Uint8ClampedArray(out.data), width: out.width, height: out.height }
 }
@@ -126,15 +130,24 @@ function cleanAlpha(alpha: Uint8ClampedArray, width: number, height: number, lev
   }
 }
 
-/** PNG شفاف مقصوص على حدود الشخص، بحواف منضّفة بدرجة `level`. */
-export async function renderCutout(raw: RawCutout, level: number = DEFAULT_EDGE): Promise<Blob> {
+/** ناتج الموديل بحواف منضّفة بدرجة `level` — بمقاس الصورة كاملة، من غير قصّ. */
+export function cleanCutout(raw: RawCutout, level: number = DEFAULT_EDGE): RawCutout {
   const { width, height } = raw
   const data = new Uint8ClampedArray(raw.data)
   bleedEdgeColors(data, width, height, Math.max(4, Math.round((width / 1080) * 8)))
-
   const alpha = new Uint8ClampedArray(width * height)
   for (let i = 0; i < alpha.length; i++) alpha[i] = data[i * 4 + 3]
   cleanAlpha(alpha, width, height, level)
+  for (let i = 0; i < alpha.length; i++) data[i * 4 + 3] = alpha[i]
+  return { data, width, height }
+}
+
+/** PNG شفاف مقصوص على حدود الشخص، بحواف منضّفة بدرجة `level`. */
+export async function renderCutout(raw: RawCutout, level: number = DEFAULT_EDGE): Promise<Blob> {
+  const { width, height } = raw
+  const { data } = cleanCutout(raw, level)
+  const alpha = new Uint8ClampedArray(width * height)
+  for (let i = 0; i < alpha.length; i++) alpha[i] = data[i * 4 + 3]
 
   let top = height, left = width, right = -1, bottom = -1
   for (let y = 0; y < height; y++) {
@@ -154,7 +167,7 @@ export async function renderCutout(raw: RawCutout, level: number = DEFAULT_EDGE)
   const full = document.createElement('canvas')
   full.width = width
   full.height = height
-  full.getContext('2d')!.putImageData(new ImageData(data, width, height), 0, 0)
+  full.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(data), width, height), 0, 0)
 
   const w = right - left + 1
   const h = bottom - top + 1

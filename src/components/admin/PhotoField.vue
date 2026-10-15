@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminData } from '@/composables/useAdminData'
-import CutoutReview from './CutoutReview.vue'
+import ImageStudio from './ImageStudio.vue'
 
 const props = defineProps<{
   modelValue: string | null
@@ -29,55 +29,44 @@ const initials = computed(() =>
     .toUpperCase(),
 )
 
-async function onPick(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
+/**
+ * أي صورة بتعدّي على استوديو الصورة قبل الرفع: عزل، مؤثرات، وتصغير — فحدّ
+ * الـ 2 ميجا بتاع المخزن ما بقاش بيرفض صور الموبايل الكبيرة.
+ */
+const studio = ref<{ source: Blob | string; existing: boolean } | null>(null)
 
+function onPick(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (input.value) input.value.value = ''
+  if (!file) return
   error.value = null
-  // نفس حدود الـ bucket، مفحوصة هنا لنعطي رسالة فورية بدل انتظار رفض الخادم
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+  if (!file.type.startsWith('image/')) {
     error.value = t('admin.photoType')
     return
   }
-  if (file.size > 2 * 1024 * 1024) {
-    error.value = t('admin.photoSize')
-    return
-  }
+  studio.value = { source: file, existing: false }
+}
 
+async function onStudio(blob: Blob) {
+  const existing = studio.value?.existing ?? false
+  studio.value = null
   uploading.value = true
+  error.value = null
   try {
-    previous.value = null
-    emit('update:modelValue', await uploadPhoto(file, props.kind, props.recordId))
+    const ext = blob.type === 'image/webp' ? 'webp' : 'png'
+    const before = props.modelValue
+    emit('update:modelValue', await uploadPhoto(new File([blob], `photo.${ext}`, { type: blob.type }), props.kind, props.recordId))
+    // تعديل صورة موجودة يتراجع عنه قبل الحفظ؛ صورة جديدة مالهاش «قبل»
+    previous.value = existing ? before : null
   } catch (err) {
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
     uploading.value = false
-    if (input.value) input.value.value = ''
   }
 }
 
-/** الصورة قبل العزل — للتراجع قبل الحفظ لو النتيجة ما عجبتش. */
+/** الصورة قبل التعديل — للتراجع قبل الحفظ لو النتيجة ما عجبتش. */
 const previous = ref<string | null>(null)
-const cutting = ref(false)
-/** العزل بيتراجع في نافذة قبل ما يترفع: درجة تنضيف الحواف + معاينة على غامق. */
-const reviewing = ref(false)
-
-async function onReviewed(blob: Blob) {
-  reviewing.value = false
-  if (!props.modelValue || cutting.value) return
-  cutting.value = true
-  error.value = null
-  try {
-    const file = new File([blob], 'cutout.png', { type: 'image/png' })
-    const before = props.modelValue
-    emit('update:modelValue', await uploadPhoto(file, props.kind, props.recordId))
-    previous.value = before
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : String(err)
-  } finally {
-    cutting.value = false
-  }
-}
 
 function undoCutout() {
   emit('update:modelValue', previous.value)
@@ -123,11 +112,11 @@ function undoCutout() {
           v-if="modelValue && !previous"
           type="button"
           class="inline-flex items-center gap-1.5 rounded-lg border border-card-border px-3 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong disabled:opacity-50"
-          :disabled="cutting || uploading"
-          @click="reviewing = true"
+          :disabled="uploading"
+          @click="studio = { source: modelValue, existing: true }"
         >
-          <iconify-icon :icon="cutting ? 'mdi:loading' : 'mdi:auto-fix'" aria-hidden="true" :class="cutting ? 'animate-spin' : ''" />
-          {{ cutting ? t('admin.cutoutWorking') : t('admin.cutoutAuto') }}
+          <iconify-icon icon="mdi:auto-fix" aria-hidden="true" />
+          {{ t('studio.edit') }}
         </button>
         <button
           v-if="previous"
@@ -162,12 +151,14 @@ function undoCutout() {
       @change="onPick"
     />
 
-    <CutoutReview
-      v-if="reviewing && modelValue"
-      :src="modelValue"
+    <ImageStudio
+      v-if="studio"
+      :source="studio.source"
       :name="name"
-      @confirm="onReviewed"
-      @cancel="reviewing = false"
+      :purpose="kind === 'team' ? 'photo' : 'person'"
+      :max-edge="1200"
+      @confirm="onStudio"
+      @cancel="studio = null"
     />
   </div>
 </template>

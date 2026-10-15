@@ -5,6 +5,7 @@ import type { Announcement, AnnouncementLogo } from '@/lib/types'
 import { useScreenAdmin, type AnnouncementDraft } from '@/composables/useScreenAdmin'
 import { activeOccurrence, cairoWallTime, nextOccurrence } from '@/composables/useAnnouncements'
 import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
+import ImageStudio from './ImageStudio.vue'
 
 /**
  * رسائل الترحيب والتحفيز: إنشاء وتعديل وجدولة ومعاينة. الجدولة بتوقيت
@@ -203,15 +204,64 @@ function uploadMessage(err: unknown) {
   return code
 }
 
-async function pickImage(event: Event) {
+/**
+ * كل صورة بتعدّي على استوديو الصورة قبل الرفع. الشعارات المتعددة بتتفتح
+ * واحد ورا التاني (طابور)؛ «تعديل» على صورة موجودة بيستبدلها في مكانها.
+ */
+interface StudioJob {
+  kind: 'image' | 'logo'
+  source: Blob | string
+  /** اسم مبدئي للشعار من اسم الملف. */
+  name: string
+  /** شعار موجود بيتعدّل: يتستبدل بدل ما يتضاف. */
+  replace?: AnnouncementLogo
+}
+const queue = ref<StudioJob[]>([])
+const job = computed(() => queue.value[0] ?? null)
+
+function pickImage(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   input.value = ''
   if (!file || !editing.value) return
-  uploading.value = 'image'
+  uploadError.value = null
+  queue.value = [{ kind: 'image', source: file, name: '' }]
+}
+
+function pickLogos(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = [...(input.files ?? [])]
+  input.value = ''
+  const e = editing.value
+  if (!files.length || !e) return
+  uploadError.value = null
+  queue.value = files.slice(0, LOGOS_MAX - e.logos.length).map((file) => ({
+    kind: 'logo' as const,
+    source: file,
+    // اسم الملف من غير الامتداد كبداية لاسم الشركة — يتعدّل من الخانة
+    name: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 60),
+  }))
+}
+
+function editImage() {
+  if (editing.value?.image_url) queue.value = [{ kind: 'image', source: editing.value.image_url, name: '' }]
+}
+function editLogo(logo: AnnouncementLogo) {
+  queue.value = [{ kind: 'logo', source: logo.url, name: logo.name, replace: logo }]
+}
+
+async function onStudio(blob: Blob) {
+  const current = job.value
+  const e = editing.value
+  queue.value = queue.value.slice(1)
+  if (!current || !e) return
+  uploading.value = current.kind
   uploadError.value = null
   try {
-    editing.value.image_url = await uploadAnnouncementImage(file, 'image')
+    const url = await uploadAnnouncementImage(blob, current.kind, true)
+    if (current.kind === 'image') e.image_url = url
+    else if (current.replace) current.replace.url = url
+    else e.logos.push({ url, name: current.name })
   } catch (err) {
     uploadError.value = uploadMessage(err)
   } finally {
@@ -219,25 +269,8 @@ async function pickImage(event: Event) {
   }
 }
 
-async function pickLogos(event: Event) {
-  const input = event.target as HTMLInputElement
-  const files = [...(input.files ?? [])]
-  input.value = ''
-  const e = editing.value
-  if (!files.length || !e) return
-  uploading.value = 'logo'
-  uploadError.value = null
-  try {
-    for (const file of files.slice(0, LOGOS_MAX - e.logos.length)) {
-      const url = await uploadAnnouncementImage(file, 'logo')
-      // اسم الملف من غير الامتداد كبداية لاسم الشركة — يتعدّل من الخانة
-      e.logos.push({ url, name: file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 60) })
-    }
-  } catch (err) {
-    uploadError.value = uploadMessage(err)
-  } finally {
-    uploading.value = null
-  }
+function skipStudio() {
+  queue.value = queue.value.slice(1)
 }
 
 function removeLogo(logo: AnnouncementLogo) {
@@ -397,6 +430,16 @@ const FIELD =
             <button
               v-if="editing.image_url"
               type="button"
+              class="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-card-border px-3 text-sm font-semibold text-mute transition-colors hover:border-accent/50 hover:text-strong"
+              :disabled="uploading !== null"
+              @click="editImage"
+            >
+              <iconify-icon icon="mdi:auto-fix" aria-hidden="true" class="text-lg" />
+              {{ t('studio.edit') }}
+            </button>
+            <button
+              v-if="editing.image_url"
+              type="button"
               class="min-h-11 rounded-lg px-3 text-sm font-semibold text-mute transition-colors hover:text-down"
               @click="editing.image_url = null"
             >{{ t('messages.removeImage') }}</button>
@@ -426,6 +469,16 @@ const FIELD =
                 :placeholder="t('messages.logoNamePlaceholder')"
                 class="min-w-0 flex-1 rounded-md border border-card-border bg-card px-2 py-2 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               />
+              <button
+                type="button"
+                class="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-mute transition-colors hover:text-accent-text"
+                :aria-label="`${t('studio.edit')} — ${logo.name || i + 1}`"
+                :title="t('studio.edit')"
+                :disabled="uploading !== null"
+                @click="editLogo(logo)"
+              >
+                <iconify-icon icon="mdi:auto-fix" aria-hidden="true" class="text-lg" />
+              </button>
               <button
                 type="button"
                 class="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-mute transition-colors hover:text-down"
@@ -660,5 +713,16 @@ const FIELD =
         </div>
       </li>
     </ul>
+    <!-- key: كل صورة في الطابور تفتح الاستوديو من جديد بحالته الأولى -->
+    <ImageStudio
+      v-if="job"
+      :key="queue.length + (job.replace ? 'r' : '') + job.name"
+      :source="job.source"
+      :name="job.name"
+      :purpose="job.kind === 'logo' ? 'logo' : editing?.style === 'newhire' ? 'person' : 'photo'"
+      :max-edge="job.kind === 'logo' ? 720 : 1600"
+      @confirm="onStudio"
+      @cancel="skipStudio"
+    />
   </section>
 </template>

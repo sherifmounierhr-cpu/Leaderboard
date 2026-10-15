@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { removeBackground } from '@/lib/cutout'
 import type { TeamManagerRow } from '@/lib/types'
-import CutoutReview from './CutoutReview.vue'
+import ImageStudio from './ImageStudio.vue'
 
 const { t, locale } = useI18n()
 
@@ -30,8 +30,9 @@ async function load() {
 }
 
 async function save(m: TeamManagerRow, blob: Blob) {
-  const path = `cutouts/${m.id}-${Date.now()}.png`
-  const up = await supabase.storage.from('avatars').upload(path, blob, { contentType: 'image/png', upsert: true })
+  const ext = blob.type === 'image/webp' ? 'webp' : 'png'
+  const path = `cutouts/${m.id}-${Date.now()}.${ext}`
+  const up = await supabase.storage.from('avatars').upload(path, blob, { contentType: blob.type || 'image/png', upsert: true })
   if (up.error) throw new Error(up.error.message)
   const url = supabase.storage.from('avatars').getPublicUrl(path).data.publicUrl
   const { error: err } = await supabase.rpc('lb_admin_set_cutout', { p_agent_id: m.id, p_url: url })
@@ -165,10 +166,13 @@ const BTN =
       <li v-if="!managers.length" class="text-caption text-dim">{{ t('admin.cutoutsEmpty') }}</li>
     </ul>
 
-    <CutoutReview
+    <ImageStudio
       v-if="reviewFor?.photo_url"
-      :src="reviewFor.photo_url"
+      :source="reviewFor.photo_url"
       :name="nameOf(reviewFor)"
+      purpose="person"
+      require-cutout
+      :max-edge="1400"
       @confirm="onReviewed"
       @cancel="reviewFor = null"
     />

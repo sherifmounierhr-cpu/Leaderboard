@@ -56,7 +56,7 @@ const IMAGE_EDGE = { image: 1600, logo: 720 } as const
  * تصغير الصورة في المتصفح قبل الرفع: صورة موبايل 12 ميجابكسل كانت هتتحمّل
  * كاملة على جهاز التلفزيون الضعيف. WebP بيحافظ على شفافية الشعارات.
  */
-async function shrinkImage(file: File, edge: number): Promise<Blob> {
+async function shrinkImage(file: Blob, edge: number): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
   const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height))
   const w = Math.max(1, Math.round(bitmap.width * scale))
@@ -145,9 +145,10 @@ export function useScreenAdmin() {
   }
 
   /** يرفع صورة رسالة أو شعار ضيف ويرجّع رابطها العام. */
-  async function uploadAnnouncementImage(file: File, kind: keyof typeof IMAGE_EDGE) {
+  /** @param ready صورة خارجة من استوديو الصورة: متصغّرة ومرمّزة خلاص. */
+  async function uploadAnnouncementImage(file: Blob, kind: keyof typeof IMAGE_EDGE, ready = false) {
     if (!file.type.startsWith('image/')) throw new Error('IMAGE_TYPE')
-    const blob = await shrinkImage(file, IMAGE_EDGE[kind])
+    const blob = ready ? file : await shrinkImage(file, IMAGE_EDGE[kind])
     // Safari القديم ما بيكتبش WebP فبيرجّع PNG: الامتداد والنوع من الناتج الفعلي
     const ext = blob.type === 'image/webp' ? 'webp' : blob.type === 'image/jpeg' ? 'jpg' : 'png'
     const path = `${kind}s/${crypto.randomUUID()}.${ext}`
