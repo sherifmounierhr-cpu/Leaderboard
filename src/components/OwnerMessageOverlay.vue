@@ -81,6 +81,50 @@ const ownerName = computed(() => (m.value ? localName(m.value.owner_name || '', 
 const ownerTitle = computed(() => (m.value ? localName(m.value.owner_title || '', m.value.owner_title_ar) : ''))
 const ownerPhoto = computed(() => drivePhotoUrl(m.value?.owner_photo ?? null))
 
+/**
+ * صورة معزولة الخلفية (أركانها شفافة) ما ينفعش تتقص في دايرة — الراس بيتقطع.
+ * بنعرضها «طالعة» من الدايرة: الجسم جوّه والراس فوق الإطار الذهبي. بنقيس كمان
+ * أول صف فيه الشخص عشان المسافة الفاضية فوق الراس ما تفرقش. الصورة العادية
+ * (أو اللي ما نقدرش نقراها — CORS) بتفضل مقصوصة في الدايرة.
+ */
+const figure = ref<{ top: number; ratio: number } | null>(null)
+const photoChecked = ref(false)
+watch(ownerPhoto, (src) => {
+  figure.value = null
+  photoChecked.value = !src
+  if (!src) return
+  const img = new Image()
+  img.crossOrigin = 'anonymous'
+  const done = () => { if (ownerPhoto.value === src) photoChecked.value = true }
+  img.onerror = done
+  img.onload = () => {
+    if (ownerPhoto.value !== src) return
+    try {
+      const ratio = img.naturalHeight / img.naturalWidth
+      const w = 48
+      const h = Math.max(1, Math.round(w * ratio))
+      const c = document.createElement('canvas')
+      c.width = w
+      c.height = h
+      const ctx = c.getContext('2d', { willReadFrequently: true })!
+      ctx.drawImage(img, 0, 0, w, h)
+      const d = ctx.getImageData(0, 0, w, h).data
+      const a = (x: number, y: number) => d[(y * w + x) * 4 + 3]
+      const cut = [a(0, 0), a(w - 1, 0), a(0, h - 1), a(w - 1, h - 1)].some((v) => v < 16)
+      let top = 0
+      find: for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) if (a(x, y) > 40) { top = y / h; break find }
+      }
+      // لازم الصورة تكون طويلة كفاية تملى الدايرة لتحت بعد ما الراس يطلع فوقها
+      if (cut && ratio * (1 - top) >= 1.12) figure.value = { top, ratio }
+    } catch { /* صورة من غير CORS — تفضل في الدايرة */ }
+    done()
+  }
+  img.src = src
+}, { immediate: true })
+/* الراس بيطلع 10% من قطر الدايرة فوقها، بعد شيل الفراغ اللي فوقه */
+const figureStyle = computed(() => (figure.value ? { top: `${-10 - figure.value.top * figure.value.ratio * 100}%` } : {}))
+
 type Audience = { kind: 'all' } | { kind: 'team' | 'agent'; name: string; photo: string | null }
 const audience = computed<Audience>(() => {
   const msg = m.value
@@ -179,7 +223,8 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
             <span class="ow-pulse ow-pulse-2" aria-hidden="true" />
             <span class="ow-pulse ow-pulse-3" aria-hidden="true" />
             <div class="ow-photo">
-              <img v-if="ownerPhoto" :src="ownerPhoto" alt="" referrerpolicy="no-referrer" />
+              <img v-if="figure && ownerPhoto" :src="ownerPhoto" alt="" referrerpolicy="no-referrer" class="ow-figure" :style="figureStyle" />
+              <img v-else-if="ownerPhoto" v-show="photoChecked" :src="ownerPhoto" alt="" referrerpolicy="no-referrer" />
               <span v-else class="ow-initials" aria-hidden="true">{{ initials }}</span>
               <span class="ow-photo-sheen" aria-hidden="true" />
             </div>
@@ -205,6 +250,10 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
               <circle class="ow-ring" cx="50" cy="50" r="44.2" pathLength="1" />
               <circle class="ow-ring ow-ring-outer" cx="50" cy="50" r="49" pathLength="1" />
             </svg>
+            <!-- نفس الصورة تاني، مقصوصة لفوق نص الدايرة: الراس بيطلع فوق الإطار -->
+            <div v-if="figure && ownerPhoto" class="ow-pop" aria-hidden="true">
+              <img :src="ownerPhoto" alt="" referrerpolicy="no-referrer" class="ow-figure" :style="figureStyle" />
+            </div>
             <!-- نجوم بتدور حوالين الصورة -->
             <span class="ow-orbit" aria-hidden="true"><i /><i /><i /></span>
             <span class="ow-orbit ow-orbit-2" aria-hidden="true"><i /><i /></span>
@@ -346,6 +395,26 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   justify-content: center;
 }
 .ow-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+.ow-photo img.ow-figure,
+.ow-figure {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: auto;
+  max-width: none;
+  object-fit: fill;
+  filter: drop-shadow(0 18px 28px #000a);
+}
+/* النسخة اللي فوق: مقصوصة لحد نص الدايرة وعرض الراس بس — تحت النص الدايرة
+   نفسها مغطية، فمفيش خط قص ظاهر */
+.ow-pop {
+  position: absolute;
+  inset: 6%;
+  z-index: 2;
+  pointer-events: none;
+  clip-path: inset(-40% 15% 50% 15%);
+}
+.ow-pop .ow-figure { filter: drop-shadow(0 -2px 10px #0008); }
 .ow-initials { font-weight: 800; color: #f0d38a; font-size: clamp(40px, 9vh, 120px); }
 /* لمعة بتعدّي على الصورة كل كام ثانية */
 .ow-photo-sheen {
