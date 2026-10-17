@@ -15,8 +15,11 @@ import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } f
  * ما تظهر، فلما اللي فوقها تخلص بتكمّل دورها بدل ما تضيع.
  */
 
-/** من الأعلى أولوية للأدنى. الاحتفال بصفقة فوق كل حاجة — هو الحدث الوحيد عن شخص. */
-export const OVERLAY_ORDER = ['celebration', 'announcement', 'cast', 'breaking', 'market'] as const
+/**
+ * من الأعلى أولوية للأدنى. الاحتفال بصفقة فوق كل حاجة — هو الحدث الوحيد عن شخص.
+ * كلمة صاحب العمل بعده: بيبعتها بنفسه دلوقتي، فتسبق الرسائل المجدولة.
+ */
+export const OVERLAY_ORDER = ['celebration', 'owner', 'announcement', 'cast', 'breaking', 'market'] as const
 
 export type OverlayLayer = (typeof OVERLAY_ORDER)[number]
 

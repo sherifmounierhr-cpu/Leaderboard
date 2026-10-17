@@ -5,6 +5,7 @@
 export const ADMIN_TABS = [
   'periods', 'deals', 'celebrate', 'messages', 'agents', 'teams',
   'reports', 'data', 'newsfeed', 'rates', 'devices', 'storage',
+  'owner1', 'owner2',
 ] as const
 
 export type AdminSection = (typeof ADMIN_TABS)[number]
@@ -19,6 +20,8 @@ export function tabLabelKey(name: AdminTab): string {
     case 'rates': return 'rates.tab'
     case 'newsfeed': return 'newsAdmin.tab'
     case 'users': return 'users.tab'
+    case 'owner1': return 'owners.tab1'
+    case 'owner2': return 'owners.tab2'
     default: return `admin.${name}`
   }
 }

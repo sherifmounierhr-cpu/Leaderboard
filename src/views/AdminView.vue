@@ -21,6 +21,10 @@ import StorageAdmin from '@/components/admin/StorageAdmin.vue'
 import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
 import MediaLibrary from '@/components/admin/MediaLibrary.vue'
 import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
+import OwnerAdmin from '@/components/admin/OwnerAdmin.vue'
+import OwnerMessageOverlay from '@/components/OwnerMessageOverlay.vue'
+import { useOwners } from '@/composables/useOwners'
+import { useLocalName } from '@/composables/useLocalName'
 import { supabase } from '@/lib/supabase'
 import UsersAdmin from '@/components/admin/UsersAdmin.vue'
 import AuditLogAdmin from '@/components/admin/AuditLogAdmin.vue'
@@ -86,6 +90,8 @@ const TAB_ICON: Record<AdminTab, string> = {
   rates: 'mdi:chart-line',
   devices: 'mdi:monitor-dashboard',
   storage: 'mdi:harddisk',
+  owner1: 'mdi:account-tie-voice-outline',
+  owner2: 'mdi:account-tie-voice-outline',
   users: 'mdi:shield-account-outline',
 }
 
@@ -106,6 +112,18 @@ function onTabKey(e: KeyboardEvent) {
   void nextTick(() => tabList.value?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus())
 }
 
+/** تبويب صاحب العمل باسمه لو اتسجّل، وإلا «صاحب العمل الأول/التاني». */
+const { owners: ownerList, reload: reloadOwners } = useOwners()
+const localName = useLocalName()
+function tabLabel(name: AdminTab) {
+  if (name === 'owner1' || name === 'owner2') {
+    const o = ownerList.value.find((x) => x.slot === (name === 'owner1' ? 1 : 2))
+    const n = o ? localName(o.name, o.name_ar) : ''
+    if (n) return n
+  }
+  return t(tabLabelKey(name))
+}
+
 const showChangePassword = ref(false)
 
 /**
@@ -121,6 +139,7 @@ const { worst: storageWorst, start: startStorage, stop: stopStorage } = useStora
 let watchingStorage = false
 function onAllowed() {
   void reload()
+  void reloadOwners()
   // سجل المستخدمين: دخول لوحة الإدارة (القاعدة تكتفي بمرة كل نصف ساعة)
   void supabase.rpc('lb_log_admin_visit').then(() => undefined, () => undefined)
   if (!watchingStorage) {
@@ -235,7 +254,7 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
             @click="tab = name"
           >
             <iconify-icon :icon="TAB_ICON[name]" aria-hidden="true" class="text-lg shrink-0" />
-            {{ t(tabLabelKey(name)) }}
+            {{ tabLabel(name) }}
           </button>
         </nav>
 
@@ -295,6 +314,8 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
           <MediaLibrary />
         </div>
         <AnnouncementsAdmin v-else-if="tab === 'messages'" />
+        <OwnerAdmin v-else-if="tab === 'owner1'" key="owner1" :owner-slot="1" />
+        <OwnerAdmin v-else-if="tab === 'owner2'" key="owner2" :owner-slot="2" />
         <AgentsAdmin v-else-if="tab === 'agents'" />
         <TeamsAdmin v-else-if="tab === 'teams'" />
         <ReportsAdmin v-else-if="tab === 'reports'" />
@@ -314,6 +335,7 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
 
     <!-- معاينة الرسائل على هذه الشاشة فقط -->
     <AnnouncementOverlay preview-only />
+    <OwnerMessageOverlay preview-only />
     <SoundUnlock />
   </div>
 </template>

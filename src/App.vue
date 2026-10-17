@@ -12,6 +12,7 @@ import AgentsView from '@/views/AgentsView.vue'
 import CelebrationOverlay from '@/components/CelebrationOverlay.vue'
 import KpiStrip from '@/components/KpiStrip.vue'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
+import OwnerMessageOverlay from '@/components/OwnerMessageOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import NewsView from '@/views/NewsView.vue'
 import BreakingNewsOverlay from '@/components/BreakingNewsOverlay.vue'
@@ -120,6 +121,7 @@ const board = ref<HTMLElement | null>(null)
     <BreakingNewsOverlay />
     <NewsCastOverlay />
     <MarketAlertOverlay />
+    <OwnerMessageOverlay />
     <AnnouncementOverlay />
     <SoundUnlock />
   </div>

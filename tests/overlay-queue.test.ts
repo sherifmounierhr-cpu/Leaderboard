@@ -139,6 +139,6 @@ describe('الحالات اللي كانت بتكسر قبل الطابور', ()
 
 describe('ترتيب الأولوية نفسه', () => {
   it('مكتوب صراحةً فأي تغيير فيه يبقى مقصود', () => {
-    expect([...OVERLAY_ORDER]).toEqual(['celebration', 'announcement', 'cast', 'breaking', 'market'])
+    expect([...OVERLAY_ORDER]).toEqual(['celebration', 'owner', 'announcement', 'cast', 'breaking', 'market'])
   })
 })

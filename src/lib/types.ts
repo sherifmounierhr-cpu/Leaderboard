@@ -315,6 +315,40 @@ export interface Announcement {
   logos?: AnnouncementLogo[]
 }
 
+/** صاحب عمل — صف من public.lb_owners (تبويبان: 1 و 2). */
+export interface Owner {
+  slot: 1 | 2
+  name: string
+  name_ar: string | null
+  title: string | null
+  title_ar: string | null
+  photo_url: string | null
+  updated_at: string
+}
+
+/** كلمة صاحب عمل جاهزة للعرض — صف من public.lb_owner_messages. */
+export interface OwnerMessage {
+  id: string
+  slot: 1 | 2
+  body: string | null
+  audio_url: string | null
+  audio_seconds: number | null
+  created_at: string
+  owner_name: string
+  owner_name_ar: string | null
+  owner_title: string | null
+  owner_title_ar: string | null
+  owner_photo: string | null
+  to_agent_id: string | null
+  to_agent_name: string | null
+  to_agent_name_ar: string | null
+  to_agent_photo: string | null
+  to_team_id: string | null
+  to_team_name: string | null
+  to_team_name_ar: string | null
+  to_team_photo: string | null
+}
+
 export type FeedStatus = 'live' | 'connecting' | 'reconnecting' | 'demo'
 export type BoardView = 'teams' | 'agents' | 'insights' | 'news' | 'markets'
 /** المظهر المطبَّق فعلياً على الصفحة. */
