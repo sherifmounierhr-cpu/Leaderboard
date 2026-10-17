@@ -120,6 +120,19 @@ const initials = computed(() =>
   ownerName.value.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join(''),
 )
 
+/* تاج من علامات حوالين الصورة: 72 علامة، كل سادسة أطول — بتلف ببطء */
+const TICKS = Array.from({ length: 72 }, (_, i) => {
+  const a = (i / 72) * Math.PI * 2
+  const long = i % 6 === 0
+  const r1 = long ? 45.2 : 45.8
+  const r2 = 47.4
+  return {
+    x1: 50 + r1 * Math.sin(a), y1: 50 - r1 * Math.cos(a),
+    x2: 50 + r2 * Math.sin(a), y2: 50 - r2 * Math.cos(a),
+    long,
+  }
+})
+
 const DUST = Array.from({ length: 14 }, (_, i) => {
   const r = (n: number) => ((Math.sin(i * 9.17 + n * 41.3) * 43758.5453) % 1 + 1) % 1
   return { left: `${4 + r(1) * 92}%`, size: `${2 + r(2) * 3}px`, dur: `${12 + r(3) * 8}s`, delay: `${-r(4) * 18}s`, drift: `${(r(5) - 0.5) * 8}vw` }
@@ -139,6 +152,8 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
       @click="close"
     >
       <span aria-hidden="true" class="ow-beam" />
+      <!-- شريط ضوء بيعدّي على الشاشة كلها مرة لحظة الظهور -->
+      <span aria-hidden="true" class="ow-sweep" />
       <span aria-hidden="true" class="ow-quote-bg">”</span>
       <span
         v-for="(d, i) in DUST"
@@ -151,21 +166,50 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
       <BrandLogo tone="white" class="absolute top-[clamp(16px,3.6vh,44px)] end-[5vw] z-10 h-[clamp(30px,5.6vh,64px)]" />
 
       <div
-        class="relative z-[1] m-auto grid w-full max-w-[min(94vw,110rem)] grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-center gap-[clamp(24px,5vw,110px)] px-[5vw] portrait:grid-cols-1 portrait:gap-[3vh] portrait:text-center"
+        class="relative z-[1] m-auto grid w-full max-w-[min(94vw,110rem)] grid-cols-[minmax(0,1fr)_minmax(0,1.08fr)] items-center gap-[clamp(20px,4vw,90px)] px-[5vw] portrait:grid-cols-1 portrait:gap-[3vh] portrait:text-center"
       >
         <!-- صاحب الكلمة -->
         <div class="flex flex-col items-center gap-[clamp(12px,2.6vh,32px)] text-center">
           <div class="ow-portrait" :class="{ 'is-speaking': m.audio_url && playing }">
+            <!-- أشعة ضوء بتلف ببطء ورا الصورة -->
+            <span class="ow-rays" aria-hidden="true" />
+            <span class="ow-halo" aria-hidden="true" />
             <span class="ow-pulse" aria-hidden="true" />
             <span class="ow-pulse ow-pulse-2" aria-hidden="true" />
-            <span class="ow-arc" aria-hidden="true" />
+            <span class="ow-pulse ow-pulse-3" aria-hidden="true" />
             <div class="ow-photo">
               <img v-if="ownerPhoto" :src="ownerPhoto" alt="" referrerpolicy="no-referrer" />
               <span v-else class="ow-initials" aria-hidden="true">{{ initials }}</span>
+              <span class="ow-photo-sheen" aria-hidden="true" />
             </div>
+            <!-- إطار ذهبي بيترسم حوالين الصورة، وتاج علامات بيلف حواليه -->
+            <svg class="ow-frame" viewBox="0 0 100 100" aria-hidden="true">
+              <defs>
+                <linearGradient id="ow-gold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#fff3cf" />
+                  <stop offset="45%" stop-color="#d9ad55" />
+                  <stop offset="70%" stop-color="#8a6a1e" />
+                  <stop offset="100%" stop-color="#f0d38a" />
+                </linearGradient>
+              </defs>
+              <g class="ow-ticks">
+                <line
+                  v-for="(tk, i) in TICKS"
+                  :key="i"
+                  :x1="tk.x1" :y1="tk.y1" :x2="tk.x2" :y2="tk.y2"
+                  :stroke-width="tk.long ? 0.45 : 0.22"
+                  :opacity="tk.long ? 0.95 : 0.55"
+                />
+              </g>
+              <circle class="ow-ring" cx="50" cy="50" r="44.2" pathLength="1" />
+              <circle class="ow-ring ow-ring-outer" cx="50" cy="50" r="49" pathLength="1" />
+            </svg>
+            <!-- نجوم بتدور حوالين الصورة -->
+            <span class="ow-orbit" aria-hidden="true"><i /><i /><i /></span>
+            <span class="ow-orbit ow-orbit-2" aria-hidden="true"><i /><i /></span>
           </div>
           <div class="ow-rise flex flex-col items-center gap-[0.35em]" style="animation-delay: 420ms">
-            <p dir="auto" class="m-0 font-extrabold leading-tight text-[clamp(24px,min(5vh,3vw),64px)]">{{ ownerName }}</p>
+            <p dir="auto" class="ow-name m-0 font-extrabold leading-tight text-[clamp(26px,min(5.6vh,3.36vw),72px)]">{{ ownerName }}</p>
             <p v-if="ownerTitle" dir="auto" class="m-0 font-bold text-[#f0d38a] text-[clamp(15px,min(2.6vh,1.56vw),32px)]">{{ ownerTitle }}</p>
             <span class="ow-sign" aria-hidden="true" />
           </div>
@@ -282,12 +326,12 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
 /* ------------------------------------------------------------ الصورة */
 .ow-portrait {
   position: relative;
-  width: clamp(170px, min(42vh, 28vw), 480px);
+  width: clamp(230px, min(64vh, 38vw), 760px);
   aspect-ratio: 1;
-  animation: ow-portrait-in 1000ms cubic-bezier(0.2, 1.15, 0.3, 1) 100ms backwards;
+  animation: ow-portrait-in 1100ms cubic-bezier(0.2, 1.15, 0.3, 1) 100ms backwards;
 }
 @media (orientation: portrait) {
-  .ow-portrait { width: min(46vw, 26vh); }
+  .ow-portrait { width: min(68vw, 36vh); }
 }
 .ow-photo {
   position: absolute;
@@ -295,22 +339,107 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   overflow: hidden;
   border-radius: 999px;
   background: linear-gradient(160deg, #1d5f59, #0a2627);
-  box-shadow: 0 0 0 clamp(3px, 0.45vh, 6px) #f0d38a, 0 0 0 clamp(8px, 1.1vh, 14px) #f0d38a26, 0 40px 90px -30px #000;
+  box-shadow: 0 40px 90px -30px #000, inset 0 0 0 1px #f0d38a66;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .ow-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
 .ow-initials { font-weight: 800; color: #f0d38a; font-size: clamp(40px, 9vh, 120px); }
-/* قوس ذهبي بيلف حوالين الصورة */
-.ow-arc {
+/* لمعة بتعدّي على الصورة كل كام ثانية */
+.ow-photo-sheen {
+  position: absolute;
+  inset: -10% auto -10% 0;
+  width: 34%;
+  background: linear-gradient(100deg, transparent, #ffffff59 50%, transparent);
+  transform: translateX(-180%) skewX(-16deg);
+  animation: ow-sheen 7s ease-in-out 1.8s infinite;
+}
+.ow-frame {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.ow-ticks {
+  stroke: #f0d38a;
+  stroke-linecap: round;
+  transform-origin: 50px 50px;
+  animation: ow-spin 90s linear infinite, fade 1200ms ease 600ms backwards;
+}
+.ow-ring {
+  fill: none;
+  stroke: url(#ow-gold);
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transform: rotate(-90deg);
+  transform-origin: 50px 50px;
+  animation: ow-draw 1600ms cubic-bezier(0.65, 0, 0.35, 1) 250ms forwards;
+}
+.ow-ring-outer {
+  stroke-width: 0.35;
+  opacity: 0.7;
+  animation-delay: 650ms;
+  animation-duration: 2000ms;
+}
+/* أشعة: قرص مخروطي بيلف، باهت على الأطراف */
+.ow-rays {
+  position: absolute;
+  inset: -34%;
   border-radius: 999px;
-  background: conic-gradient(from 0deg, transparent 0 62%, #f0d38a 78%, #fff6da 82%, transparent 90%);
-  -webkit-mask: radial-gradient(closest-side, transparent 93%, #000 94.5%);
-  mask: radial-gradient(closest-side, transparent 93%, #000 94.5%);
-  animation: ow-spin 6s linear infinite;
+  background: repeating-conic-gradient(from 0deg, #f0d38a24 0deg 5deg, transparent 5deg 15deg);
+  -webkit-mask: radial-gradient(closest-side, #000 30%, transparent 100%);
+  mask: radial-gradient(closest-side, #000 30%, transparent 100%);
+  animation: ow-spin 70s linear infinite reverse, fade 1500ms ease 300ms backwards;
+}
+.ow-halo {
+  position: absolute;
+  inset: -16%;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, #f0d38a3d 0%, #0f7e7626 55%, transparent 75%);
+}
+/* نجوم بتدور: الحاوية بتلف، والنجوم ثابتة على محيطها */
+.ow-orbit {
+  position: absolute;
+  inset: -5%;
+  animation: ow-spin 16s linear infinite;
+}
+.ow-orbit-2 { inset: -11%; animation-duration: 26s; animation-direction: reverse; }
+.ow-orbit i {
+  position: absolute;
+  width: clamp(10px, 1.8vh, 22px);
+  aspect-ratio: 1;
+  background: #fff4cf;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 5px #f0d38a);
+  animation: ow-twinkle 2.4s ease-in-out infinite;
+}
+.ow-orbit i:nth-child(1) { top: -1%; left: 49%; }
+.ow-orbit i:nth-child(2) { top: 72%; left: 92%; animation-delay: 0.8s; width: clamp(7px, 1.2vh, 15px); }
+.ow-orbit i:nth-child(3) { top: 80%; left: 6%; animation-delay: 1.6s; }
+.ow-orbit-2 i:nth-child(1) { top: 20%; left: 2%; animation-delay: 0.4s; width: clamp(6px, 1vh, 12px); }
+.ow-orbit-2 i:nth-child(2) { top: 96%; left: 60%; animation-delay: 1.2s; width: clamp(8px, 1.4vh, 16px); }
+/* الاسم بلمعة ذهبية بتمشي عليه */
+.ow-name {
+  background: linear-gradient(100deg, #ffffff 0%, #ffffff 38%, #f0d38a 48%, #fff6da 52%, #ffffff 62%, #ffffff 100%);
+  background-size: 260% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: ow-shimmer 5.5s ease-in-out 1.2s infinite;
+}
+.ow-sweep {
+  position: absolute;
+  inset: -20% auto -20% 0;
+  width: 22vw;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent, #fff6da2e 50%, transparent);
+  transform: translateX(-40vw) skewX(-14deg);
+  animation: ow-sweep 1800ms cubic-bezier(0.45, 0, 0.2, 1) 350ms forwards;
 }
 /* موجات بتطلع من الصورة وهو بيتكلم */
 .ow-pulse {
@@ -320,8 +449,9 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   border: 2px solid #f0d38a;
   opacity: 0;
 }
-.is-speaking .ow-pulse { animation: ow-pulse 2.2s ease-out infinite; }
-.is-speaking .ow-pulse-2 { animation-delay: 1.1s; }
+.is-speaking .ow-pulse { animation: ow-pulse 2.4s ease-out infinite; }
+.is-speaking .ow-pulse-2 { animation-delay: 0.8s; }
+.is-speaking .ow-pulse-3 { animation-delay: 1.6s; }
 .ow-sign {
   display: block;
   width: clamp(80px, 10vw, 220px);
@@ -449,6 +579,23 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   to { opacity: 1; transform: none; }
 }
 @keyframes ow-spin { to { transform: rotate(1turn); } }
+@keyframes ow-draw { to { stroke-dashoffset: 0; } }
+@keyframes ow-sheen {
+  0%, 60% { transform: translateX(-180%) skewX(-16deg); }
+  100% { transform: translateX(420%) skewX(-16deg); }
+}
+@keyframes ow-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.6); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes ow-shimmer {
+  0% { background-position: 100% 0; }
+  45%, 100% { background-position: 0% 0; }
+}
+@keyframes ow-sweep {
+  from { opacity: 1; transform: translateX(-40vw) skewX(-14deg); }
+  to { opacity: 1; transform: translateX(140vw) skewX(-14deg); }
+}
 @keyframes ow-pulse {
   from { opacity: 0.8; transform: scale(1); }
   to { opacity: 0; transform: scale(1.35); }
@@ -473,7 +620,10 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ow-arc, .ow-beam, .is-speaking .ow-pulse, .is-playing .ow-wave span { animation: none; }
+  .ow-beam, .is-speaking .ow-pulse, .is-playing .ow-wave span,
+  .ow-ticks, .ow-rays, .ow-orbit, .ow-orbit i, .ow-photo-sheen, .ow-name { animation: none; }
+  .ow-ring { animation: none; stroke-dashoffset: 0; }
+  .ow-sweep { display: none; }
   .ow-dust { display: none; }
   .ow-rise, .ow-portrait, .ow-sign { animation: fade 200ms ease both; }
   .is-playing .ow-wave span { transform: scaleY(var(--h)); }
