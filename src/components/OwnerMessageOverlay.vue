@@ -96,6 +96,7 @@ const audience = computed<Audience>(() => {
 /** الكلمة الطويلة بخط أصغر — عشان ما تعدّيش الشاشة، والقصيرة تبقى كبيرة. */
 const bodySize = computed(() => {
   const n = m.value?.body?.length ?? 0
+  if (n <= 24) return 'ow-body-hero'
   if (n <= 70) return 'ow-body-xl'
   if (n <= 170) return 'ow-body-lg'
   if (n <= 300) return 'ow-body-md'
@@ -508,6 +509,8 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   overflow-wrap: anywhere;
   max-width: 36ch;
 }
+/* كلمة قصيرة («إيه الأخبار؟»): هي العنوان نفسه — بحجم يملى العمود */
+.ow-body-hero { font-size: clamp(36px, min(11vh, 6.6vw), 150px); line-height: 1.2; max-width: 14ch; }
 .ow-body-xl { font-size: clamp(28px, min(6.4vh, 3.84vw), 84px); line-height: 1.3; }
 .ow-body-lg { font-size: clamp(24px, min(4.8vh, 2.88vw), 64px); }
 .ow-body-md { font-size: clamp(20px, min(3.8vh, 2.28vw), 50px); max-width: 44ch; }
