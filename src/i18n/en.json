@@ -1046,6 +1046,7 @@
     "confirmDelete": "Delete this message from the history?",
     "someone": "Management",
     "overlayLabel": "A word from {name}",
+    "introKicker": "A personal word from",
     "wordFrom": "A word from {name}",
     "to": "To",
     "toAll": "the whole Everest team",

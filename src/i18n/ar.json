@@ -1046,6 +1046,7 @@
     "confirmDelete": "حذف الكلمة دي من السجل؟",
     "someone": "الإدارة",
     "overlayLabel": "كلمة من {name}",
+    "introKicker": "كلمة خاصة من",
     "wordFrom": "كلمة {name}",
     "to": "إلى",
     "toAll": "فريق إيفرست كله",
