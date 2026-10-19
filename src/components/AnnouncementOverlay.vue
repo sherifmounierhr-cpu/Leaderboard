@@ -2,10 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BrandLogo from './BrandLogo.vue'
+import CinematicIntro from './CinematicIntro.vue'
 import { useAnnouncements } from '@/composables/useAnnouncements'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useCinematicIntro } from '@/composables/useCinematicIntro'
 
 /**
  * رسائل الشاشة بملء الشاشة: ترحيب، تحفيز، ضيوف (مطوّرين بشعاراتهم)، وموظف
@@ -59,15 +61,41 @@ watch(
   (expired) => { if (expired) dismiss() },
 )
 
-// المقطع يبدأ مع ظهور الرسالة، ولمدة عرضها الباقية بس
+/*
+ * الترحيب بالضيوف بيبدأ بدخلة سينمائية (نغمة + فلاش + العنوان والشعارات)،
+ * وبعدها الرسالة نفسها. الدخلة جزء من وقت العرض، مش زيادة عليه.
+ */
+const { phase, start: startIntro, finish: finishIntro, cancel: cancelIntro } = useCinematicIntro((skipped) => playClip(!skipped))
+/** المقطع بيستنى ذيل نغمة الدخلة يخفت. */
+const CLIP_AFTER_INTRO_MS = 900
+let clipTimer: ReturnType<typeof setTimeout> | null = null
+function clearClipTimer() {
+  if (clipTimer) clearTimeout(clipTimer)
+  clipTimer = null
+}
+onBeforeUnmount(clearClipTimer)
+
+/** المقطع لمدة العرض الباقية بس. */
+function playClip(afterIntro: boolean) {
+  const s = shown.value
+  const url = s ? urlOf(s.announcement.clip_id) : null
+  if (!url) return
+  const run = () => { if (remaining.value > 2000) void play(url, settings.value.volume, remaining.value / 1000) }
+  if (afterIntro) clipTimer = setTimeout(run, CLIP_AFTER_INTRO_MS)
+  else run()
+}
+
 watch(
   () => shown.value?.key,
   (key) => {
     stop()
+    cancelIntro()
+    clearClipTimer()
     const s = shown.value
     if (!key || !s) return
-    const url = urlOf(s.announcement.clip_id)
-    if (url) void play(url, settings.value.volume, remaining.value / 1000)
+    if (s.announcement.style === 'guests') return startIntro()
+    phase.value = 'main'
+    playClip(false)
   },
 )
 
@@ -75,8 +103,15 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape' && shown.value) close()
 }
 function close() {
+  cancelIntro()
+  clearClipTimer()
   stop()
   dismiss()
+}
+/** ضغطة أثناء الدخلة بتتخطّاها للرسالة؛ بعدها بتقفل. */
+function onClick() {
+  if (phase.value === 'intro') finishIntro(true)
+  else close()
 }
 onMounted(() => document.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
@@ -202,7 +237,7 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
       role="dialog"
       aria-modal="true"
       :aria-label="a.title"
-      @click="close"
+      @click="onClick"
     >
       <!-- ============================ الجو ============================ -->
       <!-- بقع ضوء بتدرّج دائري ناعم بدل blur: نفس الشكل من غير فلتر تقيل على التلفزيون -->
@@ -229,9 +264,20 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
         class="absolute top-[clamp(16px,3.6vh,44px)] start-[5vw] z-10 h-[clamp(34px,6.4vh,72px)]"
       />
 
+      <!-- الضيوف: دخلة — العنوان والشعارات بيطلعوا من قلب النور مع ضربة النغمة -->
+      <CinematicIntro
+        :show="phase === 'intro'"
+        :run-key="shown.key"
+        :kicker="t('announce.introKicker')"
+        :headline="a.title"
+        :subtitle="a.subtitle"
+        :logos="logos"
+      />
+
       <!-- ============================ ضيوف ============================ -->
       <div
         v-if="style === 'guests'"
+        v-show="phase === 'main'"
         class="relative z-[1] m-auto flex w-full max-w-[min(92vw,96rem)] flex-col items-center gap-[clamp(14px,3.2vh,40px)] px-[5vw] text-center"
       >
         <div class="rise an-chip">
@@ -362,7 +408,7 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
 
       <!-- ============================ ترحيب وتحفيز ============================ -->
       <div
-        v-else-if="!spotlight"
+        v-if="!spotlight && !luxe"
         class="relative z-[1] m-auto grid w-full items-center gap-[clamp(20px,4vw,80px)] px-[6vw] portrait:grid-cols-1 portrait:justify-items-center portrait:text-center"
         :class="image ? 'max-w-[min(94vw,104rem)] grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' : 'max-w-[min(90vw,80rem)] grid-cols-1 justify-items-center text-center'"
       >

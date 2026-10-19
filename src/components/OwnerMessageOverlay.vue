@@ -2,10 +2,12 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BrandLogo from './BrandLogo.vue'
+import CinematicIntro from './CinematicIntro.vue'
 import { useOwners } from '@/composables/useOwners'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { useCinematicIntro } from '@/composables/useCinematicIntro'
 import { useLocalName } from '@/composables/useLocalName'
 import { drivePhotoUrl } from '@/lib/format'
 
@@ -41,31 +43,21 @@ function secondsFor(msg: NonNullable<typeof m.value>) {
   return Math.max(8, reading, voice)
 }
 
-/**
- * الدخلة قبل الكلمة: تصاعد 1.7ث (خطوط نور بتتجمع في النص + نغمة بتعلى)، ثم
- * ضربة — الفلاش والموجة والاسم بيظهروا مع ضربة الصوت بالظبط — ثم الكلمة عند
- * 4.1ث. النغمة ملف مولّد (public/sounds) عشان تطلع نفس الصوت على كل شاشة.
- * التوقيتات في الـ CSS مربوطة بـ INTRO_HIT.
- */
-const INTRO_URL = `${import.meta.env.BASE_URL}sounds/owner-intro.mp3`
-const INTRO_SOUND_S = 5.2
-const INTRO_MS = 4100
-/** الرسالة الصوتية بتستنى ذيل النغمة يخفت — ما تتقطعش فجأة. */
+/** الرسالة الصوتية بتستنى ذيل نغمة الدخلة يخفت — ما تتقطعش فجأة. */
 const VOICE_DELAY_MS = 900
-
-const phase = ref<'intro' | 'main'>('intro')
 /** متى بدأ صوت الرسالة بعد ظهور الكلمة — عشان عدّاد الوقت يبدأ من صفر. */
 const voiceOffset = ref(0)
+const { phase, start: startIntro, finish: finishIntro, cancel: cancelIntro } = useCinematicIntro(enterMain)
+
 const now = ref(Date.now())
 const startedAt = ref(0)
 const total = ref(0)
 let clock: ReturnType<typeof setInterval> | null = null
-let introTimer: ReturnType<typeof setTimeout> | null = null
 let voiceTimer: ReturnType<typeof setTimeout> | null = null
 function clearTimers() {
-  if (introTimer) clearTimeout(introTimer)
   if (voiceTimer) clearTimeout(voiceTimer)
-  introTimer = voiceTimer = null
+  voiceTimer = null
+  cancelIntro()
 }
 onMounted(() => { clock = setInterval(() => { now.value = Date.now() }, 200) })
 onBeforeUnmount(() => { if (clock) clearInterval(clock); clearTimers(); stop() })
@@ -76,21 +68,16 @@ watch(
     clearTimers()
     stop()
     total.value = 0
-    phase.value = 'intro'
     if (!key || !m.value) return
-    void play(INTRO_URL, settings.value.volume, INTRO_SOUND_S)
-    introTimer = setTimeout(() => enterMain(false), INTRO_MS)
+    startIntro()
   },
   { immediate: true },
 )
 
-/** @param skipped ضغطة أثناء الدخلة: النغمة تقف والكلمة تظهر على طول. */
+/** بعد الدخلة (أو ضغطة تخطّيها): الكلمة نفسها، وصوتها لو فيه. */
 function enterMain(skipped: boolean) {
   const msg = m.value
-  if (!msg || phase.value === 'main') return
-  clearTimers()
-  if (skipped) stop()
-  phase.value = 'main'
+  if (!msg) return
   startedAt.value = Date.now()
   now.value = startedAt.value
   const delay = msg.audio_url && !skipped ? VOICE_DELAY_MS / 1000 : 0
@@ -117,7 +104,7 @@ function close() {
   dismiss()
 }
 function onClick() {
-  if (phase.value === 'intro') enterMain(true)
+  if (phase.value === 'intro') finishIntro(true)
   else close()
 }
 function onKeydown(event: KeyboardEvent) {
@@ -228,20 +215,6 @@ const TICKS = Array.from({ length: 72 }, (_, i) => {
   }
 })
 
-/* نقط نور بتتشد للنص قبل الضربة، وشرار بيطير منه بعدها — أماكن ثابتة */
-const seeded = (i: number, n: number) => ((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1 + 1) % 1
-const MOTES = Array.from({ length: 18 }, (_, i) => {
-  const a = (i / 18) * Math.PI * 2 + seeded(i, 1) * 0.3
-  const r = 38 + seeded(i, 2) * 26
-  const dur = 1.0 + seeded(i, 3) * 0.55
-  return { '--x': `${Math.cos(a) * r}vmin`, '--y': `${Math.sin(a) * r}vmin`, animationDuration: `${dur}s`, animationDelay: `${1.66 - dur}s` }
-})
-const SPARKS = Array.from({ length: 24 }, (_, i) => ({
-  '--a': `${(i / 24) * 360 + seeded(i, 4) * 12}deg`,
-  '--d': `${26 + seeded(i, 5) * 34}vmin`,
-  animationDuration: `${0.9 + seeded(i, 6) * 0.6}s`,
-}))
-
 const DUST = Array.from({ length: 14 }, (_, i) => {
   const r = (n: number) => ((Math.sin(i * 9.17 + n * 41.3) * 43758.5453) % 1 + 1) % 1
   return { left: `${4 + r(1) * 92}%`, size: `${2 + r(2) * 3}px`, dur: `${12 + r(3) * 8}s`, delay: `${-r(4) * 18}s`, drift: `${(r(5) - 0.5) * 8}vw` }
@@ -272,30 +245,8 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
       <BrandLogo tone="white" class="absolute top-[clamp(16px,3.6vh,44px)] end-[5vw] z-10 h-[clamp(30px,5.6vh,64px)]" />
 
       <!-- الدخلة: تصاعد → ضربة → اسم صاحب الكلمة -->
-      <Transition name="oi">
-        <div v-if="phase === 'intro'" :key="shown.key" class="oi">
-          <div class="oi-fx" aria-hidden="true">
-            <span class="oi-rays" />
-            <span class="oi-streak oi-streak-l" />
-            <span class="oi-streak oi-streak-r" />
-            <span v-for="(st, i) in MOTES" :key="'m' + i" class="oi-mote" :style="st" />
-            <span class="oi-core" />
-            <span class="oi-flash" />
-            <span class="oi-shock" />
-            <span class="oi-shock oi-shock-2" />
-            <span v-for="(st, i) in SPARKS" :key="'s' + i" class="oi-spark" :style="st" />
-          </div>
-          <div class="oi-stage">
-            <p class="oi-kicker">{{ t('owners.introKicker') }}</p>
-            <div class="oi-name-row">
-              <span class="oi-rule" aria-hidden="true" />
-              <p dir="auto" class="oi-name">{{ ownerName }}</p>
-              <span class="oi-rule oi-rule-end" aria-hidden="true" />
-            </div>
-            <p v-if="ownerTitle" dir="auto" class="oi-title">{{ ownerTitle }}</p>
-          </div>
-        </div>
-      </Transition>
+      <CinematicIntro :show="phase === 'intro'" :run-key="shown.key" :kicker="t('owners.introKicker')" :headline="ownerName" :subtitle="ownerTitle" />
+
 
       <template v-if="phase === 'main'">
       <!-- شريط ضوء بيعدّي على الشاشة كلها مرة لحظة الظهور -->
@@ -728,213 +679,6 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
 
 .ow-rise { animation: ow-up 800ms var(--ease-out) backwards; }
 
-/* ------------------------------------------------------------ الدخلة
-   كل التوقيتات من لحظة ظهور الدخلة؛ الضربة (صوت + فلاش + اسم) عند 1.7ث.
-   الحركة كلها transform/opacity — الفلاش والأشعة بيترسموا مرة واحدة. */
-.oi {
-  position: absolute;
-  inset: 0;
-  z-index: 5;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: radial-gradient(70% 60% at 50% 50%, #0b2d2c 0%, #030c0d 75%);
-}
-.oi-fx { position: absolute; inset: 0; }
-.oi-fx > * {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  pointer-events: none;
-}
-.oi-rays {
-  /* أكبر من الشاشة: margin:auto ما بيوسّطوش، فالتوسيط بإزاحة سالبة ثابتة */
-  inset: auto;
-  left: 50%;
-  top: 50%;
-  margin: -85vmax 0 0 -85vmax;
-  width: 170vmax;
-  height: 170vmax;
-  -webkit-mask: radial-gradient(closest-side, #000 8%, transparent 72%);
-  mask: radial-gradient(closest-side, #000 8%, transparent 72%);
-  animation: oi-rays-in 1300ms cubic-bezier(0.16, 1, 0.3, 1) 1.7s both;
-}
-.oi-rays::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  background: repeating-conic-gradient(from 0deg, #f0d38a2e 0deg 3.5deg, transparent 3.5deg 11deg);
-  animation: ow-spin 80s linear infinite;
-}
-.oi-streak {
-  top: 50%;
-  bottom: auto;
-  width: 50vw;
-  height: 3px;
-  margin: -1.5px 0 0;
-  border-radius: 999px;
-  box-shadow: 0 0 18px 2px #f0d38a80;
-  animation: oi-streak 1650ms cubic-bezier(0.55, 0, 0.9, 0.45) 50ms both, oi-out 260ms ease-out 1.7s forwards;
-}
-.oi-streak-l { left: 0; right: auto; transform-origin: left center; background: linear-gradient(90deg, transparent, #f0d38a 70%, #fffbe8); }
-.oi-streak-r { right: 0; left: auto; transform-origin: right center; background: linear-gradient(270deg, transparent, #f0d38a 70%, #fffbe8); }
-.oi-mote {
-  width: 0.8vmin;
-  height: 0.8vmin;
-  border-radius: 999px;
-  background: #fff4cf;
-  box-shadow: 0 0 1.4vmin #f0d38a;
-  animation-name: oi-mote;
-  animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-  animation-fill-mode: both;
-}
-.oi-core {
-  width: 9vmin;
-  height: 9vmin;
-  border-radius: 999px;
-  background: radial-gradient(closest-side, #fffbe8 0%, #f0d38a 35%, #f0d38a00 100%);
-  animation: oi-core 1700ms cubic-bezier(0.6, 0, 1, 0.6) both, oi-burst 380ms ease-out 1.7s forwards;
-}
-.oi-flash {
-  width: 100%;
-  height: 100%;
-  z-index: 3;
-  background: radial-gradient(circle at 50% 50%, #fffbe8 0%, #f6e3a8e6 18%, #f0d38a66 40%, #0f7e7622 62%, transparent 80%);
-  animation: oi-flash 1000ms ease-out 1.66s both;
-}
-.oi-shock {
-  width: 30vmin;
-  height: 30vmin;
-  border-radius: 999px;
-  border: 0.45vmin solid #f6e3a8;
-  box-shadow: 0 0 3vmin #f0d38a99, inset 0 0 3vmin #f0d38a66;
-  animation: oi-shock 1250ms cubic-bezier(0.1, 0.65, 0.3, 1) 1.7s both;
-}
-.oi-shock-2 { border-width: 0.25vmin; animation-delay: 1.84s; animation-duration: 1500ms; }
-.oi-spark {
-  width: 2.2vmin;
-  height: 0.35vmin;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #f0d38a00, #fff4cf);
-  animation-name: oi-spark;
-  animation-timing-function: cubic-bezier(0.1, 0.7, 0.3, 1);
-  animation-delay: 1.7s;
-  animation-fill-mode: both;
-}
-.oi-stage {
-  /* الاسم نفسه في نص الشاشة بالظبط — مكان الضربة؛ الجملة فوقه والمنصب تحته */
-  position: relative;
-  z-index: 4;
-  padding-inline: 6vw;
-  text-align: center;
-  animation: oi-push 2900ms linear 1.7s both;
-}
-.oi-kicker,
-.oi-title {
-  position: absolute;
-  inset-inline: 0;
-}
-.oi-kicker { bottom: calc(100% + clamp(10px, 2.4vh, 30px)); }
-.oi-title { top: calc(100% + clamp(8px, 2vh, 26px)); }
-.oi-kicker {
-  margin: 0;
-  font-weight: 700;
-  color: #f0d38ad9;
-  font-size: clamp(18px, min(3.8vh, 2.3vw), 48px);
-  animation: oi-kicker 900ms var(--ease-out) 350ms both;
-}
-.oi-name-row {
-  /* الخط الأول دايماً شمال الاسم والتاني يمينه — الاسم نفسه dir=auto */
-  direction: ltr;
-  display: flex;
-  align-items: center;
-  gap: clamp(12px, 2vw, 40px);
-}
-.oi-name {
-  margin: 0;
-  font-weight: 800;
-  line-height: 1.15;
-  font-size: clamp(44px, min(12.5vh, 8vw), 176px);
-  background: linear-gradient(100deg, #fff6da 0%, #f0d38a 30%, #fffbe8 50%, #d9ad55 70%, #fff3cf 100%);
-  background-size: 220% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: oi-name 900ms cubic-bezier(0.16, 1, 0.3, 1) 1.7s both, ow-shimmer 3.2s ease-in-out 2.4s infinite;
-}
-.oi-rule {
-  flex: none;
-  width: clamp(36px, 9vw, 190px);
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #f0d38a);
-  transform-origin: right center;
-  animation: oi-rule 800ms var(--ease-out) 2s both;
-}
-.oi-rule-end { background: linear-gradient(270deg, transparent, #f0d38a); transform-origin: left center; }
-.oi-title {
-  margin: 0;
-  font-weight: 700;
-  color: #f0d38a;
-  font-size: clamp(16px, min(3.2vh, 1.9vw), 40px);
-  animation: oi-kicker 800ms var(--ease-out) 2.15s both;
-}
-.oi-leave-active { transition: opacity 650ms ease, transform 650ms cubic-bezier(0.4, 0, 0.2, 1); }
-.oi-leave-to { opacity: 0; transform: scale(1.08); }
-
-@keyframes oi-streak {
-  from { opacity: 0; transform: scaleX(0); }
-  30% { opacity: 1; }
-  to { opacity: 1; transform: scaleX(1); }
-}
-@keyframes oi-out { to { opacity: 0; } }
-@keyframes oi-mote {
-  from { opacity: 0; transform: translate(var(--x), var(--y)) scale(0.5); }
-  25% { opacity: 1; }
-  92% { opacity: 1; transform: translate(0, 0) scale(1.3); }
-  to { opacity: 0; transform: translate(0, 0) scale(0.4); }
-}
-@keyframes oi-core {
-  from { opacity: 0; transform: scale(0.1); }
-  to { opacity: 1; transform: scale(1.5); }
-}
-@keyframes oi-burst {
-  from { opacity: 1; transform: scale(1.5); }
-  to { opacity: 0; transform: scale(5); }
-}
-@keyframes oi-flash {
-  0% { opacity: 0; }
-  7% { opacity: 1; }
-  100% { opacity: 0; }
-}
-@keyframes oi-shock {
-  from { opacity: 1; transform: scale(0.15); }
-  to { opacity: 0; transform: scale(5.5); }
-}
-@keyframes oi-spark {
-  from { opacity: 1; transform: rotate(var(--a)) translateX(3vmin) scaleX(0.4); }
-  to { opacity: 0; transform: rotate(var(--a)) translateX(var(--d)) scaleX(1.6); }
-}
-@keyframes oi-rays-in {
-  from { opacity: 0; transform: scale(0.35); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes oi-push {
-  from { transform: none; }
-  to { transform: scale(1.045); }
-}
-@keyframes oi-kicker {
-  from { opacity: 0; transform: translateY(1.6vh); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes oi-name {
-  from { opacity: 0; transform: scale(1.45); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes oi-rule {
-  from { opacity: 0; transform: scaleX(0); }
-  to { opacity: 1; transform: none; }
-}
 
 .ow-enter-active, .ow-leave-active { transition: opacity 0.5s ease; }
 .ow-enter-from, .ow-leave-to { opacity: 0; }
@@ -999,16 +743,6 @@ const DUST = Array.from({ length: 14 }, (_, i) => {
   .ow-sweep { display: none; }
   .ow-dust { display: none; }
   .ow-rise, .ow-portrait, .ow-sign { animation: fade 200ms ease both; }
-  /* الدخلة: من غير خطوط بتجري ولا فلاش ولا موجة — الاسم بيظهر مع الضربة بس */
-  .oi-streak, .oi-mote, .oi-core, .oi-flash, .oi-shock, .oi-spark { display: none; }
-  .oi-rays { animation: fade 200ms ease 1.7s both; }
-  .oi-rays::before, .oi-stage { animation: none; }
-  .oi-kicker { animation: fade 200ms ease 350ms both; }
-  .oi-name { animation: fade 200ms ease 1.7s both; }
-  .oi-rule { animation: fade 200ms ease 2s both; }
-  .oi-title { animation: fade 200ms ease 2.15s both; }
-  .oi-leave-active { transition: opacity 200ms ease; }
-  .oi-leave-to { transform: none; }
   .is-playing .ow-wave span { transform: scaleY(var(--h)); }
 }
 </style>
