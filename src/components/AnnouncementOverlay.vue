@@ -62,8 +62,9 @@ watch(
 )
 
 /*
- * الترحيب بالضيوف بيبدأ بدخلة سينمائية (نغمة + فلاش + العنوان والشعارات)،
- * وبعدها الرسالة نفسها. الدخلة جزء من وقت العرض، مش زيادة عليه.
+ * الترحيب بالضيوف وبالموظف الجديد بيبدأ بدخلة سينمائية (نغمة + فلاش +
+ * العنوان/الاسم، وشعارات الضيوف)، وبعدها الرسالة نفسها. صورة الموظف الجديد
+ * بتتأجّل لباب الترحيب بعد الدخلة. الدخلة جزء من وقت العرض، مش زيادة عليه.
  */
 const { phase, start: startIntro, finish: finishIntro, cancel: cancelIntro } = useCinematicIntro((skipped) => playClip(!skipped))
 /** المقطع بيستنى ذيل نغمة الدخلة يخفت. */
@@ -93,7 +94,7 @@ watch(
     clearClipTimer()
     const s = shown.value
     if (!key || !s) return
-    if (s.announcement.style === 'guests') return startIntro()
+    if (s.announcement.style === 'guests' || s.announcement.style === 'newhire') return startIntro()
     phase.value = 'main'
     playClip(false)
   },
@@ -264,14 +265,14 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
         class="absolute top-[clamp(16px,3.6vh,44px)] start-[5vw] z-10 h-[clamp(34px,6.4vh,72px)]"
       />
 
-      <!-- الضيوف: دخلة — العنوان والشعارات بيطلعوا من قلب النور مع ضربة النغمة -->
+      <!-- الضيوف والموظف الجديد: دخلة — العنوان/الاسم (والشعارات) بيطلعوا من قلب النور مع ضربة النغمة -->
       <CinematicIntro
         :show="phase === 'intro'"
         :run-key="shown.key"
-        :kicker="t('announce.introKicker')"
+        :kicker="t(style === 'newhire' ? 'announce.introKickerNewhire' : 'announce.introKicker')"
         :headline="a.title"
         :subtitle="a.subtitle"
-        :logos="logos"
+        :logos="style === 'guests' ? logos : undefined"
       />
 
       <!-- ============================ ضيوف ============================ -->
@@ -321,6 +322,7 @@ const DUST = Array.from({ length: 16 }, (_, i) => {
       <!-- ============================ موظف جديد ============================ -->
       <div
         v-else-if="style === 'newhire'"
+        v-show="phase === 'main'"
         class="relative z-[1] m-auto grid w-full max-w-[min(94vw,104rem)] items-center gap-[clamp(20px,4.5vw,96px)] px-[6vw] portrait:grid-cols-1 portrait:justify-items-center portrait:text-center"
         :class="image ? 'grid-cols-[auto_minmax(0,1fr)]' : 'grid-cols-1 justify-items-center text-center'"
       >
