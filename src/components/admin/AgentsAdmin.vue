@@ -156,7 +156,7 @@ const FIELD =
       <label class="flex items-center gap-2.5 text-sm font-semibold text-strong">
         <input v-model="editing.active" type="checkbox" class="size-5 accent-[var(--color-accent)]" />
         {{ t('admin.active') }}
-        <span class="font-medium text-caption text-mute">— {{ t('admin.activeHint') }}</span>
+        <span class="font-medium text-caption text-mute">— {{ t('admin.agentActiveHint') }}</span>
       </label>
 
       <p v-if="formError" role="alert" class="m-0 text-caption text-down">{{ formError }}</p>

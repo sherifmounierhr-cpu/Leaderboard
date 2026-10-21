@@ -226,6 +226,7 @@
     "saveAllCount": "Save {n} changes",
     "active": "Active",
     "activeHint": "Inactive records leave the board without losing their data",
+    "agentActiveHint": "Inactive agents leave the agent ranking; their sales still count for their team",
     "inactive": "Inactive",
     "nameEn": "Name (English)",
     "nameAr": "Name (Arabic)",
