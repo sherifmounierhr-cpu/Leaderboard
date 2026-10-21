@@ -8,6 +8,9 @@ const role = ref<string | null>(null)
 const permissions = ref<string[]>([])
 /** حساب عرض أو اطلاع: يرى صفحة الإدارة، والخادم يرفض أي كتابة منه. */
 const isDemo = ref(false)
+/** صورة الحساب واسم المستخدم — للشريط اللي فوق في صفحة الإدارة. */
+const photoUrl = ref<string | null>(null)
+const username = ref<string | null>(null)
 const ready = ref(false)
 const busy = ref(false)
 const authError = ref<string | null>(null)
@@ -36,13 +39,19 @@ async function loadRole() {
     role.value = null
     permissions.value = []
     isDemo.value = false
+    photoUrl.value = null
+    username.value = null
     return
   }
   // دور خاص باللوحة (admin | editor | readonly | demo | viewer) وأقسامه
   const { data, error } = await supabase.rpc('lb_my_access')
-  const access = error ? null : (data as { role?: string; permissions?: string[] } | null)
+  const access = error
+    ? null
+    : (data as { role?: string; permissions?: string[]; photo_url?: string | null; username?: string | null } | null)
   role.value = access?.role ?? null
   permissions.value = access?.permissions ?? []
+  photoUrl.value = access?.photo_url ?? null
+  username.value = access?.username ?? null
   isDemo.value = role.value === 'demo' || role.value === 'readonly'
 }
 
@@ -157,6 +166,10 @@ export function useAuth() {
     authError,
     role,
     permissions,
+    photoUrl,
+    username,
+    /** بعد تغيير صورتي من صفحة المستخدمين. */
+    reloadAccess: loadRole,
     isSignedIn: computed(() => Boolean(session.value)),
     isAdmin: computed(() => role.value === 'admin'),
     isDemo,

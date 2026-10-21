@@ -6,6 +6,7 @@ import { relativeTime } from '@/lib/format'
 import { checkPwnedPassword } from '@/lib/pwnedPassword'
 import { useAuth } from '@/composables/useAuth'
 import { ADMIN_TABS, tabLabelKey, type AdminSection } from '@/lib/adminTabs'
+import PhotoField from './PhotoField.vue'
 
 /**
  * مستخدمو صفحة الإدارة. القراءة وتحديد الصلاحيات عبر دوال القاعدة المحروسة؛
@@ -29,6 +30,7 @@ interface UserRow {
   created_at: string
   last_sign_in_at: string | null
   banned: boolean
+  photo_url: string | null
 }
 
 const MIN_PASSWORD = 10
@@ -39,7 +41,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SECTION_ROLES: Role[] = ['editor', 'staff', 'staff_manager']
 
 const { t, locale } = useI18n()
-const { session, expireSession, permissions: myPerms } = useAuth()
+const { session, expireSession, permissions: myPerms, reloadAccess } = useAuth()
 const myId = computed(() => session.value?.user.id ?? null)
 /** مسؤول كامل؟ وإلا فهو مدير إداري بيدير حسابات «إداري» بس. */
 const fullAdmin = computed(() => myPerms.value.includes('users'))
@@ -61,14 +63,22 @@ const busy = ref(false)
 const notice = ref<{ ok: boolean; text: string } | null>(null)
 
 /** null = مغلق؛ id فاضي = مستخدم جديد. accessLocked: حسابك أو حساب العرض — الاسم فقط. */
-const editing = ref<{ id: string; name: string; username: string; email: string; accessLocked: boolean; self: boolean } | null>(null)
+const editing = ref<{ id: string; name: string; username: string; email: string; photo: string | null; accessLocked: boolean; self: boolean } | null>(null)
 const form = ref({
   email: '',
   username: '',
   password: '',
   role: 'staff' as Exclude<Role, 'demo'>,
   permissions: [] as Perm[],
+  photo: null as string | null,
 })
+
+/** صورة الحساب: بتتربط بعد الإنشاء أو مع الحفظ (الرفع نفسه بيحصل وقت الاختيار). */
+async function savePhoto(userId: string, photo: string | null) {
+  const { error } = await supabase.rpc('lb_admin_set_user_photo', { p_user_id: userId, p_photo_url: photo })
+  if (error) throw new Error(error.message)
+  if (userId === myId.value) void reloadAccess()
+}
 
 const displayName = (u: UserRow) => u.username ?? u.email ?? '—'
 const shownPassword = ref<string | null>(null)
@@ -138,8 +148,8 @@ async function passwordProblem(password: string) {
 }
 
 function openNew() {
-  editing.value = { id: '', name: '', username: '', email: '', accessLocked: false, self: false }
-  form.value = { email: '', username: '', password: generatePassword(), role: 'staff', permissions: [] }
+  editing.value = { id: '', name: '', username: '', email: '', photo: null, accessLocked: false, self: false }
+  form.value = { email: '', username: '', password: generatePassword(), role: 'staff', permissions: [], photo: null }
   shownPassword.value = null
   notice.value = null
 }
@@ -150,6 +160,7 @@ function openEdit(u: UserRow) {
     name: displayName(u),
     username: u.username ?? '',
     email: u.email ?? '',
+    photo: u.photo_url,
     accessLocked: u.id === myId.value || u.role === 'demo',
     self: u.id === myId.value,
   }
@@ -159,6 +170,7 @@ function openEdit(u: UserRow) {
     password: '',
     role: u.role === 'demo' ? 'readonly' : u.role,
     permissions: hasSections(u.role) ? [...u.permissions] : [],
+    photo: u.photo_url,
   }
   shownPassword.value = null
   notice.value = null
@@ -200,10 +212,11 @@ async function save() {
       notice.value = { ok: false, text: problem }
       return
     }
-    const ok = await run(
-      () => invoke({ action: 'create', email, username, password, role: form.value.role, permissions: perms }),
-      t('users.created', { email: name }),
-    )
+    const photo = form.value.photo
+    const ok = await run(async () => {
+      const created = await invoke({ action: 'create', email, username, password, role: form.value.role, permissions: perms })
+      if (photo && created.id) await savePhoto(created.id, photo)
+    }, t('users.created', { email: name }))
     if (ok) {
       // تظهر مرة واحدة ليسلّمها المسؤول لصاحب الحساب
       shownPassword.value = password
@@ -235,6 +248,7 @@ async function save() {
       await invoke({ action: 'password', user_id: target.id, password: newPassword })
       passwordChanged = true
     }
+    if (form.value.photo !== target.photo) await savePhoto(target.id, form.value.photo)
     if (target.accessLocked) return
     const { error } = await supabase.rpc('lb_admin_set_access', {
       p_user_id: target.id,
@@ -373,6 +387,13 @@ const ICON_BTN =
       <h3 class="m-0 font-semibold text-strong">
         {{ editing.id ? t('users.editTitle', { email: editing.name }) : t('users.add') }}
       </h3>
+
+      <PhotoField
+        v-model="form.photo"
+        kind="user"
+        :record-id="editing.id || null"
+        :name="form.username || form.email || editing.name"
+      />
 
       <div class="grid gap-4 sm:grid-cols-2">
         <label class="flex flex-col gap-1.5">
@@ -516,7 +537,14 @@ const ICON_BTN =
         class="flex flex-wrap items-center gap-3 admin-row rounded-xl border bg-card px-4 py-3"
         :class="r.user.banned ? 'border-down/40 opacity-70' : 'border-card-border'"
       >
+        <img
+          v-if="r.user.photo_url"
+          :src="r.user.photo_url"
+          alt=""
+          class="size-11 shrink-0 rounded-xl object-cover outline outline-1 -outline-offset-1 outline-strong/10"
+        />
         <span
+          v-else
           class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-page text-xl text-mute"
           aria-hidden="true"
         >

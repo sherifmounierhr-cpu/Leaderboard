@@ -49,8 +49,11 @@ function toggleLanguage() {
 
 const {
   ready, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
-  email, signOut,
+  email, signOut, photoUrl, username,
 } = useAuth()
+/** اسم الداخل وأول حرفين منه (لو مفيش صورة). */
+const meName = computed(() => username.value || email.value)
+const meInitials = computed(() => meName.value.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase())
 const { reload, loading, saveError } = useAdminData()
 
 /** التبويبات حسب الصلاحية — الإخفاء للواجهة فقط، والقاعدة ترفض أي كتابة خارجها. */
@@ -171,6 +174,14 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
 
       <!-- أزرار التنقّل تختفي عند طباعة تقرير؛ الشعار والعنوان يبقيان في الورقة -->
       <div class="flex shrink-0 items-center justify-end gap-2" data-export-hide>
+        <!-- مين داخل: صورته واسمه -->
+        <span v-if="isSignedIn && meName" class="me-1 inline-flex items-center gap-2 max-lg:hidden" :title="meName">
+          <span class="inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 text-sm font-bold text-white ring-2 ring-white/25">
+            <img v-if="photoUrl" :src="photoUrl" alt="" class="size-full object-cover" />
+            <span v-else aria-hidden="true">{{ meInitials }}</span>
+          </span>
+          <span dir="ltr" class="max-w-40 truncate text-sm font-semibold text-white/90">{{ meName }}</span>
+        </span>
         <button
           type="button"
           class="inline-flex items-center justify-center gap-1.5 min-h-11 min-w-11 sm:min-h-10 whitespace-nowrap rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-sm font-semibold text-white/85 transition-colors duration-200 hover:bg-white/[0.14] hover:text-white"

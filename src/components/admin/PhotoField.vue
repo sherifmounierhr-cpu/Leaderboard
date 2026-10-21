@@ -6,7 +6,7 @@ import ImageStudio from './ImageStudio.vue'
 
 const props = defineProps<{
   modelValue: string | null
-  kind: 'team' | 'agent' | 'director'
+  kind: 'team' | 'agent' | 'director' | 'user'
   recordId: string | null
   name: string
 }>()
