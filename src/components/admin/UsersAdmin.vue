@@ -7,6 +7,8 @@ import { checkPwnedPassword } from '@/lib/pwnedPassword'
 import { useAuth } from '@/composables/useAuth'
 import { ADMIN_TABS, tabLabelKey, type AdminSection } from '@/lib/adminTabs'
 import PhotoField from './PhotoField.vue'
+import ImageStudio from './ImageStudio.vue'
+import { useAdminData } from '@/composables/useAdminData'
 
 /**
  * مستخدمو صفحة الإدارة. القراءة وتحديد الصلاحيات عبر دوال القاعدة المحروسة؛
@@ -262,6 +264,44 @@ async function save() {
     if (passwordChanged) shownPassword.value = newPassword
     editing.value = null
   }
+}
+
+/*
+ * تغيير الصورة من القائمة مباشرة: ضغطة على صورة الحساب ← اختيار ملف ← استوديو
+ * الصورة ← رفع وحفظ على طول، من غير ما تفتح نموذج التعديل.
+ */
+const { uploadPhoto } = useAdminData()
+const photoInput = ref<HTMLInputElement | null>(null)
+const photoFor = ref<UserRow | null>(null)
+const studio = ref<{ source: Blob; user: UserRow } | null>(null)
+
+function pickPhoto(u: UserRow) {
+  photoFor.value = u
+  photoInput.value?.click()
+}
+
+function onPhotoPicked(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  const u = photoFor.value
+  if (!file || !u) return
+  if (!file.type.startsWith('image/')) {
+    notice.value = { ok: false, text: t('admin.photoType') }
+    return
+  }
+  studio.value = { source: file, user: u }
+}
+
+async function onPhotoStudio(blob: Blob) {
+  const u = studio.value?.user
+  studio.value = null
+  if (!u) return
+  const ext = blob.type === 'image/webp' ? 'webp' : 'png'
+  await run(async () => {
+    const url = await uploadPhoto(new File([blob], `photo.${ext}`, { type: blob.type }), 'user', u.id)
+    await savePhoto(u.id, url)
+  }, t('users.photoSaved', { email: displayName(u) }))
 }
 
 async function resetPassword(u: UserRow) {
@@ -529,6 +569,16 @@ const ICON_BTN =
       </div>
     </form>
 
+    <input ref="photoInput" type="file" accept="image/*" class="sr-only" tabindex="-1" aria-hidden="true" @change="onPhotoPicked" />
+    <ImageStudio
+      v-if="studio"
+      :source="studio.source"
+      :name="displayName(studio.user)"
+      purpose="person"
+      @confirm="onPhotoStudio"
+      @cancel="studio = null"
+    />
+
     <!-- القائمة -->
     <ul class="m-0 flex list-none flex-col gap-2 p-0">
       <li
@@ -537,21 +587,37 @@ const ICON_BTN =
         class="flex flex-wrap items-center gap-3 admin-row rounded-xl border bg-card px-4 py-3"
         :class="r.user.banned ? 'border-down/40 opacity-70' : 'border-card-border'"
       >
-        <img
-          v-if="r.user.photo_url"
-          :src="r.user.photo_url"
-          alt=""
-          class="size-11 shrink-0 rounded-xl object-cover outline outline-1 -outline-offset-1 outline-strong/10"
-        />
-        <span
-          v-else
-          class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-page text-xl text-mute"
-          aria-hidden="true"
+        <!-- الصورة نفسها زرار تغييرها -->
+        <button
+          type="button"
+          class="group relative size-11 shrink-0 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
+          :title="t('users.changePhoto', { email: displayName(r.user) })"
+          :aria-label="t('users.changePhoto', { email: displayName(r.user) })"
+          :disabled="busy"
+          @click="pickPhoto(r.user)"
         >
-          <iconify-icon
-            :icon="r.user.role === 'admin' ? 'mdi:shield-account-outline' : r.user.role === 'staff_manager' ? 'mdi:account-tie-outline' : r.user.role === 'staff' ? 'mdi:badge-account-horizontal-outline' : 'mdi:account-outline'"
+          <img
+            v-if="r.user.photo_url"
+            :src="r.user.photo_url"
+            alt=""
+            class="size-full rounded-xl object-cover outline outline-1 -outline-offset-1 outline-strong/10"
           />
-        </span>
+          <span
+            v-else
+            class="inline-flex size-full items-center justify-center rounded-xl bg-page text-xl text-mute"
+            aria-hidden="true"
+          >
+            <iconify-icon
+              :icon="r.user.role === 'admin' ? 'mdi:shield-account-outline' : r.user.role === 'staff_manager' ? 'mdi:account-tie-outline' : r.user.role === 'staff' ? 'mdi:badge-account-horizontal-outline' : 'mdi:account-outline'"
+            />
+          </span>
+          <span
+            class="absolute -bottom-1 -end-1 inline-flex size-5 items-center justify-center rounded-full bg-accent text-white shadow ring-2 ring-card transition-transform group-hover:scale-110"
+            aria-hidden="true"
+          >
+            <iconify-icon icon="mdi:camera" class="text-[11px]" />
+          </span>
+        </button>
 
         <div class="flex min-w-0 flex-1 flex-col gap-1">
           <p class="m-0 flex flex-wrap items-center gap-2 font-semibold text-strong">
@@ -591,7 +657,7 @@ const ICON_BTN =
             :disabled="busy"
             @click="openEdit(r.user)"
           >
-            <iconify-icon icon="mdi:shield-edit-outline" aria-hidden="true" />
+            <iconify-icon icon="mdi:account-edit-outline" aria-hidden="true" />
           </button>
           <button
             type="button"

@@ -825,7 +825,7 @@
     "copied": "Copied",
     "created": "Account {email} created",
     "saved": "Permissions for {email} saved",
-    "editAccess": "Edit permissions",
+    "editAccess": "Edit account",
     "resetPassword": "New password",
     "confirmReset": "Create a new password for {email}? The old one stops working immediately.",
     "passwordReset": "Password for {email} changed",
@@ -855,7 +855,9 @@
     "newPasswordHint": "Leave it empty to keep the current one. If you set one (at least {n} characters) it shows once after saving so you can hand it over.",
     "staffAccounts": "Manage staff accounts",
     "staffAccountsHint": "“Manage staff accounts”: creates Staff accounts, resets their passwords, suspends and deletes them, and can only give them sections they have themselves — never touches manager or admin accounts.",
-    "staffHint": "You can create and edit Staff accounts and give them sections you have yourself. Manager and admin accounts are handled by a full admin."
+    "staffHint": "You can create and edit Staff accounts and give them sections you have yourself. Manager and admin accounts are handled by a full admin.",
+    "changePhoto": "Change photo of {email}",
+    "photoSaved": "Saved the photo of {email}."
   },
   "audit": {
     "title": "User activity log",
