@@ -2,7 +2,9 @@
 //
 // هذه العمليات تحتاج service_role، فلا تحصل من المتصفح. المفتاح لا يغادر
 // هذه الدالة. تُنشر بـ verify_jwt=true، وأول خطوة التأكد من أن المستدعي مسؤول
-// كامل عبر lb_my_access() بتوكنه هو — لا بمفتاح الخدمة.
+// كامل — أو مدير إداري معاه «إدارة حسابات الإداريين» — عبر lb_my_access()
+// بتوكنه هو، لا بمفتاح الخدمة. المدير الإداري يدير حسابات «إداري» بس: الحساب
+// المستهدف بيتفحص بـ lb_can_manage_user قبل أي عملية عليه.
 //
 // تحديد الصلاحيات نفسه يمر عبر public.lb_admin_set_access (المحروسة) بتوكن
 // المستدعي، فالقواعد (لا تعديل للنفس، لا حساب عرض…) في مكان واحد.
@@ -120,7 +122,8 @@ Deno.serve(async (req) => {
 
   const { data: access, error: accessErr } = await caller.rpc('lb_my_access')
   const perms = (access as { permissions?: string[] } | null)?.permissions ?? []
-  if (accessErr || !perms.includes('users')) {
+  const isAdmin = perms.includes('users')
+  if (accessErr || (!isAdmin && !perms.includes('staff_accounts'))) {
     return fail('إدارة المستخدمين للمسؤول الكامل فقط', 403)
   }
 
@@ -147,6 +150,15 @@ Deno.serve(async (req) => {
   if (action !== 'create') {
     if (!userId) return fail('المستخدم مطلوب')
     if (action !== 'email' && userId === me.user.id) return fail('لا يمكنك تنفيذ هذا على حسابك — استخدم «تغيير كلمة المرور»')
+  }
+
+  // المدير الإداري: ينشئ «إداري» بس، ويتعامل مع حسابات «إداري» بس
+  if (!isAdmin) {
+    if (action === 'create' && body.role !== 'staff') return fail('المدير الإداري يقدر يعمل حسابات «إداري» بس', 403)
+    if (action !== 'create') {
+      const { data: can, error } = await caller.rpc('lb_can_manage_user', { p_user_id: userId })
+      if (error || can !== true) return fail('تقدر تدير حسابات «إداري» بس', 403)
+    }
   }
 
   try {

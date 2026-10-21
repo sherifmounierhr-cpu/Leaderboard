@@ -804,13 +804,17 @@
       "editor": "Editor",
       "readonly": "View only",
       "viewer": "Board only",
-      "demo": "Demo account"
+      "demo": "Demo account",
+      "staff": "Staff",
+      "staff_manager": "Staff manager"
     },
     "roleHints": {
       "admin": "Every section + user management",
       "editor": "Edits the selected sections only",
       "readonly": "Sees the whole admin page, can’t change anything",
-      "viewer": "Sees the board screen only, no admin page"
+      "viewer": "Sees the board screen only, no admin page",
+      "staff": "Administrative account — edits the selected sections only",
+      "staff_manager": "Edits the selected sections, and can manage staff accounts if you allow it"
     },
     "readonlyTitle": "View-only account",
     "passwordHint": "At least {n} characters. Hand it to the account owner; they can change it after signing in.",
@@ -848,7 +852,10 @@
     "emailEditHint": "Change it, or clear it (a username must remain) so the account signs in with the username only",
     "emailInvalid": "That email address isn’t valid",
     "newPassword": "New password (optional)",
-    "newPasswordHint": "Leave it empty to keep the current one. If you set one (at least {n} characters) it shows once after saving so you can hand it over."
+    "newPasswordHint": "Leave it empty to keep the current one. If you set one (at least {n} characters) it shows once after saving so you can hand it over.",
+    "staffAccounts": "Manage staff accounts",
+    "staffAccountsHint": "“Manage staff accounts”: creates Staff accounts, resets their passwords, suspends and deletes them, and can only give them sections they have themselves — never touches manager or admin accounts.",
+    "staffHint": "You can create and edit Staff accounts and give them sections you have yourself. Manager and admin accounts are handled by a full admin."
   },
   "audit": {
     "title": "User activity log",

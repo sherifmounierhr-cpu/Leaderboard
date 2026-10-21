@@ -57,7 +57,8 @@ const { reload, loading, saveError } = useAdminData()
 const tabs = computed<AdminTab[]>(() => {
   void permissions.value
   const visible: AdminTab[] = ADMIN_TABS.filter((name) => canSee(name))
-  if (permissions.value.includes('users')) visible.push('users')
+  // المدير الإداري بصلاحية «إدارة حسابات الإداريين» بيشوف التبويب (حسابات الإداريين بس)
+  if (permissions.value.includes('users') || permissions.value.includes('staff_accounts')) visible.push('users')
   return visible
 })
 const tab = ref<AdminTab>('periods')
@@ -325,7 +326,7 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         <StorageAdmin v-else-if="tab === 'storage'" @goto="goto($event)" />
         <div v-else-if="tab === 'users'" class="flex flex-col gap-8">
           <UsersAdmin />
-          <AuditLogAdmin />
+          <AuditLogAdmin v-if="permissions.includes('users')" />
         </div>
         <DataTransfer v-else-if="tab === 'data'" />
         </div>

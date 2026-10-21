@@ -11,8 +11,13 @@ import { ADMIN_TABS, tabLabelKey, type AdminSection } from '@/lib/adminTabs'
  * مستخدمو صفحة الإدارة. القراءة وتحديد الصلاحيات عبر دوال القاعدة المحروسة؛
  * الإنشاء والحذف وكلمة المرور عبر دالة الحافة admin-users (تحتاج service_role).
  * الواجهة هنا للراحة فقط — كل قاعدة تُفرض على الخادم.
+ *
+ * المدير الإداري اللي معاه «إدارة حسابات الإداريين» بيشوف الصفحة دي كمان، بس
+ * لحسابات «إداري» وحدها، ويديهم من الأقسام اللي معاه هو (الخادم بيرفض غير كده).
  */
-type Role = 'admin' | 'editor' | 'readonly' | 'viewer' | 'demo'
+type Role = 'admin' | 'editor' | 'readonly' | 'viewer' | 'demo' | 'staff' | 'staff_manager'
+/** صلاحية مش تبويب: المدير الإداري يدير حسابات الإداريين. */
+type Perm = AdminSection | 'staff_accounts'
 
 interface UserRow {
   id: string
@@ -20,7 +25,7 @@ interface UserRow {
   email: string | null
   username: string | null
   role: Role
-  permissions: AdminSection[]
+  permissions: Perm[]
   created_at: string
   last_sign_in_at: string | null
   banned: boolean
@@ -30,11 +35,25 @@ const MIN_PASSWORD = 10
 /** نفس قيد القاعدة: 3–30، حروف إنجليزية صغيرة وأرقام و . _ - */
 const USERNAME_RE = /^[a-z0-9][a-z0-9._-]{2,29}$/
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const ROLES: Exclude<Role, 'demo'>[] = ['admin', 'editor', 'readonly', 'viewer']
+/** الأدوار اللي ليها أقسام مختارة — نفس lb_section_roles() بالقاعدة. */
+const SECTION_ROLES: Role[] = ['editor', 'staff', 'staff_manager']
 
 const { t, locale } = useI18n()
-const { session, expireSession } = useAuth()
+const { session, expireSession, permissions: myPerms } = useAuth()
 const myId = computed(() => session.value?.user.id ?? null)
+/** مسؤول كامل؟ وإلا فهو مدير إداري بيدير حسابات «إداري» بس. */
+const fullAdmin = computed(() => myPerms.value.includes('users'))
+const ROLES = computed<Exclude<Role, 'demo'>[]>(() =>
+  fullAdmin.value ? ['admin', 'staff_manager', 'staff', 'editor', 'readonly', 'viewer'] : ['staff'],
+)
+const hasSections = (role: Role) => SECTION_ROLES.includes(role)
+
+/** الأقسام اللي ينفع تتدي للدور المختار — المدير الإداري: من أقسامه هو بس. */
+const grantable = computed<Perm[]>(() => {
+  const base: Perm[] = fullAdmin.value ? [...ADMIN_TABS] : ADMIN_TABS.filter((p) => myPerms.value.includes(p))
+  return fullAdmin.value && form.value.role === 'staff_manager' ? [...base, 'staff_accounts'] : base
+})
+const permLabel = (p: Perm) => (p === 'staff_accounts' ? t('users.staffAccounts') : t(tabLabelKey(p)))
 
 const users = ref<UserRow[]>([])
 const loading = ref(false)
@@ -47,8 +66,8 @@ const form = ref({
   email: '',
   username: '',
   password: '',
-  role: 'editor' as Exclude<Role, 'demo'>,
-  permissions: [] as AdminSection[],
+  role: 'staff' as Exclude<Role, 'demo'>,
+  permissions: [] as Perm[],
 })
 
 const displayName = (u: UserRow) => u.username ?? u.email ?? '—'
@@ -120,7 +139,7 @@ async function passwordProblem(password: string) {
 
 function openNew() {
   editing.value = { id: '', name: '', username: '', email: '', accessLocked: false, self: false }
-  form.value = { email: '', username: '', password: generatePassword(), role: 'editor', permissions: [] }
+  form.value = { email: '', username: '', password: generatePassword(), role: 'staff', permissions: [] }
   shownPassword.value = null
   notice.value = null
 }
@@ -139,16 +158,19 @@ function openEdit(u: UserRow) {
     username: u.username ?? '',
     password: '',
     role: u.role === 'demo' ? 'readonly' : u.role,
-    permissions: u.role === 'editor' ? [...u.permissions] : [],
+    permissions: hasSections(u.role) ? [...u.permissions] : [],
   }
   shownPassword.value = null
   notice.value = null
 }
 
-function togglePerm(p: AdminSection) {
+function togglePerm(p: Perm) {
   const list = form.value.permissions
   form.value.permissions = list.includes(p) ? list.filter((x) => x !== p) : [...list, p]
 }
+
+/** المختار من المسموح للدور الحالي (تغيير الدور بيسقط «إدارة الحسابات» مثلاً). */
+const chosenPerms = computed(() => form.value.permissions.filter((p) => grantable.value.includes(p)))
 
 const formError = computed(() => {
   const username = form.value.username.trim().toLowerCase()
@@ -156,7 +178,7 @@ const formError = computed(() => {
   const email = form.value.email.trim()
   if (email && !EMAIL_RE.test(email)) return t('users.emailInvalid')
   if (editing.value && !username && !email) return t('users.needOne')
-  if (!editing.value?.accessLocked && form.value.role === 'editor' && !form.value.permissions.length) {
+  if (!editing.value?.accessLocked && hasSections(form.value.role) && !chosenPerms.value.length) {
     return t('users.pickOne')
   }
   return null
@@ -164,7 +186,7 @@ const formError = computed(() => {
 
 async function save() {
   if (!editing.value || formError.value) return
-  const perms = form.value.role === 'editor' ? form.value.permissions : []
+  const perms = hasSections(form.value.role) ? chosenPerms.value : []
   const username = form.value.username.trim().toLowerCase()
 
   if (!editing.value.id) {
@@ -261,6 +283,8 @@ async function copy(text: string) {
 const ROLE_TONE: Record<Role, string> = {
   admin: 'bg-accent/12 text-accent-text',
   editor: 'bg-gold/15 text-gold',
+  staff_manager: 'bg-accent/12 text-accent-text',
+  staff: 'bg-gold/15 text-gold',
   readonly: 'bg-page text-mute border border-card-border',
   demo: 'bg-page text-mute border border-card-border',
   viewer: 'bg-page text-dim border border-card-border',
@@ -290,7 +314,7 @@ const ICON_BTN =
           {{ t('users.title') }}
           <span class="font-medium text-mute text-sm">({{ users.length }})</span>
         </h2>
-        <p class="m-0 mt-1 text-caption text-mute">{{ t('users.hint') }}</p>
+        <p class="m-0 mt-1 text-caption text-mute">{{ t(fullAdmin ? 'users.hint' : 'users.staffHint') }}</p>
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -426,7 +450,7 @@ const ICON_BTN =
 
       <fieldset v-if="!editing.accessLocked" class="m-0 flex flex-col gap-2 border-0 p-0">
         <legend class="mb-2 font-semibold text-caption text-mute">{{ t('users.role') }}</legend>
-        <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
           <label
             v-for="r in ROLES"
             :key="r"
@@ -442,23 +466,30 @@ const ICON_BTN =
         </div>
       </fieldset>
 
-      <fieldset v-if="form.role === 'editor' && !editing.accessLocked" class="m-0 flex flex-col gap-2 border-0 p-0">
+      <fieldset v-if="hasSections(form.role) && !editing.accessLocked" class="m-0 flex flex-col gap-2 border-0 p-0">
         <legend class="mb-2 font-semibold text-caption text-mute">{{ t('users.sections') }}</legend>
         <div class="flex flex-wrap gap-2">
           <button
-            v-for="p in ADMIN_TABS"
+            v-for="p in grantable"
             :key="p"
             type="button"
             role="checkbox"
             :aria-checked="form.permissions.includes(p)"
             class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-caption font-semibold transition-colors"
-            :class="form.permissions.includes(p) ? 'border-accent bg-accent text-white' : 'border-card-border text-mute hover:text-strong'"
+            :class="[
+              form.permissions.includes(p) ? 'border-accent bg-accent text-white' : 'border-card-border text-mute hover:text-strong',
+              p === 'staff_accounts' ? 'border-dashed' : '',
+            ]"
             @click="togglePerm(p)"
           >
-            <iconify-icon :icon="form.permissions.includes(p) ? 'mdi:check' : 'mdi:plus'" aria-hidden="true" />
-            {{ t(tabLabelKey(p)) }}
+            <iconify-icon
+              :icon="form.permissions.includes(p) ? 'mdi:check' : p === 'staff_accounts' ? 'mdi:account-key-outline' : 'mdi:plus'"
+              aria-hidden="true"
+            />
+            {{ permLabel(p) }}
           </button>
         </div>
+        <p v-if="form.role === 'staff_manager' && fullAdmin" class="m-0 text-caption text-dim">{{ t('users.staffAccountsHint') }}</p>
       </fieldset>
 
       <p v-if="formError" class="m-0 text-caption text-down">{{ formError }}</p>
@@ -489,7 +520,9 @@ const ICON_BTN =
           class="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-page text-xl text-mute"
           aria-hidden="true"
         >
-          <iconify-icon :icon="r.user.role === 'admin' ? 'mdi:shield-account-outline' : 'mdi:account-outline'" />
+          <iconify-icon
+            :icon="r.user.role === 'admin' ? 'mdi:shield-account-outline' : r.user.role === 'staff_manager' ? 'mdi:account-tie-outline' : r.user.role === 'staff' ? 'mdi:badge-account-horizontal-outline' : 'mdi:account-outline'"
+          />
         </span>
 
         <div class="flex min-w-0 flex-1 flex-col gap-1">
@@ -505,12 +538,13 @@ const ICON_BTN =
               {{ t('users.bannedBadge') }}
             </span>
           </p>
-          <p v-if="r.user.role === 'editor'" class="m-0 flex flex-wrap gap-1">
+          <p v-if="hasSections(r.user.role)" class="m-0 flex flex-wrap gap-1">
             <span
               v-for="p in r.user.permissions"
               :key="p"
-              class="rounded-md border border-card-border px-1.5 py-0.5 text-caption text-mute"
-            >{{ t(tabLabelKey(p)) }}</span>
+              class="rounded-md border px-1.5 py-0.5 text-caption"
+              :class="p === 'staff_accounts' ? 'border-accent/50 font-semibold text-accent-text' : 'border-card-border text-mute'"
+            >{{ permLabel(p) }}</span>
           </p>
           <p class="m-0 text-caption text-dim">
             <template v-if="r.user.username">
