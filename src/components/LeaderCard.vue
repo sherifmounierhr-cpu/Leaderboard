@@ -7,6 +7,11 @@ import type { BoardEntity } from '@/composables/useBoardData'
 import Avatar from './Avatar.vue'
 import ProgressTrack from './ProgressTrack.vue'
 import TeamLeads from './TeamLeads.vue'
+import { useBoardMedia } from '@/composables/useBoardMedia'
+
+/** إخفاء مبالغ الأفراد (إعداد من الإدارة). */
+const { settings: boardSettings } = useBoardMedia()
+const hideSales = computed(() => boardSettings.value.hide_agent_sales === true)
 
 const props = withDefaults(
   defineProps<{
@@ -66,7 +71,7 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
 
     <TeamLeads v-if="kind === 'team'" :leads="entity.leads" :size="size === 'hero' ? 'hero' : 'compact'" />
 
-    <div class="flex items-baseline gap-2" :title="egp(entity.deals)">
+    <div v-if="!(kind === 'agent' && hideSales)" class="flex items-baseline gap-2" :title="egp(entity.deals)">
       <span
         class="font-extrabold leading-[0.85] [@media(max-height:820px)]:leading-[1.05] tracking-[-0.02em] tabular-nums text-strong"
         :class="statSize"

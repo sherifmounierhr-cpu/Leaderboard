@@ -49,6 +49,7 @@ async function load() {
       news_screen_s: row.news_screen_s ? Number(row.news_screen_s) : null,
       insights_in_rotation: row.insights_in_rotation === true,
       insights_screen_s: Number(row.insights_screen_s) || 30,
+      hide_agent_sales: row.hide_agent_sales === true,
     }
   }
   if (!m.error) {

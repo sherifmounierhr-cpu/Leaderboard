@@ -8,6 +8,11 @@ import { useAuth } from '@/composables/useAuth'
 import { useStorageHealth } from '@/composables/useStorageHealth'
 import type { SaleEventRow } from '@/lib/types'
 import Avatar from './Avatar.vue'
+import { useBoardMedia } from '@/composables/useBoardMedia'
+
+/** إخفاء مبالغ الأفراد (إعداد من الإدارة). */
+const { settings: boardSettings } = useBoardMedia()
+const hideSales = computed(() => boardSettings.value.hide_agent_sales === true)
 
 /** يُحدَّث «منذ كم» كل نصف دقيقة — أدق من ذلك لا يلزم. */
 const CLOCK_MS = 30_000
@@ -110,8 +115,8 @@ const items = computed(() => {
         e.kind === 'manual'
           ? t('notifications.manual', { name })
           : (e.partner_name
-            ? t('notifications.saleShared', { name, partner: localName(e.partner_name, e.partner_name_ar), amount: compact(e.amount_egp) })
-            : t('notifications.sale', { name, amount: compact(e.amount_egp) })),
+            ? t(hideSales.value ? 'notifications.saleSharedHidden' : 'notifications.saleShared', { name, partner: localName(e.partner_name, e.partner_name_ar), amount: compact(e.amount_egp) })
+            : t(hideSales.value ? 'notifications.saleHidden' : 'notifications.sale', { name, amount: compact(e.amount_egp) })),
       when: relativeTime(new Date(e.created_at), now.value),
       title: new Date(e.created_at).toLocaleString(),
     }

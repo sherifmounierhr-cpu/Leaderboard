@@ -124,6 +124,12 @@ export function useScreenAdmin() {
     await media.reload()
   }
 
+  async function saveHideAgentSales(hide: boolean) {
+    const { error } = await supabase.rpc('lb_admin_set_hide_agent_sales', { p_hide: hide })
+    fail(error)
+    await media.reload()
+  }
+
   async function saveAnnouncement(d: AnnouncementDraft) {
     const { data, error } = await supabase.rpc('lb_admin_save_announcement', {
       p_id: d.id,
@@ -165,5 +171,5 @@ export function useScreenAdmin() {
     await announcements.reload()
   }
 
-  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage }
+  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveHideAgentSales, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage }
 }

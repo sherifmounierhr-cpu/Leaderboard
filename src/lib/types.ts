@@ -277,6 +277,8 @@ export interface BoardSettings {
   insights_in_rotation?: boolean
   /** كم ثانية تبقى شاشة التحليلات في التبديل. */
   insights_screen_s?: number
+  /** إخفاء مبالغ مبيعات الأفراد من الشاشات (إجماليات الفرق تفضل ظاهرة). */
+  hide_agent_sales?: boolean
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number

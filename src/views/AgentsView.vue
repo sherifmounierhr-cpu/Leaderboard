@@ -11,6 +11,11 @@ import RankDelta from '@/components/RankDelta.vue'
 import LeaderCard from '@/components/LeaderCard.vue'
 import BoardSkeleton from '@/components/BoardSkeleton.vue'
 import LatestDeals from '@/components/LatestDeals.vue'
+import { useBoardMedia } from '@/composables/useBoardMedia'
+
+/** إخفاء مبالغ الأفراد (إعداد من الإدارة). */
+const { settings: boardSettings } = useBoardMedia()
+const hideSales = computed(() => boardSettings.value.hide_agent_sales === true)
 
 const { agents, agentDeltas, updatedAt } = useBoardData()
 const { t } = useI18n()
@@ -152,7 +157,7 @@ const GRID =
         </div>
 
         <div class="mt-3.5 flex items-center gap-4">
-          <div class="text-center" :title="egp(agent.deals)">
+          <div v-if="!hideSales" class="text-center" :title="egp(agent.deals)">
             <div class="text-xs font-medium text-mute">
               {{ t('card.sales') }}
             </div>
@@ -243,10 +248,10 @@ const GRID =
 
           <span
             role="cell"
-            :title="egp(agent.deals)"
+            :title="hideSales ? undefined : egp(agent.deals)"
             class="text-center font-bold tracking-[-0.01em] tabular-nums"
             :class="rank === 1 ? 'text-accent-text text-stat-3-lead' : 'text-strong text-stat-3'"
-          >{{ millions(agent.deals) }}</span>
+          >{{ hideSales ? '—' : millions(agent.deals) }}</span>
 
           <span
             role="cell"

@@ -127,7 +127,9 @@
     "manual": "Special congratulations to {name}",
     "replay": "Replay the celebration on this screen",
     "saleShared": "{name} and {partner} closed a shared deal worth {amount}",
-    "replayAll": "Replay the celebration on every screen"
+    "replayAll": "Replay the celebration on every screen",
+    "saleHidden": "{name} closed a new deal",
+    "saleSharedHidden": "{name} and {partner} closed a shared deal"
   },
   "spotlight": {
     "topAgent": "Top performer",
@@ -512,7 +514,9 @@
     "notAudio": "The file must be audio (MP3, M4A, WAV or OGG).",
     "tooBig": "The file is larger than {mb} MB.",
     "confirmDelete": "Delete “{name}” permanently? Celebrations and messages using it will play without sound.",
-    "isDefault": "Default"
+    "isDefault": "Default",
+    "hideAgentSales": "Hide individual agents' sales amounts",
+    "hideAgentSalesHint": "Screens hide each agent's amount (agent ranking, top-performer card, latest deals and notifications). Team totals and targets stay visible."
   },
   "messages": {
     "tab": "Screen messages",
