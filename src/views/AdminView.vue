@@ -13,13 +13,9 @@ import NewsAdmin from '@/components/admin/NewsAdmin.vue'
 import ChangePasswordCard from '@/components/admin/ChangePasswordCard.vue'
 import ReportsAdmin from '@/components/admin/ReportsAdmin.vue'
 import DataTransfer from '@/components/admin/DataTransfer.vue'
-import CelebrateAdmin from '@/components/admin/CelebrateAdmin.vue'
-import QuarterCelebrateAdmin from '@/components/admin/QuarterCelebrateAdmin.vue'
-import DirectorsAdmin from '@/components/admin/DirectorsAdmin.vue'
-import ManagerCutoutsAdmin from '@/components/admin/ManagerCutoutsAdmin.vue'
+import CelebrationPanel from '@/components/admin/CelebrationPanel.vue'
+import DirectorsPanel from '@/components/admin/DirectorsPanel.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
-import CelebrationSettings from '@/components/admin/CelebrationSettings.vue'
-import MediaLibrary from '@/components/admin/MediaLibrary.vue'
 import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
 import OwnerAdmin from '@/components/admin/OwnerAdmin.vue'
 import OwnerMessageOverlay from '@/components/OwnerMessageOverlay.vue'
@@ -28,7 +24,7 @@ import { useLocalName } from '@/composables/useLocalName'
 import { supabase } from '@/lib/supabase'
 import UsersAdmin from '@/components/admin/UsersAdmin.vue'
 import AuditLogAdmin from '@/components/admin/AuditLogAdmin.vue'
-import { ADMIN_TABS, tabLabelKey, type AdminTab } from '@/lib/adminTabs'
+import { tabLabelKey, visibleNav, type AdminTab } from '@/lib/adminTabs'
 import AnnouncementOverlay from '@/components/AnnouncementOverlay.vue'
 import SoundUnlock from '@/components/SoundUnlock.vue'
 import SignInScreen from '@/components/SignInScreen.vue'
@@ -48,7 +44,7 @@ function toggleLanguage() {
 }
 
 const {
-  ready, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions, canSee,
+  ready, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions,
   email, signOut, photoUrl, username,
 } = useAuth()
 /** اسم الداخل وأول حرفين منه (لو مفيش صورة). */
@@ -56,15 +52,14 @@ const meName = computed(() => username.value || email.value)
 const meInitials = computed(() => meName.value.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase())
 const { reload, loading, saveError } = useAdminData()
 
-/** التبويبات حسب الصلاحية — الإخفاء للواجهة فقط، والقاعدة ترفض أي كتابة خارجها. */
-const tabs = computed<AdminTab[]>(() => {
-  void permissions.value
-  const visible: AdminTab[] = ADMIN_TABS.filter((name) => canSee(name))
-  // المدير الإداري بصلاحية «إدارة حسابات الإداريين» بيشوف التبويب (حسابات الإداريين بس)
-  if (permissions.value.includes('users') || permissions.value.includes('staff_accounts')) visible.push('users')
-  return visible
-})
+/**
+ * التنقّل مجموعات (الأشخاص/المبيعات/الشاشة/النظام) حسب الصلاحية — الإخفاء للواجهة
+ * فقط، والقاعدة ترفض أي كتابة خارجها. المصدر: src/lib/adminTabs.ts.
+ */
+const groups = computed(() => visibleNav(permissions.value, isDemo.value))
+const tabs = computed<AdminTab[]>(() => groups.value.flatMap((g) => g.items.map((i) => i.key)))
 const tab = ref<AdminTab>('periods')
+const currentGroup = computed(() => groups.value.find((g) => g.items.some((i) => i.key === tab.value)))
 watch(tabs, (list) => { if (list.length && !list.includes(tab.value)) tab.value = list[0] }, { immediate: true })
 const tabList = ref<HTMLElement | null>(null)
 function goto(name: AdminTab) { if (tabs.value.includes(name)) tab.value = name }
@@ -80,24 +75,6 @@ watch(tab, () => {
     list.scrollLeft += a.left + a.width / 2 - (b.left + b.width / 2)
   })
 })
-
-const TAB_ICON: Record<AdminTab, string> = {
-  periods: 'mdi:target',
-  deals: 'mdi:handshake-outline',
-  celebrate: 'mdi:party-popper',
-  messages: 'mdi:message-text-outline',
-  agents: 'mdi:account-tie-outline',
-  teams: 'mdi:account-group-outline',
-  reports: 'mdi:file-chart-outline',
-  data: 'mdi:database-import-outline',
-  newsfeed: 'mdi:newspaper-variant-outline',
-  rates: 'mdi:chart-line',
-  devices: 'mdi:monitor-dashboard',
-  storage: 'mdi:harddisk',
-  owner1: 'mdi:account-tie-voice-outline',
-  owner2: 'mdi:account-tie-voice-outline',
-  users: 'mdi:shield-account-outline',
-}
 
 /** الأسهم تتنقّل بين التبويبات (نمط tablist): تركيز واحد يدخل القائمة والأسهم تكمّل. */
 function onTabKey(e: KeyboardEvent) {
@@ -244,30 +221,42 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         <!-- التنقّل: عمود جانبي ثابت على الشاشات العريضة، وشريط يتمرّر أفقياً على الموبايل -->
         <nav
           ref="tabList"
-          class="flex gap-1 overflow-x-auto rounded-2xl border border-card-border bg-card p-1.5 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:flex-col lg:overflow-visible lg:p-2"
+          class="flex items-center gap-1 overflow-x-auto rounded-2xl border border-card-border bg-card p-1.5 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:flex-col lg:items-stretch lg:overflow-visible lg:p-2"
           role="tablist"
           data-export-hide
           :aria-label="t('admin.title')"
           @keydown="onTabKey"
         >
-          <button
-            v-for="name in tabs"
-            :id="`admin-tab-${name}`"
-            :key="name"
-            type="button"
-            role="tab"
-            :aria-selected="tab === name"
-            aria-controls="admin-panel"
-            :tabindex="tab === name ? 0 : -1"
-            class="relative flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 min-h-11 text-sm font-semibold text-start transition-colors duration-200"
-            :class="tab === name
-              ? 'bg-accent text-white shadow-[0_8px_16px_-10px_var(--color-accent)]'
-              : 'text-mute hover:bg-accent/[0.08] hover:text-strong'"
-            @click="tab = name"
-          >
-            <iconify-icon :icon="TAB_ICON[name]" aria-hidden="true" class="text-lg shrink-0" />
-            {{ tabLabel(name) }}
-          </button>
+          <template v-for="(group, gi) in groups" :key="group.key">
+            <!-- عنوان المجموعة (على الشاشة العريضة)؛ على الموبايل فاصل رفيع بين المجموعات -->
+            <p
+              role="presentation"
+              class="m-0 flex items-center gap-2 px-3.5 pb-1 pt-3 text-caption font-bold tracking-wide text-dim max-lg:hidden"
+              :class="gi === 0 ? '!pt-1' : ''"
+            >
+              <iconify-icon :icon="group.icon" aria-hidden="true" class="text-base" />
+              {{ t(group.label) }}
+            </p>
+            <span v-if="gi > 0" role="presentation" class="mx-1 h-6 w-px shrink-0 bg-card-border lg:hidden" aria-hidden="true" />
+            <button
+              v-for="item in group.items"
+              :id="`admin-tab-${item.key}`"
+              :key="item.key"
+              type="button"
+              role="tab"
+              :aria-selected="tab === item.key"
+              aria-controls="admin-panel"
+              :tabindex="tab === item.key ? 0 : -1"
+              class="relative flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 min-h-11 text-sm font-semibold text-start transition-colors duration-200"
+              :class="tab === item.key
+                ? 'bg-accent text-white shadow-[0_8px_16px_-10px_var(--color-accent)]'
+                : 'text-mute hover:bg-accent/[0.08] hover:text-strong'"
+              @click="tab = item.key"
+            >
+              <iconify-icon :icon="item.icon" aria-hidden="true" class="text-lg shrink-0" />
+              {{ tabLabel(item.key) }}
+            </button>
+          </template>
         </nav>
 
         <div id="admin-panel" role="tabpanel" :aria-labelledby="`admin-tab-${tab}`" class="flex min-w-0 flex-col gap-6">
@@ -311,20 +300,19 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         </p>
         <p v-if="saveError" role="alert" class="m-0 font-medium text-down text-sm">{{ saveError }}</p>
 
+        <!-- مسار الصفحة: المجموعة ‹ التبويب -->
+        <p v-if="currentGroup" class="m-0 flex items-center gap-1.5 text-caption font-semibold text-dim" data-export-hide>
+          <iconify-icon :icon="currentGroup.icon" aria-hidden="true" />
+          {{ t(currentGroup.label) }}
+          <iconify-icon icon="mdi:chevron-left" aria-hidden="true" class="ltr:rotate-180" />
+          <span class="text-mute">{{ tabLabel(tab) }}</span>
+        </p>
+
         <div :key="tab" class="fade-in flex min-w-0 flex-col gap-6">
         <PeriodsAdmin v-if="tab === 'periods'" />
         <DealsAdmin v-else-if="tab === 'deals'" />
-        <!-- الاحتفال: التهنئة والإعدادات جنب مكتبة الصوت -->
-        <div v-else-if="tab === 'celebrate'" class="grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
-          <div class="flex flex-col gap-6">
-            <CelebrateAdmin />
-            <QuarterCelebrateAdmin />
-            <DirectorsAdmin />
-            <ManagerCutoutsAdmin />
-            <CelebrationSettings />
-          </div>
-          <MediaLibrary />
-        </div>
+        <CelebrationPanel v-else-if="tab === 'celebrate'" />
+        <DirectorsPanel v-else-if="tab === 'directors'" />
         <AnnouncementsAdmin v-else-if="tab === 'messages'" />
         <OwnerAdmin v-else-if="tab === 'owner1'" key="owner1" :owner-slot="1" />
         <OwnerAdmin v-else-if="tab === 'owner2'" key="owner2" :owner-slot="2" />
@@ -335,10 +323,8 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         <MarketRatesAdmin v-else-if="tab === 'rates'" />
         <DevicesAdmin v-else-if="tab === 'devices'" />
         <StorageAdmin v-else-if="tab === 'storage'" @goto="goto($event)" />
-        <div v-else-if="tab === 'users'" class="flex flex-col gap-8">
-          <UsersAdmin />
-          <AuditLogAdmin v-if="permissions.includes('users')" />
-        </div>
+        <UsersAdmin v-else-if="tab === 'users'" />
+        <AuditLogAdmin v-else-if="tab === 'audit'" />
         <DataTransfer v-else-if="tab === 'data'" />
         </div>
         </div>

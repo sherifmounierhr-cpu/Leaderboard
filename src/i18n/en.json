@@ -1069,5 +1069,15 @@
     "to": "To",
     "toAll": "the whole Everest team",
     "toTeam": "Team {name}"
+  },
+  "nav": {
+    "group": {
+      "people": "People",
+      "sales": "Sales",
+      "screen": "Screen & content",
+      "system": "System"
+    },
+    "directors": "Company directors",
+    "audit": "Activity log"
   }
 }
