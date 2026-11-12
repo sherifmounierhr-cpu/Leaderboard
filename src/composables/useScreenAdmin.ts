@@ -124,8 +124,9 @@ export function useScreenAdmin() {
     await media.reload()
   }
 
-  async function saveHideAgentSales(hide: boolean) {
-    const { error } = await supabase.rpc('lb_admin_set_hide_agent_sales', { p_hide: hide })
+  /** مفاتيح «التحكم في العرض»: hide_agent_sales | hide_markets | hide_insights. */
+  async function saveDisplayFlag(key: string, on: boolean) {
+    const { error } = await supabase.rpc('lb_admin_set_display_flag', { p_key: key, p_on: on })
     fail(error)
     await media.reload()
   }
@@ -171,5 +172,5 @@ export function useScreenAdmin() {
     await announcements.reload()
   }
 
-  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveHideAgentSales, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage }
+  return { ...media, announcements, uploadMedia, deleteMedia, saveSettings, saveCelebrationLang, saveDisplayFlag, saveAnnouncement, deleteAnnouncement, uploadAnnouncementImage }
 }

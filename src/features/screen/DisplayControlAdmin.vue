@@ -9,7 +9,7 @@ import { useScreenAdmin } from '@/composables/useScreenAdmin'
  * مفتاح جديد = عنصر في FLAGS + عمود/RPC في القاعدة + قراءته في الشاشة.
  */
 const { t } = useI18n()
-const { settings, saveHideAgentSales } = useScreenAdmin()
+const { settings, saveDisplayFlag } = useScreenAdmin()
 
 interface Flag {
   key: string
@@ -27,7 +27,23 @@ const FLAGS: Flag[] = [
     label: 'screen.hideAgentSales',
     hint: 'screen.hideAgentSalesHint',
     value: () => settings.value.hide_agent_sales === true,
-    save: saveHideAgentSales,
+    save: (on) => saveDisplayFlag('hide_agent_sales', on),
+  },
+  {
+    key: 'hide_markets',
+    icon: 'mdi:chart-line-variant',
+    label: 'screen.hideMarkets',
+    hint: 'screen.hideMarketsHint',
+    value: () => settings.value.hide_markets === true,
+    save: (on) => saveDisplayFlag('hide_markets', on),
+  },
+  {
+    key: 'hide_insights',
+    icon: 'mdi:chart-timeline-variant',
+    label: 'screen.hideInsights',
+    hint: 'screen.hideInsightsHint',
+    value: () => settings.value.hide_insights === true,
+    save: (on) => saveDisplayFlag('hide_insights', on),
   },
 ]
 

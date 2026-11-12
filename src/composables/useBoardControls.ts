@@ -26,6 +26,15 @@ const { hasNews } = useNews()
 const { hasQuotes } = useMarkets()
 const { settings: boardSettings } = useBoardMedia()
 
+/** شاشة اتخفّت من الإدارة وهي مفتوحة: نرجع للفرق بدل ما نفضل عليها. */
+watch(
+  () => [boardSettings.value.hide_insights, boardSettings.value.hide_markets],
+  ([insights, markets]) => {
+    if ((insights && view.value === 'insights') || (markets && view.value === 'markets')) view.value = 'teams'
+  },
+  { immediate: true },
+)
+
 /**
  * التدوير: الفرق ← المستشارون ← (التحليلات لو متفعّلة من الإدارة) ← الأخبار ←
  * الأسواق. التحليلات كانت تُفتح يدوياً فقط، وأي شاشة مصدرها واقع تُتخطّى فلا
@@ -33,9 +42,9 @@ const { settings: boardSettings } = useBoardMedia()
  */
 export function advanceView() {
   const cycle: BoardView[] = ['teams', 'agents']
-  if (boardSettings.value.insights_in_rotation === true) cycle.push('insights')
+  if (boardSettings.value.insights_in_rotation === true && boardSettings.value.hide_insights !== true) cycle.push('insights')
   if (hasNews.value && boardSettings.value.news_enabled !== false) cycle.push('news')
-  if (hasQuotes.value) cycle.push('markets')
+  if (hasQuotes.value && boardSettings.value.hide_markets !== true) cycle.push('markets')
   const at = cycle.indexOf(view.value)
   view.value = cycle[(at + 1) % cycle.length] ?? 'teams'
 }

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { BoardView } from '@/lib/types'
 import { useIndicator } from '@/composables/useIndicator'
+import { useBoardMedia } from '@/composables/useBoardMedia'
 
 const props = defineProps<{ view: BoardView }>()
 const emit = defineEmits<{ 'update:view': [BoardView] }>()
@@ -13,14 +14,15 @@ const { t } = useI18n()
  * شاشات الأرقام بس. الأخبار والأسواق بتيجي في نوبتها من التبديل التلقائي
  * وبتاخد الشاشة كلها، فتبويب ليها كان هيزحم الترويسة بلا داعي.
  */
-const options: Array<{ value: BoardView; icon: string }> = [
+const { settings: boardSettings } = useBoardMedia()
+const options = computed<Array<{ value: BoardView; icon: string }>>(() => [
   { value: 'teams', icon: 'mdi:office-building-outline' },
   { value: 'agents', icon: 'mdi:account-tie' },
-  { value: 'insights', icon: 'mdi:chart-timeline-variant' },
-]
+  ...(boardSettings.value.hide_insights === true ? [] : [{ value: 'insights' as BoardView, icon: 'mdi:chart-timeline-variant' }]),
+])
 
 const listEl = ref<HTMLElement | null>(null)
-const known = computed(() => options.some((o) => o.value === props.view))
+const known = computed(() => options.value.some((o) => o.value === props.view))
 const current = computed(() => props.view)
 const { indicatorStyle, ready } = useIndicator(listEl, current)
 </script>

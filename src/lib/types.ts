@@ -279,6 +279,9 @@ export interface BoardSettings {
   insights_screen_s?: number
   /** إخفاء مبالغ مبيعات الأفراد من الشاشات (إجماليات الفرق تفضل ظاهرة). */
   hide_agent_sales?: boolean
+  /** إخفاء شاشة الأسواق / شاشة التحليلات من اللوحة. */
+  hide_markets?: boolean
+  hide_insights?: boolean
   celebration_seconds: number
   celebration_song_id: string | null
   volume: number

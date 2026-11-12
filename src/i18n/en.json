@@ -518,7 +518,11 @@
     "confirmDelete": "Delete “{name}” permanently? Celebrations and messages using it will play without sound.",
     "isDefault": "Default",
     "hideAgentSales": "Hide individual agents' sales amounts",
-    "hideAgentSalesHint": "Screens hide each agent's amount (agent ranking, top-performer card, latest deals and notifications). Team totals and targets stay visible."
+    "hideAgentSalesHint": "Screens hide each agent's amount (agent ranking, top-performer card, latest deals and notifications). Team totals and targets stay visible.",
+    "hideMarkets": "Hide the markets screen",
+    "hideMarketsHint": "The markets screen (gold, dollar, stocks) leaves the automatic rotation.",
+    "hideInsights": "Hide the insights screen",
+    "hideInsightsHint": "The insights screen leaves the automatic rotation and the header view buttons."
   },
   "messages": {
     "tab": "Screen messages",

@@ -50,6 +50,8 @@ async function load() {
       insights_in_rotation: row.insights_in_rotation === true,
       insights_screen_s: Number(row.insights_screen_s) || 30,
       hide_agent_sales: row.hide_agent_sales === true,
+      hide_markets: row.hide_markets === true,
+      hide_insights: row.hide_insights === true,
     }
   }
   if (!m.error) {
