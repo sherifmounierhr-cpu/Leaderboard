@@ -8,6 +8,7 @@ import { useLocalName } from '@/composables/useLocalName'
 import type { DealRow } from '@/lib/types'
 import SearchSelect, { type SearchOption } from './SearchSelect.vue'
 import { dayKey, NUMBER_LOCALE } from '@/lib/region'
+import { FIELD } from '@/lib/ui'
 
 /**
  * إدخال المبيعات صفقة صفقة: المستشار والتاريخ والمبلغ. الصفقة بتزوّد إجمالي
@@ -263,8 +264,6 @@ const rows = computed(() => {
 
 const listedTotal = computed(() => rows.value.reduce((s, r) => s + r.deal.amount_egp, 0))
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

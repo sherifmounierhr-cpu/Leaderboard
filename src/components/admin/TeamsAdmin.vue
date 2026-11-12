@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useAdminData, type AdminTeam } from '@/composables/useAdminData'
 import { useLocalName } from '@/composables/useLocalName'
 import PhotoField from './PhotoField.vue'
+import { FIELD_SM as FIELD } from '@/lib/ui'
 
 const { teams, agents, saveTeam, deleteTeam } = useAdminData()
 const { t, locale } = useI18n()
@@ -120,8 +121,6 @@ async function remove(team: AdminTeam) {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

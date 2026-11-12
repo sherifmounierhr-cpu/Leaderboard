@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useBoardData } from '@/composables/useBoardData'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useCelebrate, type QuarterCelebrationCounts } from '@/composables/useSaleEvents'
+import { FIELD } from '@/lib/ui'
 
 const NOTE_MAX = 140
 const INTRO_MAX = 280
@@ -74,8 +75,6 @@ async function onSubmit() {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

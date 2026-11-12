@@ -6,6 +6,7 @@ import { compact, relativeTime } from '@/lib/format'
 import { useAdminData } from '@/composables/useAdminData'
 import { useLocalName } from '@/composables/useLocalName'
 import { NUMBER_LOCALE } from '@/lib/region'
+import { FIELD_AUTO as FIELD } from '@/lib/ui'
 
 /**
  * سجل المستخدمين: مَن دخل لوحة الإدارة ومَن أضاف أو عدّل أو حذف ماذا.
@@ -218,8 +219,6 @@ function toggle(id: number) {
   expanded.value = next
 }
 
-const FIELD =
-  'rounded-lg border border-card-border bg-page px-3 py-2 text-sm text-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

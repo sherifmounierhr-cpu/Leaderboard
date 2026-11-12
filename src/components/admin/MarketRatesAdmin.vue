@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/composables/useAuth'
 import { useBoardMedia } from '@/composables/useBoardMedia'
+import { FIELD } from '@/lib/ui'
 
 /**
  * أسعار فائدة البنك المركزي المصري.
@@ -83,8 +84,6 @@ async function save() {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

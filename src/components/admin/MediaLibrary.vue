@@ -5,6 +5,7 @@ import type { MediaFile } from '@/lib/types'
 import { MAX_AUDIO_BYTES, useScreenAdmin } from '@/composables/useScreenAdmin'
 import { mediaUrl } from '@/composables/useBoardMedia'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { FIELD } from '@/lib/ui'
 
 /** مكتبة الصوتيات: أغاني الاحتفال ومقاطع الرسائل، رفع وتجربة وحذف. */
 const { t } = useI18n()
@@ -90,8 +91,6 @@ const mmss = (s: number | null) => {
 }
 const mb = (b: number) => `${(b / 1024 / 1024).toFixed(1)} MB`
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

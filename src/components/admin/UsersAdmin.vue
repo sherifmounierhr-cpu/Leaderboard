@@ -9,6 +9,7 @@ import { ADMIN_TABS, tabLabelKey, type AdminSection } from '@/lib/adminTabs'
 import PhotoField from './PhotoField.vue'
 import ImageStudio from './ImageStudio.vue'
 import { useAdminData } from '@/composables/useAdminData'
+import { FIELD } from '@/lib/ui'
 
 /**
  * مستخدمو صفحة الإدارة. القراءة وتحديد الصلاحيات عبر دوال القاعدة المحروسة؛
@@ -354,8 +355,6 @@ const rows = computed(() => {
   }))
 })
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 const ICON_BTN =
   'rounded-lg border border-card-border px-2.5 py-1.5 text-caption font-semibold text-mute transition-colors hover:text-strong disabled:opacity-40'
 </script>

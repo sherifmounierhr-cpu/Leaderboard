@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useDirectors, type DirectorDraft } from '@/composables/useDirectors'
 import type { DirectorRow } from '@/lib/types'
 import PhotoField from './PhotoField.vue'
+import { FIELD_SM as FIELD } from '@/lib/ui'
 
 const { directors, saveDirector, deleteDirector, load } = useDirectors()
 const { t, locale } = useI18n()
@@ -85,8 +86,6 @@ async function remove(d: DirectorRow) {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

@@ -6,6 +6,7 @@ import { useScreenAdmin, type AnnouncementDraft } from '@/composables/useScreenA
 import { activeOccurrence, cairoWallTime, nextOccurrence } from '@/composables/useAnnouncements'
 import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
 import ImageStudio from './ImageStudio.vue'
+import { FIELD } from '@/lib/ui'
 
 /**
  * رسائل الترحيب والتحفيز: إنشاء وتعديل وجدولة ومعاينة. الجدولة بتوقيت
@@ -335,8 +336,6 @@ const rows = computed(() =>
   }),
 )
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

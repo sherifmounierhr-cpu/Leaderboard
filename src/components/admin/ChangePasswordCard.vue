@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuth } from '@/composables/useAuth'
 import { checkPwnedPassword } from '@/lib/pwnedPassword'
+import { FIELD } from '@/lib/ui'
 
 const { t } = useI18n()
 const { changePassword } = useAuth()
@@ -60,8 +61,6 @@ async function submit() {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

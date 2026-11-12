@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useScreenAdmin } from '@/composables/useScreenAdmin'
 import { useAudioPlayer } from '@/composables/useAudioPlayer'
+import { FIELD } from '@/lib/ui'
 
 /** مدة الاحتفال، الأغنية الافتراضية، ومستوى الصوت لكل الشاشات. */
 const { t } = useI18n()
@@ -69,8 +70,6 @@ function onTry() {
   if (url) void play(url, volume.value, seconds.value)
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

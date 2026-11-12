@@ -5,6 +5,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import { useCelebrate } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
 import { useBoardMedia } from '@/composables/useBoardMedia'
+import { FIELD } from '@/lib/ui'
 
 const NOTE_MAX = 140
 
@@ -61,8 +62,6 @@ async function onSubmit() {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>

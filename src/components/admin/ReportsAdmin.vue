@@ -7,6 +7,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import { useLocalName } from '@/composables/useLocalName'
 import { exportRows } from '@/lib/workbook'
 import type { AgentStanding, TeamContribution, TeamStanding } from '@/lib/types'
+import { FIELD_AUTO as FIELD } from '@/lib/ui'
 
 type ReportKind = 'exec' | 'branch' | 'agent' | 'hr'
 
@@ -172,8 +173,6 @@ function onPrint() {
 const KINDS: ReportKind[] = ['exec', 'branch', 'agent', 'hr']
 const quarters = [1, 2, 3, 4]
 
-const FIELD =
-  'rounded-lg border border-card-border bg-page px-3 py-2 text-sm text-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 const TH = 'px-4 py-3 text-start font-medium text-mute whitespace-nowrap'
 const TD = 'px-4 py-2.5 whitespace-nowrap'
 const CARD = 'rounded-xl border border-card-border bg-card px-5 py-4'

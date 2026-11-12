@@ -9,6 +9,7 @@ import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
 import type { Owner, OwnerMessage } from '@/lib/types'
 import ImageStudio from './ImageStudio.vue'
 import VoiceRecorder, { type Voice } from './VoiceRecorder.vue'
+import { FIELD } from '@/lib/ui'
 
 /**
  * تبويب صاحب العمل: صورته واسمه، وكلمة مكتوبة أو صوتية بتظهر على كل
@@ -204,8 +205,6 @@ async function remove(m: OwnerMessage) {
   }
 }
 
-const FIELD =
-  'w-full rounded-lg border border-card-border bg-page px-3 py-2.5 text-sm text-strong placeholder:text-dim focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
 </script>
 
 <template>
