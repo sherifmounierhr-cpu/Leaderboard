@@ -69,5 +69,7 @@ the way they are.
 ## Open checks
 
 - `lb_board_settings` exposes `alert_email` to every authenticated user; consider moving it out.
-- `supabase/config.toml` is absent, so each Edge Function's `verify_jwt` setting lives only in the
-  dashboard (`sheets-sync`, `screen-alert`, `username-sign-in`: off; `admin-users`: on).
+- `supabase/config.toml` records `verify_jwt` for the deployed Edge Functions (`admin-users`: on;
+  `username-sign-in`, `screen-alert`: off), checked against the live project. `sheets-sync` is **not
+  deployed** and has no cron job (only `lb-daily-snapshot` and `lb-screen-alerts` run); its code stays in the
+  repo in case the Google Sheets import is brought back.

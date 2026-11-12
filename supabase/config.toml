@@ -1,0 +1,25 @@
+# إعدادات Supabase المسجّلة في الريبو (project ref: mbvscayjwnuvkvolbpoz).
+# الأسرار مش هنا أبداً: SYNC/ALERT secrets و RESEND_API_KEY في Supabase Vault / Function Secrets.
+#
+# verify_jwt بيتطبّق لما تنشر بالأمر: supabase functions deploy <name>
+# القيم دي اتطابقت مع الإعدادات الفعلية على المشروع.
+
+project_id = "mbvscayjwnuvkvolbpoz"
+
+# إدارة الحسابات: بتتحقق من المسؤول بتوكنه (lb_my_access) — لازم JWT صالح.
+[functions.admin-users]
+verify_jwt = true
+
+# الدخول باسم المستخدم: المستخدم لسه ما عندوش جلسة، فمفيش JWT. الحماية: قفل بعد 5 محاولات
+# فاشلة + حد لكل IP (داخل الدالة).
+[functions.username-sign-in]
+verify_jwt = false
+
+# تنبيه الشاشات: بينده عليها pg_cron كل 5 دقايق بالسر x-alert-secret (مش JWT).
+[functions.screen-alert]
+verify_jwt = false
+
+# sheets-sync (supabase/functions/sheets-sync) مش منشورة دلوقتي ومفيش cron ليها (المبيعات بتتسجّل
+# من الصفقات في اللوحة). لو رجّعتها: verify_jwt = false بسر x-sync-secret، وأعد جدولة cron.
+# [functions.sheets-sync]
+# verify_jwt = false
