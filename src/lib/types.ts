@@ -265,12 +265,6 @@ export interface BoardSettings {
   cbe_lending?: number | null
   /** تاريخ قرار لجنة السياسة النقدية. */
   cbe_rates_at?: string | null
-  /** إيميل تنبيه الشاشات شغّال. */
-  alerts_enabled?: boolean
-  /** البريد اللي التنبيه بيروحه. */
-  alert_email?: string | null
-  /** الشاشة تسكت كام دقيقة قبل الإيميل. */
-  alert_after_min?: number
   /** مدة شاشة الأخبار كلها بالثواني؛ null = تلقائي (عدد الأخبار × مدة الخبر). */
   news_screen_s?: number | null
   /** التحليلات تدخل التبديل التلقائي. */

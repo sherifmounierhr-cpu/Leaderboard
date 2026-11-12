@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { relativeTime } from '@/lib/format'
 import { useAuth } from '@/composables/useAuth'
-import { useBoardMedia } from '@/composables/useBoardMedia'
 import type { DeviceRow } from '@/lib/types'
 
 /**
@@ -16,7 +15,6 @@ const REFRESH_MS = 30_000
 
 const { t, locale } = useI18n()
 const { isDemo } = useAuth()
-const { settings } = useBoardMedia()
 
 const devices = ref<DeviceRow[]>([])
 const loading = ref(false)
@@ -106,17 +104,21 @@ async function toggleWatch(device: DeviceRow) {
 const alertForm = ref({ enabled: true, email: '', afterMin: 15 })
 const savingAlerts = ref(false)
 
-/*
- * immediate: الإعدادات بتتحمّل مرة واحدة وممكن تكون جاهزة قبل ما المكوّن
- * يركّب، فالمراقبة العادية بتفوتها والنموذج يفضل فاضي.
+/**
+ * إعدادات التنبيه مش جزء من إعدادات اللوحة العامة (البريد ما يظهرش لكل حساب):
+ * بتتحمّل بدالة تتأكد من صلاحية «الأجهزة»، وحساب الاطلاع بياخد الافتراضي.
  */
-watch(settings, (s) => {
+async function loadAlerts() {
+  const { data, error } = await supabase.rpc('lb_admin_get_alert_settings')
+  const row = (Array.isArray(data) ? data[0] : data) as { alerts_enabled?: boolean; alert_email?: string | null; alert_after_min?: number } | null
+  if (error || !row) return
   alertForm.value = {
-    enabled: s.alerts_enabled !== false,
-    email: s.alert_email ?? '',
-    afterMin: s.alert_after_min ?? 15,
+    enabled: row.alerts_enabled !== false,
+    email: row.alert_email ?? '',
+    afterMin: row.alert_after_min ?? 15,
   }
-}, { immediate: true, deep: true })
+}
+onMounted(() => void loadAlerts())
 
 const watchedCount = computed(() => devices.value.filter((d) => d.watch && !d.revoked_at).length)
 
@@ -131,7 +133,7 @@ async function saveAlerts() {
     })
     if (error) throw new Error(error.message)
     notice.value = { ok: true, text: t('devices.alertsSaved') }
-    await load()
+    await Promise.all([load(), loadAlerts()])
   } catch (err) {
     notice.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
   } finally {

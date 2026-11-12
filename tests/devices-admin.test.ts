@@ -64,7 +64,12 @@ async function render() {
 
 beforeEach(() => {
   rpc.mockClear()
-  rpc.mockResolvedValue({ data: null, error: null })
+  // إعدادات التنبيه بتيجي من lb_admin_get_alert_settings (مش من إعدادات اللوحة العامة)
+  rpc.mockImplementation(async (name: unknown) =>
+    name === 'lb_admin_get_alert_settings'
+      ? { data: [boardSettings.value], error: null }
+      : { data: null, error: null },
+  )
   devicesData.value = [device()]
   boardSettings.value = { alerts_enabled: true, alert_email: 'ops@everest.test', alert_after_min: 20 }
 })
