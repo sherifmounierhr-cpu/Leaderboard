@@ -415,9 +415,13 @@ watch(
 const imgBroken = ref(false)
 
 /** الرقم الكبير: قيمة الصفقة للزيادة، والإجمالي لباقي الأنواع — لا رقم للافتتاحية أو البطاقات المحلية. */
+/** إخفاء مبالغ الأفراد (إعداد من الإدارة): احتفالات المستشارين بالاسم والتهنئة بس. */
+const hideAgentAmounts = computed(() => settings.value.hide_agent_sales === true)
+
 const headline = computed(() => {
   const c = current.value
   if (!c || c.scope === 'intro' || c.scope === 'divider' || c.scope === 'ranking') return null
+  if (c.scope === 'agent' && hideAgentAmounts.value) return null
   const e = c.event
   if (c.scope === 'agent' && e.kind === 'sale') return { label: t('celebrate.amount'), value: e.amount_egp }
   // التهنئة قد تُعاد لاحقاً من الإشعارات، فلا نقول «الآن» عن رقم وقت إرسالها
@@ -445,6 +449,11 @@ const announceText = computed(() => {
   if (c.scope === 'divider') return t(c.event.section === 'team' ? 'celebrate.announceDividerTeam' : 'celebrate.announceDividerAgent')
   if (c.scope === 'ranking') return t(c.event.section === 'team' ? 'celebrate.announceRankingTeam' : 'celebrate.announceRankingAgent')
   if (c.scope === 'team') return t('celebrate.announceTeam', { name: team.value?.name ?? '' })
+  if (isSale.value && hideAgentAmounts.value) {
+    return partner.value
+      ? t('celebrate.announceSharedHidden', { name: agent.value?.name ?? '', partner: partner.value.name })
+      : t('celebrate.announceHidden', { name: agent.value?.name ?? '' })
+  }
   if (isSale.value && partner.value) {
     return t('celebrate.announceShared', {
       name: agent.value?.name ?? '', partner: partner.value.name, amount: egp(c.event.amount_egp),
@@ -875,13 +884,13 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <div v-if="isSale && partner" class="flex flex-wrap gap-x-[1.4em] gap-y-[0.2em] font-medium text-white/75 text-[clamp(15px,min(2.4vh,1.44vw),28px)]">
+        <div v-if="isSale && partner && !hideAgentAmounts" class="flex flex-wrap gap-x-[1.4em] gap-y-[0.2em] font-medium text-white/75 text-[clamp(15px,min(2.4vh,1.44vw),28px)]">
           <span v-for="s in shares" :key="s.name" :title="egp(s.amount)">
             {{ s.name }}
             <b class="font-bold tabular-nums text-white">{{ compact(s.amount) }}</b>
           </span>
         </div>
-        <div v-else-if="isSale" class="font-medium text-white/70 text-[clamp(15px,min(2.4vh,1.44vw),28px)]" :title="egp(saleEventTotal)">
+        <div v-else-if="isSale && !hideAgentAmounts" class="font-medium text-white/70 text-[clamp(15px,min(2.4vh,1.44vw),28px)]" :title="egp(saleEventTotal)">
           {{ t('celebrate.newTotal') }}
           <b class="font-bold tabular-nums text-white">{{ compact(saleEventTotal) }}</b>
         </div>
@@ -966,7 +975,7 @@ onBeforeUnmount(() => {
               :style="row.photo ? { backgroundImage: `url('${row.photo}')` } : undefined"
             />
             <span class="min-w-0 flex-1 truncate font-bold">{{ row.name }}</span>
-            <span class="shrink-0 font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
+            <span v-if="!hideAgentAmounts" class="shrink-0 font-bold tabular-nums text-gold">{{ compact(row.deals) }}</span>
           </li>
         </ol>
       </div>

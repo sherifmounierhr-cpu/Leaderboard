@@ -116,7 +116,9 @@
     "announceRankingAgent": "جدول ترتيب المستشارين",
     "sharedTitle": "صفقة مشتركة",
     "and": "و",
-    "announceShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}"
+    "announceShared": "صفقة مشتركة لـ {name} و{partner} بقيمة {amount}",
+    "announceHidden": "صفقة جديدة لـ {name}",
+    "announceSharedHidden": "صفقة مشتركة لـ {name} و{partner}"
   },
   "notifications": {
     "title": "الإشعارات",

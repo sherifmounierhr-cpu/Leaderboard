@@ -116,7 +116,9 @@
     "announceRankingAgent": "Advisor ranking table",
     "sharedTitle": "Shared deal",
     "and": "&",
-    "announceShared": "{name} and {partner} closed a shared deal worth {amount}"
+    "announceShared": "{name} and {partner} closed a shared deal worth {amount}",
+    "announceHidden": "{name} closed a new deal",
+    "announceSharedHidden": "{name} and {partner} closed a shared deal"
   },
   "notifications": {
     "title": "Notifications",
