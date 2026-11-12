@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { BoardEntity } from '@/composables/useBoardData'
 import { thumbUrl } from '@/lib/format'
@@ -14,6 +14,61 @@ const photoSrc = computed(() => thumbUrl(props.entity.photo, props.size))
 
 const { t, locale } = useI18n()
 
+/**
+ * تأطير صور المستشارين: الصور بتتحمّل بأشكال مختلفة (بورتريه معزول طويل، أو بوستر مربع
+ * بالاسم مكتوب تحته والشخص صغير في النص)، فقصّة واحدة للكل بتطلع وشوش صغيرة أو نص مقطوع.
+ * بنقيس النسبة (ونشوف لو الصورة بوستر معتم الأركان) مرة لكل رابط ونخزّنها:
+ *  - بوستر مربع: تقريب على الراس والكتفين.
+ *  - صورة شبه مربعة (فيها غالباً اسم أسفلها): نعرض الجزء العلوي بس.
+ *  - بورتريه طويل: القصّة المعتادة.
+ * أي فشل في القياس (CORS مثلاً) يرجّع للقصّة المعتادة.
+ */
+interface Framing { size: string; position: string }
+const framingCache = new Map<string, Framing | null>()
+const VISIBLE_TOP = 0.62
+
+function framingOf(img: HTMLImageElement): Framing | null {
+  const w = img.naturalWidth
+  const h = img.naturalHeight
+  if (!w || !h) return null
+  const ratio = w / h
+  let poster = false
+  if (ratio > 0.9) {
+    try {
+      const c = document.createElement('canvas')
+      c.width = c.height = 8
+      const ctx = c.getContext('2d', { willReadFrequently: true })!
+      ctx.drawImage(img, 0, 0, 8, 8)
+      const a = (x: number, y: number) => ctx.getImageData(x, y, 1, 1).data[3]
+      poster = [a(0, 0), a(7, 0), a(0, 7), a(7, 7)].every((v) => v > 250)
+    } catch { /* مفيش قراءة بكسلات: نكمّل بالقاعدة التالية */ }
+  }
+  if (poster) return { size: '215%', position: '50% 15%' }
+  if (ratio > 0.66) return { size: `${Math.round((ratio / VISIBLE_TOP) * 100)}%`, position: '50% 0%' }
+  return null
+}
+
+const framing = ref<Framing | null>(null)
+watch(
+  () => (props.kind === 'agent' ? photoSrc.value : ''),
+  (src) => {
+    framing.value = null
+    if (!src) return
+    if (framingCache.has(src)) {
+      framing.value = framingCache.get(src) ?? null
+      return
+    }
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const f = framingOf(img)
+      framingCache.set(src, f)
+      if (photoSrc.value === src) framing.value = f
+    }
+    img.src = src
+  },
+  { immediate: true },
+)
 /**
  * الأحرف الأولى مرسومة دائماً تحت الصورة — فإن سقطت الصورة (شبكة، أو كتمها
  * التصدير تفادياً لتلويث الـ canvas) يبقى شيء مقروء مكانها.
@@ -87,7 +142,7 @@ const label = computed(() =>
         aria-hidden="true"
         data-avatar-photo
         class="absolute inset-0 bg-cover bg-center"
-        :style="{ backgroundImage: `url('${photoSrc}')`, backgroundPosition: kind === 'agent' ? '50% 12%' : 'center' }"
+        :style="{ backgroundImage: `url('${photoSrc}')`, backgroundPosition: kind === 'agent' ? (framing?.position ?? '50% 12%') : 'center', backgroundSize: framing?.size }"
       />
     </template>
   </div>
