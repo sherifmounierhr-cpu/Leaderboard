@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDirectors, type DirectorDraft } from '@/composables/useDirectors'
 import type { DirectorRow } from '@/lib/types'
-import PhotoField from './PhotoField.vue'
+import PhotoField from '@/shared/ui/PhotoField.vue'
 import { FIELD_SM as FIELD } from '@/lib/ui'
 
 const { directors, saveDirector, deleteDirector, load } = useDirectors()

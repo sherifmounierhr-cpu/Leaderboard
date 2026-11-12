@@ -6,7 +6,7 @@ import { useAdminData } from '@/composables/useAdminData'
 import { useDeals } from '@/composables/useDeals'
 import { useLocalName } from '@/composables/useLocalName'
 import type { DealRow } from '@/lib/types'
-import SearchSelect, { type SearchOption } from './SearchSelect.vue'
+import SearchSelect, { type SearchOption } from '@/shared/ui/SearchSelect.vue'
 import { dayKey, NUMBER_LOCALE } from '@/lib/region'
 import { FIELD } from '@/lib/ui'
 

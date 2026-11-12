@@ -56,7 +56,7 @@ async function render() {
   const { i18n } = await import('@/i18n')
   // اللوحة عربية أولاً، لكن اللغة الافتراضية بتتقرا من الرابط — وهو فاضي هنا
   i18n.global.locale.value = 'ar'
-  const { default: DevicesAdmin } = await import('@/components/admin/DevicesAdmin.vue')
+  const { default: DevicesAdmin } = await import('@/features/screen/DevicesAdmin.vue')
   const wrapper = mount(DevicesAdmin, { global: { plugins: [i18n] } })
   await flushPromises()
   return wrapper

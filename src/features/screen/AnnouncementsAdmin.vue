@@ -5,7 +5,7 @@ import type { Announcement, AnnouncementLogo } from '@/lib/types'
 import { useScreenAdmin, type AnnouncementDraft } from '@/composables/useScreenAdmin'
 import { activeOccurrence, cairoWallTime, nextOccurrence } from '@/composables/useAnnouncements'
 import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
-import ImageStudio from './ImageStudio.vue'
+import ImageStudio from '@/shared/ui/ImageStudio.vue'
 import { FIELD } from '@/lib/ui'
 
 /**

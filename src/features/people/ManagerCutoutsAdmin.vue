@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { supabase } from '@/lib/supabase'
 import { removeBackground } from '@/lib/cutout'
 import type { TeamManagerRow } from '@/lib/types'
-import ImageStudio from './ImageStudio.vue'
+import ImageStudio from '@/shared/ui/ImageStudio.vue'
 
 const { t, locale } = useI18n()
 

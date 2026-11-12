@@ -7,8 +7,8 @@ import { useScreenAdmin } from '@/composables/useScreenAdmin'
 import { useLocalName } from '@/composables/useLocalName'
 import { NUMBER_LOCALE, TIME_ZONE } from '@/lib/region'
 import type { Owner, OwnerMessage } from '@/lib/types'
-import ImageStudio from './ImageStudio.vue'
-import VoiceRecorder, { type Voice } from './VoiceRecorder.vue'
+import ImageStudio from '@/shared/ui/ImageStudio.vue'
+import VoiceRecorder, { type Voice } from '@/shared/ui/VoiceRecorder.vue'
 import { FIELD } from '@/lib/ui'
 
 /**

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAdminData, type AdminTeam } from '@/composables/useAdminData'
 import { useLocalName } from '@/composables/useLocalName'
-import PhotoField from './PhotoField.vue'
+import PhotoField from '@/shared/ui/PhotoField.vue'
 import { FIELD_SM as FIELD } from '@/lib/ui'
 
 const { teams, agents, saveTeam, deleteTeam } = useAdminData()
