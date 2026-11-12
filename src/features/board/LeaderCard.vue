@@ -83,9 +83,10 @@ const statSize = computed(() => (props.size === 'hero' ? 'text-stat-hero' : 'tex
       </span>
     </div>
 
-    <ProgressTrack :pct="entity.pct" soft tall />
+    <!-- مبالغ الأفراد مخفية: لا شريط تقدم ولا «من الهدف» (الهدف أصلاً بيكشف حجم المبيعات) -->
+    <ProgressTrack v-if="!(kind === 'agent' && hideSales)" :pct="entity.pct" soft tall />
 
-    <div class="font-semibold text-mute text-sm lg:text-[clamp(15px,1.9vh,21px)]">
+    <div v-if="!(kind === 'agent' && hideSales)" class="font-semibold text-mute text-sm lg:text-[clamp(15px,1.9vh,21px)]">
       {{ t('card.ofTarget', { pct: entity.pct, target: compact(entity.target) }) }}
     </div>
   </div>

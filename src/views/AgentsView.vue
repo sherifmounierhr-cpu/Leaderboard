@@ -60,6 +60,10 @@ const MEDAL: Record<number, string> = {
 
 const GRID =
   'grid-cols-[52px_2.6fr_0.9fr_clamp(112px,9vw,205px)_clamp(116px,9vw,160px)_0.8fr] gap-3 px-5 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
+/** مبالغ الأفراد مخفية: الجدول بيفضل بالترتيب والاسم والفريق بس، من غير أعمدة المبيعات والهدف والتقدم. */
+const GRID_NO_AMOUNTS =
+  'grid-cols-[52px_3fr_1.2fr] gap-3 px-5 2xl:grid-cols-[96px_3fr_1fr] 2xl:gap-[22px] 2xl:px-10'
+const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
 </script>
 
 <template>
@@ -156,8 +160,8 @@ const GRID =
           <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-sm" />
         </div>
 
-        <div class="mt-3.5 flex items-center gap-4">
-          <div v-if="!hideSales" class="text-center" :title="egp(agent.deals)">
+        <div v-if="!hideSales" class="mt-3.5 flex items-center gap-4">
+          <div class="text-center" :title="egp(agent.deals)">
             <div class="text-xs font-medium text-mute">
               {{ t('card.sales') }}
             </div>
@@ -197,14 +201,16 @@ const GRID =
         <div
           role="row"
           class="grid items-center py-3 2xl:py-4 bg-card-alt border-b border-card-border font-semibold tracking-[0.04em] text-mute text-sm 2xl:text-base whitespace-nowrap"
-          :class="GRID"
+          :class="gridClass"
         >
           <span role="columnheader">{{ t('table.rank') }}</span>
           <span role="columnheader">{{ t('table.agent') }}</span>
           <span role="columnheader">{{ t('table.team') }}</span>
-          <span role="columnheader" class="text-center">{{ t('table.salesM') }}</span>
-          <span role="columnheader" class="text-center">{{ t('table.targetM') }}</span>
-          <span role="columnheader">{{ t('table.progressShort') }}</span>
+          <template v-if="!hideSales">
+            <span role="columnheader" class="text-center">{{ t('table.salesM') }}</span>
+            <span role="columnheader" class="text-center">{{ t('table.targetM') }}</span>
+            <span role="columnheader">{{ t('table.progressShort') }}</span>
+          </template>
         </div>
       </div>
 
@@ -215,7 +221,7 @@ const GRID =
           role="row"
           class="grid items-center flex-1 min-h-[clamp(3.75rem,7.5vh,5.5rem)] 2xl:min-h-[clamp(4rem,8.5vh,6.5rem)] py-2 border-b border-divider last:border-b-0"
           :class="[
-            GRID,
+            gridClass,
             rank === 1
               ? 'bg-accent/[0.06] border-b-0 shadow-[inset_3px_0_0_0_var(--color-accent)]'
               : 'transition-colors duration-200 hover:bg-accent/[0.06]',
@@ -247,19 +253,21 @@ const GRID =
           <span role="cell" class="font-medium truncate text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
 
           <span
+            v-if="!hideSales"
             role="cell"
-            :title="hideSales ? undefined : egp(agent.deals)"
+            :title="egp(agent.deals)"
             class="text-center font-bold tracking-[-0.01em] tabular-nums"
             :class="rank === 1 ? 'text-accent-text text-stat-3-lead' : 'text-strong text-stat-3'"
-          >{{ hideSales ? '—' : millions(agent.deals) }}</span>
+          >{{ millions(agent.deals) }}</span>
 
           <span
+            v-if="!hideSales"
             role="cell"
             :title="egp(agent.target)"
             class="text-center font-medium tabular-nums text-mute text-lg 2xl:text-metric-sm"
           >{{ millions(agent.target) }}</span>
 
-          <div role="cell" class="flex items-center gap-2.5 2xl:gap-3.5">
+          <div v-if="!hideSales" role="cell" class="flex items-center gap-2.5 2xl:gap-3.5">
             <ProgressTrack :pct="agent.pct" :soft="rank === 1" tall class="flex-1" />
             <span
               class="w-11 2xl:w-[52px] text-end font-semibold tabular-nums text-base 2xl:text-lg"
