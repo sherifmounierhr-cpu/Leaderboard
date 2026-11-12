@@ -69,6 +69,6 @@ the way they are.
 ## Open checks
 
 - `supabase/config.toml` records `verify_jwt` for the deployed Edge Functions (`admin-users`: on;
-  `username-sign-in`, `screen-alert`: off), checked against the live project. `sheets-sync` is **not
-  deployed** and has no cron job (only `lb-daily-snapshot` and `lb-screen-alerts` run); its code stays in the
-  repo in case the Google Sheets import is brought back.
+  `username-sign-in`, `screen-alert`: off), checked against the live project. `sheets-sync` was removed (direct entry only); `lb_sync` stays because `lb_admin_import` (Excel import)
+  calls it, and `lb_log_sync` / `sync_log` stay as inert leftovers (the log is empty). Only `lb-daily-snapshot`
+  and `lb-screen-alerts` run on cron.

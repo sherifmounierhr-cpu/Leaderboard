@@ -21,7 +21,7 @@ src/
   lib/                      pure helpers; adminTabs.ts = admin navigation, ui.ts = shared field styles
   i18n/                     locales/<ar|en>/<section>.json — one file per top-level section
 supabase/migrations/        database history (0000 → latest)
-supabase/functions/         sheets-sync, screen-alert, admin-users, username-sign-in
+supabase/functions/         screen-alert, admin-users, username-sign-in
 api/                        Vercel functions: /api/news, /api/markets
 ```
 
@@ -40,7 +40,7 @@ api/                        Vercel functions: /api/news, /api/markets
 ## Data flow
 
 ```
-Google Sheets ──sheets-sync (cron)──▶ lb_sync ─┐
+Excel import ──lb_admin_import──▶ lb_sync ──┐
 Admin page ──lb_admin_* RPCs (lb_require)──────┼▶ leaderboard.* tables ──▶ public.lb_* views ──▶ TV board
                                                │        │ realtime
                                                │        └▶ overlays (celebration, owner message, announcements…)

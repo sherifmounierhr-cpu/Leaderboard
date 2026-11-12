@@ -19,7 +19,4 @@ verify_jwt = false
 [functions.screen-alert]
 verify_jwt = false
 
-# sheets-sync (supabase/functions/sheets-sync) مش منشورة دلوقتي ومفيش cron ليها (المبيعات بتتسجّل
-# من الصفقات في اللوحة). لو رجّعتها: verify_jwt = false بسر x-sync-secret، وأعد جدولة cron.
-# [functions.sheets-sync]
-# verify_jwt = false
+# sheets-sync اتشالت (الإدخال بقى مباشر من صفحة الإدارة).
