@@ -46,7 +46,7 @@ function toggleLanguage() {
 
 const {
   ready, isSignedIn, canViewAdmin, isDemo, isSharedDemo, role, permissions,
-  email, signOut, photoUrl, username,
+  email, signOut, photoUrl, username, preview, stopPreview,
 } = useAuth()
 /** اسم الداخل وأول حرفين منه (لو مفيش صورة). */
 const meName = computed(() => username.value || email.value)
@@ -158,6 +158,21 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
 
   <div v-else data-admin class="min-h-screen flex flex-col bg-page text-strong font-sans">
     <a href="#admin-main" class="skip-link" data-export-hide>{{ t('a11y.skip') }}</a>
+    <!-- «شوف شاشته»: معاينة بصلاحيات مستخدم تاني — قراءة فقط -->
+    <div
+      v-if="preview"
+      role="status"
+      data-export-hide
+      class="sticky top-0 z-40 flex flex-wrap items-center gap-3 bg-gold px-4 py-2 text-sm font-semibold text-header sm:px-8"
+    >
+      <iconify-icon icon="mdi:eye-outline" aria-hidden="true" class="text-lg" />
+      <span class="min-w-0 flex-1">{{ t('users.previewing', { name: preview.name }) }}</span>
+      <button
+        type="button"
+        class="rounded-lg bg-header px-3 py-1.5 text-caption font-bold text-white transition-opacity hover:opacity-90"
+        @click="stopPreview"
+      >{{ t('users.previewExit') }}</button>
+    </div>
     <header
       class="relative isolate flex items-center justify-between gap-3 bg-[linear-gradient(100deg,var(--color-header),var(--color-header-2))] text-white px-4 py-3 sm:px-8 lg:px-12"
     >

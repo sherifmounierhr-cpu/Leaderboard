@@ -44,7 +44,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SECTION_ROLES: Role[] = ['editor', 'staff', 'staff_manager']
 
 const { t, locale } = useI18n()
-const { session, expireSession, permissions: myPerms, reloadAccess } = useAuth()
+const { session, expireSession, permissions: myPerms, reloadAccess, startPreview, preview } = useAuth()
 const myId = computed(() => session.value?.user.id ?? null)
 /** مسؤول كامل؟ وإلا فهو مدير إداري بيدير حسابات «إداري» بس. */
 const fullAdmin = computed(() => myPerms.value.includes('users'))
@@ -303,6 +303,12 @@ async function onPhotoStudio(blob: Blob) {
     const url = await uploadPhoto(new File([blob], `photo.${ext}`, { type: blob.type }), 'user', u.id)
     await savePhoto(u.id, url)
   }, t('users.photoSaved', { email: displayName(u) }))
+}
+
+/** «شوف شاشته»: يفتح صفحة الإدارة بصلاحيات الحساب ده (قراءة فقط) لتجربة التدرّج. */
+function viewAs(u: UserRow) {
+  const perms = u.role === 'admin' ? [...ADMIN_TABS, 'users'] : hasSections(u.role) ? [...u.permissions] : []
+  startPreview({ id: u.id, name: displayName(u), role: u.role, permissions: perms })
 }
 
 async function resetPassword(u: UserRow) {
@@ -657,6 +663,17 @@ const ICON_BTN =
             @click="openEdit(r.user)"
           >
             <iconify-icon icon="mdi:account-edit-outline" aria-hidden="true" />
+          </button>
+          <button
+            v-if="fullAdmin && !r.isMe && r.user.role !== 'demo' && !preview"
+            type="button"
+            :class="ICON_BTN"
+            :title="t('users.viewAs')"
+            :aria-label="t('users.viewAs')"
+            :disabled="busy"
+            @click="viewAs(r.user)"
+          >
+            <iconify-icon icon="mdi:eye-outline" aria-hidden="true" />
           </button>
           <button
             type="button"

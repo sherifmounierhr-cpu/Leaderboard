@@ -1,13 +1,26 @@
 import { computed, ref } from 'vue'
 import type { Session } from '@supabase/supabase-js'
-import { hasSupabaseConfig, supabase } from '@/lib/supabase'
+import { hasSupabaseConfig, setPreviewReadOnly, supabase } from '@/lib/supabase'
 
 const session = ref<Session | null>(null)
-const role = ref<string | null>(null)
+const realRole = ref<string | null>(null)
 /** الأقسام المسموح بتعديلها (admin: كلها + users). */
-const permissions = ref<string[]>([])
+const realPermissions = ref<string[]>([])
 /** حساب عرض أو اطلاع: يرى صفحة الإدارة، والخادم يرفض أي كتابة منه. */
-const isDemo = ref(false)
+const realIsDemo = ref(false)
+
+/**
+ * «شوف شاشته»: معاينة صفحة الإدارة بصلاحيات مستخدم تاني (للمسؤول الكامل بس).
+ * الدور والأقسام اللي الواجهة بتشوفها هي بتاعة المستخدم المعاين، وأي كتابة
+ * بتتحجب في lib/supabase.ts. الخادم لسه شايف الحساب الحقيقي.
+ */
+interface Preview { id: string; name: string; role: string; permissions: string[] }
+const preview = ref<Preview | null>(null)
+const role = computed(() => (preview.value ? preview.value.role : realRole.value))
+const permissions = computed(() => (preview.value ? preview.value.permissions : realPermissions.value))
+const isDemo = computed(() =>
+  preview.value ? preview.value.role === 'readonly' || preview.value.role === 'demo' : realIsDemo.value,
+)
 /** صورة الحساب واسم المستخدم — للشريط اللي فوق في صفحة الإدارة. */
 const photoUrl = ref<string | null>(null)
 const username = ref<string | null>(null)
@@ -36,9 +49,11 @@ async function sessionRevoked(): Promise<boolean> {
  */
 async function loadRole() {
   if (!session.value) {
-    role.value = null
-    permissions.value = []
-    isDemo.value = false
+    realRole.value = null
+    realPermissions.value = []
+    realIsDemo.value = false
+    preview.value = null
+    setPreviewReadOnly(false)
     photoUrl.value = null
     username.value = null
     return
@@ -48,11 +63,11 @@ async function loadRole() {
   const access = error
     ? null
     : (data as { role?: string; permissions?: string[]; photo_url?: string | null; username?: string | null } | null)
-  role.value = access?.role ?? null
-  permissions.value = access?.permissions ?? []
+  realRole.value = access?.role ?? null
+  realPermissions.value = access?.permissions ?? []
   photoUrl.value = access?.photo_url ?? null
   username.value = access?.username ?? null
-  isDemo.value = role.value === 'demo' || role.value === 'readonly'
+  realIsDemo.value = realRole.value === 'demo' || realRole.value === 'readonly'
 }
 
 function start() {
@@ -143,9 +158,11 @@ export function useAuth() {
   async function signOut() {
     await supabase.auth.signOut({ scope: 'local' })
     session.value = null
-    role.value = null
-    permissions.value = []
-    isDemo.value = false
+    realRole.value = null
+    realPermissions.value = []
+    realIsDemo.value = false
+    preview.value = null
+    setPreviewReadOnly(false)
   }
 
   /** الخادم رفض الجلسة: نرجع لشاشة الدخول برسالة بدل صفحة شكلها شغّال. */
@@ -172,6 +189,17 @@ export function useAuth() {
     reloadAccess: loadRole,
     isSignedIn: computed(() => Boolean(session.value)),
     isAdmin: computed(() => role.value === 'admin'),
+    /** معاينة صلاحيات مستخدم تاني شغّالة؟ */
+    preview: computed(() => preview.value),
+    startPreview(user: Preview) {
+      if (!realPermissions.value.includes('users') || preview.value) return
+      preview.value = user
+      setPreviewReadOnly(true)
+    },
+    stopPreview() {
+      preview.value = null
+      setPreviewReadOnly(false)
+    },
     isDemo,
     /** حساب العرض المشترك: كلمة مروره لا تتغيّر من الواجهة. */
     isSharedDemo: computed(() => role.value === 'demo'),

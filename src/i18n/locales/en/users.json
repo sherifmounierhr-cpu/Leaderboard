@@ -66,5 +66,8 @@
   "staffAccountsHint": "“Manage staff accounts”: creates Staff accounts, resets their passwords, suspends and deletes them, and can only give them sections they have themselves — never touches manager or admin accounts.",
   "staffHint": "You can create and edit Staff accounts and give them sections you have yourself. Manager and admin accounts are handled by a full admin.",
   "changePhoto": "Change photo of {email}",
-  "photoSaved": "Saved the photo of {email}."
+  "photoSaved": "Saved the photo of {email}.",
+  "viewAs": "See their screen (preview with their permissions)",
+  "previewing": "Previewing as “{name}” — view only, nothing is saved",
+  "previewExit": "Exit preview"
 }
