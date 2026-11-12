@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useScreenAdmin } from '@/composables/useScreenAdmin'
+import { useAuth } from '@/composables/useAuth'
 
 /**
  * التحكم في العرض: مفاتيح إظهار/إخفاء بتتطبّق فوراً على كل الشاشات (من غير زرار
@@ -10,9 +11,12 @@ import { useScreenAdmin } from '@/composables/useScreenAdmin'
  */
 const { t } = useI18n()
 const { settings, saveDisplayFlag } = useScreenAdmin()
+const { permissions, isDemo } = useAuth()
 
 interface Flag {
   key: string
+  /** القسم اللي صلاحيته بتتحكم في المفتاح (نفس اللي بتفرضه القاعدة). */
+  needs: 'celebrate' | 'newsfeed'
   icon: string
   label: string
   hint: string
@@ -23,6 +27,7 @@ interface Flag {
 const FLAGS: Flag[] = [
   {
     key: 'hide_agent_sales',
+    needs: 'celebrate',
     icon: 'mdi:eye-off-outline',
     label: 'screen.hideAgentSales',
     hint: 'screen.hideAgentSalesHint',
@@ -31,6 +36,7 @@ const FLAGS: Flag[] = [
   },
   {
     key: 'hide_markets',
+    needs: 'celebrate',
     icon: 'mdi:chart-line-variant',
     label: 'screen.hideMarkets',
     hint: 'screen.hideMarketsHint',
@@ -39,13 +45,36 @@ const FLAGS: Flag[] = [
   },
   {
     key: 'hide_insights',
+    needs: 'celebrate',
     icon: 'mdi:chart-timeline-variant',
     label: 'screen.hideInsights',
     hint: 'screen.hideInsightsHint',
     value: () => settings.value.hide_insights === true,
     save: (on) => saveDisplayFlag('hide_insights', on),
   },
+  {
+    key: 'news_enabled',
+    needs: 'newsfeed',
+    icon: 'mdi:newspaper-variant-outline',
+    label: 'screen.newsEnabled',
+    hint: 'screen.newsEnabledHint',
+    // مفتاح «تشغيل»: الافتراضي شغّال لو العمود فاضي
+    value: () => settings.value.news_enabled !== false,
+    save: (on) => saveDisplayFlag('news_enabled', on),
+  },
+  {
+    key: 'insights_in_rotation',
+    needs: 'newsfeed',
+    icon: 'mdi:chart-box-outline',
+    label: 'screen.insightsInRotation',
+    hint: 'screen.insightsInRotationHint',
+    value: () => settings.value.insights_in_rotation === true,
+    save: (on) => saveDisplayFlag('insights_in_rotation', on),
+  },
 ]
+
+/** المفاتيح اللي صاحب الحساب يقدر يغيّرها (الخادم بيرفض غيرها حتى لو ظهرت). */
+const shown = computed(() => FLAGS.filter((f) => isDemo.value || permissions.value.includes(f.needs)))
 
 const busy = ref<string | null>(null)
 const message = ref<{ ok: boolean; text: string } | null>(null)
@@ -73,13 +102,13 @@ async function toggle(flag: Flag, event: Event) {
     </header>
 
     <ul class="m-0 flex max-w-2xl list-none flex-col gap-3 p-0">
-      <li v-for="flag in FLAGS" :key="flag.key">
+      <li v-for="flag in shown" :key="flag.key">
         <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-card-border bg-card px-5 py-4 shadow-[var(--shadow-panel)]">
           <input
             type="checkbox"
             class="mt-1 size-4 accent-[var(--color-accent)]"
             :checked="flag.value()"
-            :disabled="busy === flag.key"
+            :disabled="busy === flag.key || isDemo"
             @change="toggle(flag, $event)"
           />
           <iconify-icon :icon="flag.icon" aria-hidden="true" class="mt-0.5 text-xl text-accent-text" />

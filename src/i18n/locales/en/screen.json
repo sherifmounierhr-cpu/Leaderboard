@@ -42,5 +42,9 @@
   "hideMarkets": "Hide the markets screen",
   "hideMarketsHint": "The markets screen (gold, dollar, stocks) leaves the automatic rotation.",
   "hideInsights": "Hide the insights screen",
-  "hideInsightsHint": "The insights screen leaves the automatic rotation and the header view buttons."
+  "hideInsightsHint": "The insights screen leaves the automatic rotation and the header view buttons.",
+  "newsEnabled": "Show the news screen",
+  "newsEnabledHint": "News appears in the rotation and as breaking news. Timing and sound live in the News tab.",
+  "insightsInRotation": "Put insights in the automatic rotation",
+  "insightsInRotationHint": "Insights appears between screens automatically instead of only when opened by hand. Its duration is in the News tab."
 }

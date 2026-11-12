@@ -63,7 +63,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { key: 'newsfeed', icon: 'mdi:newspaper-variant-outline', label: 'newsAdmin.tab', needs: ['newsfeed'] },
       { key: 'rates', icon: 'mdi:chart-line', label: 'rates.tab', needs: ['rates'] },
       { key: 'devices', icon: 'mdi:monitor-dashboard', label: 'devices.tab', needs: ['devices'] },
-      { key: 'display', icon: 'mdi:eye-settings-outline', label: 'nav.display', needs: ['celebrate'] },
+      { key: 'display', icon: 'mdi:eye-settings-outline', label: 'nav.display', needs: ['celebrate', 'newsfeed'] },
     ],
   },
   {
