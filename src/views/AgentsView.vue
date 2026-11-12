@@ -62,8 +62,10 @@ const GRID =
   'grid-cols-[52px_2.6fr_0.9fr_clamp(112px,9vw,205px)_clamp(116px,9vw,160px)_0.8fr] gap-3 px-5 2xl:grid-cols-[96px_2fr_0.85fr_clamp(125px,12vw,205px)_clamp(120px,8vw,160px)_1.35fr] 2xl:gap-[22px] 2xl:px-10'
 /** مبالغ الأفراد مخفية: الجدول بيفضل بالترتيب والاسم والفريق بس، من غير أعمدة المبيعات والهدف والتقدم. */
 const GRID_NO_AMOUNTS =
-  'grid-cols-[52px_3fr_1.2fr] gap-3 px-5 2xl:grid-cols-[96px_3fr_1fr] 2xl:gap-[22px] 2xl:px-10'
+  'grid-cols-[56px_1fr] gap-3 px-4 rounded-xl 2xl:grid-cols-[88px_1fr] 2xl:gap-5 2xl:px-6 bg-strong/[0.03]'
 const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
+/** بلا أرقام: صفوف كروت في عمودين على الشاشات العريضة، والفريق تحت الاسم بدل عمود فاضي. */
+const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-3 2xl:gap-3 2xl:p-4 xl:grid-cols-2' : 'flex flex-col'))
 </script>
 
 <template>
@@ -197,7 +199,7 @@ const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
       class="rise hidden lg:flex lg:flex-col lg:flex-1 rounded-2xl border border-card-border bg-card overflow-hidden min-h-0 shadow-[var(--shadow-panel)]"
       style="--i: 1"
     >
-      <div role="rowgroup">
+      <div v-if="!hideSales" role="rowgroup">
         <div
           role="row"
           class="grid items-center py-3 2xl:py-4 bg-card-alt border-b border-card-border font-semibold tracking-[0.04em] text-mute text-sm 2xl:text-base whitespace-nowrap"
@@ -214,17 +216,19 @@ const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
         </div>
       </div>
 
-      <TransitionGroup role="rowgroup" tag="div" name="rank" data-scroll class="flex-1 min-h-0 flex flex-col overflow-y-auto">
+      <TransitionGroup role="rowgroup" tag="div" name="rank" data-scroll class="flex-1 min-h-0 overflow-y-auto" :class="listClass">
         <div
           v-for="{ agent, rank } in listed"
           :key="agent.id"
           role="row"
-          class="grid items-center flex-1 min-h-[clamp(3.75rem,7.5vh,5.5rem)] 2xl:min-h-[clamp(4rem,8.5vh,6.5rem)] py-2 border-b border-divider last:border-b-0"
+          class="grid items-center min-h-[clamp(3.75rem,7.5vh,5.5rem)] 2xl:min-h-[clamp(4rem,8.5vh,6.5rem)] py-2"
           :class="[
             gridClass,
+            hideSales ? '' : 'flex-1 border-b border-divider last:border-b-0',
             rank === 1
               ? 'bg-accent/[0.06] border-b-0 shadow-[inset_3px_0_0_0_var(--color-accent)]'
               : 'transition-colors duration-200 hover:bg-accent/[0.06]',
+            hideSales && rank === 1 ? 'xl:col-span-2' : '',
           ]"
         >
           <div role="cell">
@@ -246,11 +250,15 @@ const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
               class="rounded-xl 2xl:rounded-2xl shrink-0 text-xl"
               :class="rank === 1 ? 'size-14 2xl:size-[72px] ring-2 ring-accent/70' : 'size-14 2xl:size-[66px]'"
             />
-            <span class="min-w-0 font-semibold leading-tight text-strong text-lg xl:text-xl 2xl:text-name line-clamp-2 break-words" :title="agent.name">{{ agent.name }}</span>
+            <div class="min-w-0 flex-1">
+              <span class="block font-semibold leading-tight text-strong text-lg xl:text-xl 2xl:text-name line-clamp-2 break-words" :title="agent.name">{{ agent.name }}</span>
+              <!-- بلا عمود فريق: الفريق تحت الاسم -->
+              <span v-if="hideSales" class="mt-0.5 block truncate font-medium text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
+            </div>
             <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
           </div>
 
-          <span role="cell" class="font-medium truncate text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
+          <span v-if="!hideSales" role="cell" class="font-medium truncate text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
 
           <span
             v-if="!hideSales"
