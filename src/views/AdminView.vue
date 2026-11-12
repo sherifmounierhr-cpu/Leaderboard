@@ -63,6 +63,24 @@ const tab = ref<AdminTab>('periods')
 const currentGroup = computed(() => groups.value.find((g) => g.items.some((i) => i.key === tab.value)))
 watch(tabs, (list) => { if (list.length && !list.includes(tab.value)) tab.value = list[0] }, { immediate: true })
 const tabList = ref<HTMLElement | null>(null)
+/** درج التنقّل على الموبايل. */
+const drawerOpen = ref(false)
+function pickFromDrawer(name: AdminTab) {
+  tab.value = name
+  drawerOpen.value = false
+}
+function onDrawerKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') drawerOpen.value = false
+}
+watch(drawerOpen, (open) => {
+  if (open) document.addEventListener('keydown', onDrawerKey)
+  else document.removeEventListener('keydown', onDrawerKey)
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', onDrawerKey)
+  document.body.style.overflow = ''
+})
 function goto(name: AdminTab) { if (tabs.value.includes(name)) tab.value = name }
 // شريط التبويبات على الموبايل بيتمرّر أفقياً: المختار يتجاب قدام العين
 watch(tab, () => {
@@ -219,10 +237,27 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
 
       <!-- لوحة الإدارة -->
       <div v-else-if="isSignedIn" class="flex flex-col gap-6 lg:grid lg:grid-cols-[236px_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <!-- التنقّل: عمود جانبي ثابت على الشاشات العريضة، وشريط يتمرّر أفقياً على الموبايل -->
+        <!-- موبايل: شريط بالتبويب الحالي بيفتح درج التنقّل -->
+        <button
+          type="button"
+          class="flex min-h-12 w-full items-center gap-3 rounded-2xl border border-card-border bg-card px-4 text-start shadow-[var(--shadow-card)] lg:hidden"
+          data-export-hide
+          aria-haspopup="dialog"
+          :aria-expanded="drawerOpen"
+          @click="drawerOpen = true"
+        >
+          <iconify-icon icon="mdi:menu" aria-hidden="true" class="text-xl text-mute" />
+          <span class="flex min-w-0 flex-1 flex-col leading-tight">
+            <span v-if="currentGroup" class="truncate text-caption font-semibold text-dim">{{ t(currentGroup.label) }}</span>
+            <span class="truncate text-sm font-bold text-strong">{{ tabLabel(tab) }}</span>
+          </span>
+          <iconify-icon icon="mdi:chevron-down" aria-hidden="true" class="text-xl text-mute" />
+        </button>
+
+        <!-- التنقّل: عمود جانبي ثابت على الشاشات العريضة -->
         <nav
           ref="tabList"
-          class="flex items-center gap-1 overflow-x-auto rounded-2xl border border-card-border bg-card p-1.5 shadow-[var(--shadow-card)] lg:sticky lg:top-6 lg:flex-col lg:items-stretch lg:overflow-visible lg:p-2"
+          class="flex-col items-stretch gap-1 rounded-2xl border border-card-border bg-card p-2 shadow-[var(--shadow-card)] max-lg:hidden lg:sticky lg:top-6 lg:flex"
           role="tablist"
           data-export-hide
           :aria-label="t('admin.title')"
@@ -232,13 +267,12 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
             <!-- عنوان المجموعة (على الشاشة العريضة)؛ على الموبايل فاصل رفيع بين المجموعات -->
             <p
               role="presentation"
-              class="m-0 flex items-center gap-2 px-3.5 pb-1 pt-3 text-caption font-bold tracking-wide text-dim max-lg:hidden"
+              class="m-0 flex items-center gap-2 px-3.5 pb-1 pt-3 text-caption font-bold tracking-wide text-dim"
               :class="gi === 0 ? '!pt-1' : ''"
             >
               <iconify-icon :icon="group.icon" aria-hidden="true" class="text-base" />
               {{ t(group.label) }}
             </p>
-            <span v-if="gi > 0" role="presentation" class="mx-1 h-6 w-px shrink-0 bg-card-border lg:hidden" aria-hidden="true" />
             <button
               v-for="item in group.items"
               :id="`admin-tab-${item.key}`"
@@ -333,9 +367,67 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
       </div>
     </main>
 
+    <!-- درج التنقّل (موبايل) -->
+    <Transition name="nav-drawer">
+      <div v-if="drawerOpen" class="fixed inset-0 z-50 lg:hidden" data-export-hide>
+        <div class="absolute inset-0 bg-black/50" aria-hidden="true" @click="drawerOpen = false" />
+        <nav
+          class="nav-drawer-panel absolute inset-y-0 start-0 flex w-[min(20rem,86vw)] flex-col gap-1 overflow-y-auto bg-card p-3 shadow-2xl"
+          role="dialog"
+          aria-modal="true"
+          :aria-label="t('admin.title')"
+        >
+          <div class="mb-1 flex items-center justify-between px-1">
+            <span class="text-sm font-bold text-strong">{{ t('admin.title') }}</span>
+            <button
+              type="button"
+              class="inline-flex size-11 items-center justify-center rounded-lg text-mute hover:text-strong"
+              :aria-label="t('admin.cancel')"
+              @click="drawerOpen = false"
+            >
+              <iconify-icon icon="mdi:close" aria-hidden="true" class="text-xl" />
+            </button>
+          </div>
+          <template v-for="(group, gi) in groups" :key="group.key">
+            <p
+              class="m-0 flex items-center gap-2 px-3 pb-1 pt-3 text-caption font-bold tracking-wide text-dim"
+              :class="gi === 0 ? '!pt-1' : ''"
+            >
+              <iconify-icon :icon="group.icon" aria-hidden="true" class="text-base" />
+              {{ t(group.label) }}
+            </p>
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              type="button"
+              :aria-current="tab === item.key ? 'page' : undefined"
+              class="flex min-h-11 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-start text-sm font-semibold transition-colors"
+              :class="tab === item.key ? 'bg-accent text-white' : 'text-mute hover:bg-accent/[0.08] hover:text-strong'"
+              @click="pickFromDrawer(item.key)"
+            >
+              <iconify-icon :icon="item.icon" aria-hidden="true" class="text-lg shrink-0" />
+              {{ tabLabel(item.key) }}
+            </button>
+          </template>
+        </nav>
+      </div>
+    </Transition>
+
     <!-- معاينة الرسائل على هذه الشاشة فقط -->
     <AnnouncementOverlay preview-only />
     <OwnerMessageOverlay preview-only />
     <SoundUnlock />
   </div>
 </template>
+
+<style scoped>
+.nav-drawer-enter-active, .nav-drawer-leave-active { transition: opacity 200ms ease; }
+.nav-drawer-enter-active .nav-drawer-panel, .nav-drawer-leave-active .nav-drawer-panel { transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.nav-drawer-enter-from, .nav-drawer-leave-to { opacity: 0; }
+.nav-drawer-enter-from .nav-drawer-panel, .nav-drawer-leave-to .nav-drawer-panel { transform: translateX(-100%); }
+:global([dir='rtl']) .nav-drawer-enter-from .nav-drawer-panel,
+:global([dir='rtl']) .nav-drawer-leave-to .nav-drawer-panel { transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer-enter-active .nav-drawer-panel, .nav-drawer-leave-active .nav-drawer-panel { transition: none; }
+}
+</style>
