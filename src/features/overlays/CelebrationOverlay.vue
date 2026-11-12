@@ -9,8 +9,8 @@ import { useAudioPlayer } from '@/composables/useAudioPlayer'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
 import { supabase } from '@/lib/supabase'
 import type { AgentStanding, LocaleName, TeamContribution, TeamStanding } from '@/lib/types'
-import Avatar from './Avatar.vue'
-import BrandLogo from './BrandLogo.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
 
 /** كثافة تُقرأ احتفالاً على شاشة 1920 من بعيد، لا نقاطاً متناثرة. */
 const PIECES = 44

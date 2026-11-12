@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { TeamLead } from '@/composables/useBoardData'
-import Avatar from './Avatar.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
 
 /**
  * مديرو الفريق ومشرفوه تحت اسم الفريق، مجمّعين بالدور: صور منفصلة + الأسماء.

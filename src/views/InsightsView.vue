@@ -2,8 +2,8 @@
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useBoardData } from '@/composables/useBoardData'
-import TrendChart from '@/components/charts/TrendChart.vue'
-import QuarterCompare from '@/components/charts/QuarterCompare.vue'
+import TrendChart from '@/features/board/charts/TrendChart.vue'
+import QuarterCompare from '@/features/board/charts/QuarterCompare.vue'
 
 const { history, quarterTotals, teams, calendarQuarter, loadHistory, loadQuarterTotals } =
   useBoardData()

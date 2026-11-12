@@ -2,9 +2,9 @@
 import { useI18n } from 'vue-i18n'
 import { compact, egp } from '@/lib/format'
 import type { BoardEntity } from '@/composables/useBoardData'
-import Avatar from './Avatar.vue'
-import ProgressTrack from './ProgressTrack.vue'
-import RankDelta from './RankDelta.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
+import ProgressTrack from '@/shared/ui/ProgressTrack.vue'
+import RankDelta from '@/shared/ui/RankDelta.vue'
 
 withDefaults(
   defineProps<{ team: BoardEntity; rank: number; alt?: boolean; delta?: number }>(),

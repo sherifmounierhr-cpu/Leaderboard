@@ -7,7 +7,7 @@ import { useLocalName } from '@/composables/useLocalName'
 import { useAuth } from '@/composables/useAuth'
 import { useStorageHealth } from '@/composables/useStorageHealth'
 import type { SaleEventRow } from '@/lib/types'
-import Avatar from './Avatar.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 
 /** إخفاء مبالغ الأفراد (إعداد من الإدارة). */

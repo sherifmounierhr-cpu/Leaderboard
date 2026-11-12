@@ -6,13 +6,13 @@ import { useBoardData } from '@/composables/useBoardData'
 import { isKiosk } from '@/composables/useSettings'
 import QuarterSwitcher from './QuarterSwitcher.vue'
 import ViewToggle from './ViewToggle.vue'
-import StatusBadge from './StatusBadge.vue'
+import StatusBadge from '@/shared/ui/StatusBadge.vue'
 import BoardClock from './BoardClock.vue'
 import SettingsMenu from './SettingsMenu.vue'
 import NotificationsMenu from './NotificationsMenu.vue'
 import ExportMenu from './ExportMenu.vue'
 import LatestDeals from './LatestDeals.vue'
-import BrandLogo from './BrandLogo.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
 
 const props = defineProps<{
   view: BoardView

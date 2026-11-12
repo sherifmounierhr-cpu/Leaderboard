@@ -3,8 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ALERT_MS, useMarketAlerts } from '@/composables/useMarketAlerts'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'
-import Sparkline from './Sparkline.vue'
-import BrandLogo from './BrandLogo.vue'
+import Sparkline from '@/shared/ui/Sparkline.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
 import { chime } from '@/composables/useChime'
 
 /**

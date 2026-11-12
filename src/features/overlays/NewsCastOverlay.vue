@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import BrandLogo from './BrandLogo.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
 import { useNewsControls } from '@/composables/useNewsControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useOverlayLayer } from '@/composables/useOverlayQueue'

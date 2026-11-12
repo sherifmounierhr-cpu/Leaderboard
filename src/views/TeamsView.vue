@@ -2,13 +2,13 @@
 import { useI18n } from 'vue-i18n'
 import { egp, millions } from '@/lib/format'
 import { useBoardData } from '@/composables/useBoardData'
-import Avatar from '@/components/Avatar.vue'
-import ProgressTrack from '@/components/ProgressTrack.vue'
-import RankDelta from '@/components/RankDelta.vue'
-import LeaderCard from '@/components/LeaderCard.vue'
-import PodiumCard from '@/components/PodiumCard.vue'
-import TeamRow from '@/components/TeamRow.vue'
-import BoardSkeleton from '@/components/BoardSkeleton.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
+import ProgressTrack from '@/shared/ui/ProgressTrack.vue'
+import RankDelta from '@/shared/ui/RankDelta.vue'
+import LeaderCard from '@/features/board/LeaderCard.vue'
+import PodiumCard from '@/features/board/PodiumCard.vue'
+import TeamRow from '@/features/board/TeamRow.vue'
+import BoardSkeleton from '@/features/board/BoardSkeleton.vue'
 
 const { teams, teamDeltas, updatedAt } = useBoardData()
 const { t } = useI18n()

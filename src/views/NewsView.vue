@@ -7,8 +7,8 @@ import { advanceView } from '@/composables/useBoardControls'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { useNewsControls } from '@/composables/useNewsControls'
 import { dayKey } from '@/lib/region'
-import BrandLogo from '@/components/BrandLogo.vue'
-import StoryBar from '@/components/StoryBar.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
+import StoryBar from '@/features/board/StoryBar.vue'
 
 /**
  * نوبة الأخبار في التبديل التلقائي: أخبار النهارده واحد ورا التاني بملء

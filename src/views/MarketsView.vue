@@ -5,9 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { useMarkets } from '@/composables/useMarkets'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 import { advanceView } from '@/composables/useBoardControls'
-import Sparkline from '@/components/Sparkline.vue'
-import BrandLogo from '@/components/BrandLogo.vue'
-import StoryBar from '@/components/StoryBar.vue'
+import Sparkline from '@/shared/ui/Sparkline.vue'
+import BrandLogo from '@/shared/ui/BrandLogo.vue'
+import StoryBar from '@/features/board/StoryBar.vue'
 import type { MarketQuote } from '@/lib/types'
 
 /**

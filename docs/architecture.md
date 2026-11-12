@@ -4,14 +4,18 @@
 
 ```
 src/
-  features/                 admin screens, grouped the way the admin sidebar is
+  features/                 grouped by what they are for
     people/                 agents, teams, directors (+cut-outs), owners, users, password card
     sales/                  periods, deals, reports, import/export
     screen/                 celebrations, messages, news, market rates, devices, display control
     system/                 storage, activity log
-  shared/ui/                admin building blocks used by several features
-                            (ImageStudio, PhotoField, VoiceRecorder, SearchSelect)
-  components/               the TV board and its overlays (not admin)
+    overlays/               celebration, owner message, announcements, breaking news, news cast, market alert,
+                            the cinematic intro, sound unlock
+    board/                  the TV board: header, KPI strip, leader/podium cards, rows, menus, latest deals
+      charts/               insights charts
+  shared/ui/                building blocks used by several features
+                            (Avatar, BrandLogo, ProgressTrack, Sparkline, StatusBadge, RankDelta, SignInScreen,
+                            ImageStudio, PhotoField, VoiceRecorder, SearchSelect)
   views/                    AdminView + the board screens
   composables/              shared singletons (state lives at module level)
   lib/                      pure helpers; adminTabs.ts = admin navigation, ui.ts = shared field styles

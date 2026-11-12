@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { compact, drivePhotoUrl, relativeTime } from '@/lib/format'
 import { useSaleEvents } from '@/composables/useSaleEvents'
 import { useLocalName } from '@/composables/useLocalName'
-import Avatar from './Avatar.vue'
+import Avatar from '@/shared/ui/Avatar.vue'
 import { useBoardMedia } from '@/composables/useBoardMedia'
 
 /** إخفاء مبالغ الأفراد (إعداد من الإدارة). */
