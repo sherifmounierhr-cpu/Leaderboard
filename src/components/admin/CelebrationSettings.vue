@@ -7,7 +7,7 @@ import { FIELD } from '@/lib/ui'
 
 /** مدة الاحتفال، الأغنية الافتراضية، ومستوى الصوت لكل الشاشات. */
 const { t } = useI18n()
-const { settings, songs, urlOf, saveSettings, saveCelebrationLang, saveHideAgentSales } = useScreenAdmin()
+const { settings, songs, urlOf, saveSettings, saveCelebrationLang } = useScreenAdmin()
 const { play, stop, playing } = useAudioPlayer()
 
 const seconds = ref(settings.value.celebration_seconds)
@@ -45,22 +45,6 @@ async function onSave() {
     message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
   } finally {
     saving.value = false
-  }
-}
-
-/** إخفاء مبالغ الأفراد: بيتطبّق فوراً على كل الشاشات من غير زرار حفظ. */
-const hideBusy = ref(false)
-async function onHideSales(event: Event) {
-  const hide = (event.target as HTMLInputElement).checked
-  hideBusy.value = true
-  message.value = null
-  try {
-    await saveHideAgentSales(hide)
-    message.value = { ok: true, text: t('screen.settingsSaved') }
-  } catch (err) {
-    message.value = { ok: false, text: err instanceof Error ? err.message : String(err) }
-  } finally {
-    hideBusy.value = false
   }
 }
 
@@ -115,20 +99,6 @@ function onTry() {
         <option value="en">English</option>
       </select>
       <span class="text-caption text-dim">{{ t('screen.celebrationLangHint') }}</span>
-    </label>
-
-    <label class="flex cursor-pointer items-start gap-3 rounded-lg border border-card-border bg-page px-4 py-3">
-      <input
-        type="checkbox"
-        class="mt-1 size-4 accent-[var(--color-accent)]"
-        :checked="settings.hide_agent_sales === true"
-        :disabled="hideBusy"
-        @change="onHideSales"
-      />
-      <span class="flex flex-col gap-0.5">
-        <span class="text-sm font-semibold text-strong">{{ t('screen.hideAgentSales') }}</span>
-        <span class="text-caption text-mute leading-snug">{{ t('screen.hideAgentSalesHint') }}</span>
-      </span>
     </label>
 
     <p

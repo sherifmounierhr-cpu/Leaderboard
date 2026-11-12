@@ -14,7 +14,7 @@ export const ADMIN_TABS = [
 
 export type AdminSection = (typeof ADMIN_TABS)[number]
 /** تبويبات خارج مفاتيح الصلاحيات: users/audit للمسؤول، directors تحت قسم celebrate. */
-export type AdminTab = AdminSection | 'users' | 'directors' | 'audit'
+export type AdminTab = AdminSection | 'users' | 'directors' | 'audit' | 'display'
 
 export type NavGroupKey = 'people' | 'sales' | 'screen' | 'system'
 
@@ -63,6 +63,7 @@ export const NAV_GROUPS: readonly NavGroup[] = [
       { key: 'newsfeed', icon: 'mdi:newspaper-variant-outline', label: 'newsAdmin.tab', needs: ['newsfeed'] },
       { key: 'rates', icon: 'mdi:chart-line', label: 'rates.tab', needs: ['rates'] },
       { key: 'devices', icon: 'mdi:monitor-dashboard', label: 'devices.tab', needs: ['devices'] },
+      { key: 'display', icon: 'mdi:eye-settings-outline', label: 'nav.display', needs: ['celebrate'] },
     ],
   },
   {

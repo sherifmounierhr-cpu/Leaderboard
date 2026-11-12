@@ -16,6 +16,7 @@ import DataTransfer from '@/components/admin/DataTransfer.vue'
 import CelebrationPanel from '@/components/admin/CelebrationPanel.vue'
 import DirectorsPanel from '@/components/admin/DirectorsPanel.vue'
 import StorageAdmin from '@/components/admin/StorageAdmin.vue'
+import DisplayControlAdmin from '@/components/admin/DisplayControlAdmin.vue'
 import AnnouncementsAdmin from '@/components/admin/AnnouncementsAdmin.vue'
 import OwnerAdmin from '@/components/admin/OwnerAdmin.vue'
 import OwnerMessageOverlay from '@/components/OwnerMessageOverlay.vue'
@@ -313,6 +314,7 @@ onBeforeUnmount(() => { if (watchingStorage) stopStorage() })
         <DealsAdmin v-else-if="tab === 'deals'" />
         <CelebrationPanel v-else-if="tab === 'celebrate'" />
         <DirectorsPanel v-else-if="tab === 'directors'" />
+        <DisplayControlAdmin v-else-if="tab === 'display'" />
         <AnnouncementsAdmin v-else-if="tab === 'messages'" />
         <OwnerAdmin v-else-if="tab === 'owner1'" key="owner1" :owner-slot="1" />
         <OwnerAdmin v-else-if="tab === 'owner2'" key="owner2" :owner-slot="2" />
