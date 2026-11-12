@@ -1,0 +1,12 @@
+{
+  "group": {
+    "people": "People",
+    "sales": "Sales",
+    "screen": "Screen & content",
+    "system": "System"
+  },
+  "directors": "Company directors",
+  "audit": "Activity log",
+  "display": "Display control",
+  "displayHint": "Show/hide switches that apply instantly to every open screen."
+}

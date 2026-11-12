@@ -1,0 +1,13 @@
+{
+  "title": "Notifications",
+  "open": "Open notifications",
+  "openUnread": "Open notifications — {n} new",
+  "empty": "No notifications yet. Every new deal and congratulation shows up here.",
+  "sale": "{name} closed a new deal worth {amount}",
+  "manual": "Special congratulations to {name}",
+  "replay": "Replay the celebration on this screen",
+  "saleShared": "{name} and {partner} closed a shared deal worth {amount}",
+  "replayAll": "Replay the celebration on every screen",
+  "saleHidden": "{name} closed a new deal",
+  "saleSharedHidden": "{name} and {partner} closed a shared deal"
+}

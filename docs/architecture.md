@@ -19,7 +19,7 @@ src/
   views/                    AdminView + the board screens
   composables/              shared singletons (state lives at module level)
   lib/                      pure helpers; adminTabs.ts = admin navigation, ui.ts = shared field styles
-  i18n/                     ar.json / en.json
+  i18n/                     locales/<ar|en>/<section>.json — one file per top-level section
 supabase/migrations/        database history (0000 → latest)
 supabase/functions/         sheets-sync, screen-alert, admin-users, username-sign-in
 api/                        Vercel functions: /api/news, /api/markets

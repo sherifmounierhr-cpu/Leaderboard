@@ -1,0 +1,5 @@
+{
+  "markerTitle": "Expected pace today: {pct}%",
+  "aheadBy": "{n} pts ahead of pace",
+  "behindBy": "{n} pts behind pace"
+}

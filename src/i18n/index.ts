@@ -1,6 +1,4 @@
 import { createI18n } from 'vue-i18n'
-import ar from './ar.json'
-import en from './en.json'
 import type { LocaleName } from '@/lib/types'
 import { setNumberLocale } from '@/lib/format'
 
@@ -17,6 +15,21 @@ function initialLocale(): LocaleName {
   if (query.has('admin')) return savedLocale() ?? 'en'
   return 'en'
 }
+
+/**
+ * النصوص ملف لكل قسم (locales/<لغة>/<قسم>.json) والاسم هو مفتاح القسم؛ بتتجمّع
+ * هنا في كائن واحد لكل لغة. قسم جديد = ملف جديد في اللغتين.
+ */
+type Messages = Record<string, any>
+function load(files: Record<string, unknown>): Messages {
+  return Object.fromEntries(
+    Object.entries(files)
+      .map(([path, mod]) => [path.replace(/^.*\/(.+)\.json$/, '$1'), mod] as const)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  )
+}
+const ar = load(import.meta.glob('./locales/ar/*.json', { eager: true, import: 'default' }))
+const en = load(import.meta.glob('./locales/en/*.json', { eager: true, import: 'default' }))
 
 const SETTINGS_KEY = 'everest.settings'
 
@@ -39,7 +52,7 @@ export function rememberLocale(locale: LocaleName) {
   }
 }
 
-export const i18n = createI18n({
+export const i18n = createI18n<[Messages], LocaleName, false>({
   legacy: false,
   locale: initialLocale(),
   fallbackLocale: 'en',

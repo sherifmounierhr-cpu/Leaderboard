@@ -1,0 +1,12 @@
+{
+  "topTeam": "#1 TEAM",
+  "sales": "SALES",
+  "target": "Target",
+  "ofTarget": "{pct}% of {target} EGP target",
+  "manager": "Team manager",
+  "supervisor": "Team supervisor",
+  "managers": "Team managers",
+  "supervisors": "Team supervisors",
+  "place2": "2nd place",
+  "place3": "3rd place"
+}

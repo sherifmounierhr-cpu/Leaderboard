@@ -1,0 +1,15 @@
+{
+  "trend": "Sales trend this quarter",
+  "compare": "Quarter comparison",
+  "noHistory": "Not enough history yet — a snapshot is taken daily.",
+  "trendSub": "Each team’s total sales, from the daily snapshots",
+  "compareSub": "Each team’s total sales per quarter",
+  "leader": "Leader",
+  "otherTeams": "Other teams",
+  "date": "Date",
+  "showTable": "Table",
+  "showChart": "Chart",
+  "trendHint": "Use the left and right arrow keys to step through dates",
+  "leaderNow": "{name} — leading now",
+  "bestQuarter": "Strongest quarter: {quarter}"
+}

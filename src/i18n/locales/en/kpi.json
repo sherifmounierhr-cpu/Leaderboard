@@ -1,0 +1,14 @@
+{
+  "label": "Company quarter summary",
+  "total": "Quarter sales",
+  "of": "of {target}",
+  "achieved": "Achieved",
+  "daysLeft": "Days left",
+  "ofDays": "of {n} · {elapsed}% elapsed",
+  "ended": "Quarter ended",
+  "notStarted": "Not started",
+  "perDay": "Needed per day",
+  "perDayUnit": "EGP / day",
+  "reached": "Target reached 🎉",
+  "shortBy": "Short by {amount}"
+}

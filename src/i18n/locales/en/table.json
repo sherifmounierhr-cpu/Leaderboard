@@ -1,0 +1,12 @@
+{
+  "rank": "Rank",
+  "team": "Team",
+  "agent": "Agent",
+  "members": "Members",
+  "sales": "Sales (EGP)",
+  "target": "Target (EGP)",
+  "progress": "Progress to target",
+  "progressShort": "Progress",
+  "salesM": "Sales (M)",
+  "targetM": "Target (M)"
+}

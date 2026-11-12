@@ -1,0 +1,15 @@
+{
+  "rank": "الترتيب {n}",
+  "members": "عدد الأعضاء: {n}",
+  "salesAmount": "المبيعات {amount}",
+  "pctOfTarget": "{pct} بالمئة من المستهدف",
+  "up": "صعود {n}",
+  "down": "هبوط {n}",
+  "teamStandings": "ترتيب الفرق",
+  "teamStandingsRest": "ترتيب الفرق من المركز {from} فما دون",
+  "agentStandings": "ترتيب المستشارين",
+  "teamLeader": "متصدّر الفرق: {name}، {amount}.",
+  "topAgent": "المتصدّر: {name}، {amount}.",
+  "logo": "شعار {name}",
+  "skip": "تخطَّ إلى المحتوى"
+}

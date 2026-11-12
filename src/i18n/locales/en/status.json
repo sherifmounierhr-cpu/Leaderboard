@@ -1,0 +1,7 @@
+{
+  "live": "LIVE",
+  "reconnecting": "RECONNECTING",
+  "connecting": "CONNECTING",
+  "demo": "DEMO DATA",
+  "feed": "Data feed status: {status}"
+}

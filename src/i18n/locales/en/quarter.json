@@ -1,0 +1,11 @@
+{
+  "label": "Quarter",
+  "short": "Q{n}",
+  "notStarted": "Q{n} — not started yet",
+  "range": {
+    "1": "Jan–Mar",
+    "2": "Apr–Jun",
+    "3": "Jul–Sep",
+    "4": "Oct–Dec"
+  }
+}

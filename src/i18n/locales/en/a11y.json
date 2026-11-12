@@ -1,0 +1,15 @@
+{
+  "rank": "Rank {n}",
+  "members": "{n} members",
+  "salesAmount": "Sales {amount}",
+  "pctOfTarget": "{pct} percent of target",
+  "up": "up {n}",
+  "down": "down {n}",
+  "teamStandings": "Team standings",
+  "teamStandingsRest": "Team standings, ranks {from} and below",
+  "agentStandings": "Agent standings",
+  "teamLeader": "Team leader: {name}, {amount}.",
+  "topAgent": "Top agent: {name}, {amount}.",
+  "logo": "{name} logo",
+  "skip": "Skip to content"
+}

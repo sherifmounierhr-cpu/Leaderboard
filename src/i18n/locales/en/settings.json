@@ -1,0 +1,19 @@
+{
+  "title": "Settings",
+  "open": "Open settings",
+  "theme": "Theme",
+  "daylight": "Daylight",
+  "midnight": "Midnight",
+  "auto": "Auto",
+  "autoHint": "Follows the clock: daylight from {from}:00 to {to}:00",
+  "activeNow": "now {theme}",
+  "rotate": "Auto-rotate",
+  "interval": "Rotation interval",
+  "seconds": "{n}s",
+  "fullscreen": "Fullscreen",
+  "exitFullscreen": "Exit fullscreen",
+  "language": "Language",
+  "keepAwake": "Keep screen awake",
+  "shortcuts": "Shortcuts: T view · R rotate · F fullscreen · S settings · L language",
+  "chime": "Alert chime"
+}
