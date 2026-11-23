@@ -26,7 +26,13 @@ const query = ref('')
  * الترتيب يبقى مرتبطاً بالموضع الأصلي في القائمة، لا بموضعه بعد الفلترة —
  * البحث لا يجب أن يغيّر رقم المركز الذي يراه المستشار.
  */
-const ranked = computed(() => agents.value.map((agent, index) => ({ agent, rank: index + 1 })))
+/**
+ * اللي باع بس ليه مركز؛ اللي لسه ما باعش (0) بيظهر في القايمة من غير ترتيب (rank = 0).
+ * القايمة أصلاً مرتّبة بالمبيعات تنازلياً، فالبايعين أول القايمة ومراكزهم متتالية.
+ */
+const ranked = computed(() =>
+  agents.value.map((agent, index) => ({ agent, rank: Number(agent.deals) > 0 ? index + 1 : 0 })),
+)
 
 const filtered = computed(() => {
   const q = query.value.trim().toLowerCase()
@@ -44,8 +50,11 @@ const searching = computed(() => query.value.trim().length > 0)
  * الفروع. أثناء البحث تُخفى البطاقة ويعود الجدول كاملاً، وإلا لاختفى المتصدّر
  * من نتائج البحث عن اسمه.
  */
-const leader = computed(() => (searching.value ? null : (ranked.value[0] ?? null)))
-const listed = computed(() => (searching.value ? filtered.value : filtered.value.slice(1)))
+const leader = computed(() => {
+  const first = ranked.value[0]
+  return searching.value || !first || first.rank === 0 ? null : first
+})
+const listed = computed(() => (searching.value || !leader.value ? filtered.value : filtered.value.slice(1)))
 
 /**
  * عمودا المبيعات والمستهدف بـ clamp لا بعرض ثابت: `compact` بالعربية يكتب
@@ -144,7 +153,8 @@ const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-
               <iconify-icon icon="mdi:trophy" aria-hidden="true" class="text-gold text-xl" />
               <span class="sr-only">{{ t('a11y.rank', { n: 1 }) }}</span>
             </template>
-            <span v-else class="font-bold tabular-nums text-strong text-xl">{{ rank }}</span>
+            <span v-else-if="rank > 0" class="font-bold tabular-nums text-strong text-xl">{{ rank }}</span>
+            <span v-else class="font-bold text-dim text-xl" aria-hidden="true">—</span>
           </div>
 
           <Avatar
@@ -159,7 +169,7 @@ const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-
             <div class="font-medium truncate text-mute text-xs sm:text-sm">{{ agent.team }}</div>
           </div>
 
-          <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-sm" />
+          <RankDelta v-if="rank > 0" :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-sm" />
         </div>
 
         <div v-if="!hideSales" class="mt-3.5 flex items-center gap-4">
@@ -239,8 +249,9 @@ const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-
             <span
               v-else
               class="inline-flex items-center justify-center rounded-xl font-display font-bold tabular-nums size-10 text-xl 2xl:size-[clamp(44px,5vh,56px)] 2xl:text-2xl"
-              :class="MEDAL[rank] ?? 'bg-strong/[0.06] text-strong'"
-            >{{ rank }}</span>
+              :class="rank > 0 ? (MEDAL[rank] ?? 'bg-strong/[0.06] text-strong') : 'text-dim'"
+              :aria-label="rank > 0 ? undefined : t('table.unranked')"
+            >{{ rank > 0 ? rank : '—' }}</span>
           </div>
 
           <div role="cell" class="flex items-center gap-3 2xl:gap-4 min-w-0">
@@ -255,7 +266,7 @@ const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-
               <!-- بلا عمود فريق: الفريق تحت الاسم -->
               <span v-if="hideSales" class="mt-0.5 block truncate font-medium text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
             </div>
-            <RankDelta :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
+            <RankDelta v-if="rank > 0" :delta="agentDeltas.get(agent.id) || 0" class="shrink-0 text-base 2xl:text-lg" />
           </div>
 
           <span v-if="!hideSales" role="cell" class="font-medium truncate text-mute text-base 2xl:text-xl">{{ agent.team }}</span>
