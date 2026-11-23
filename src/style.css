@@ -450,6 +450,7 @@ body { margin: 0; background: var(--color-page); }
 /* الصور من نطاق خارجي؛ إن رفض CORS تلويث الـ canvas نُعيد المحاولة بعد كتمها،
    فتظهر الأحرف الأولى المرسومة تحتها بدل أن يفشل التصدير كلياً. */
 :root[data-exporting="no-images"] [data-avatar-photo] { display: none !important; }
+:root[data-exporting="no-images"] [data-avatar-initials] { opacity: 1 !important; }
 
 /* ------------------------------------------------------------------
    الطباعة / PDF.

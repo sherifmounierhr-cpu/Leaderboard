@@ -25,6 +25,8 @@ const { t, locale } = useI18n()
  */
 interface Framing { size: string; position: string }
 const framingCache = new Map<string, Framing | null>()
+/** روابط اتحمّلت فعلاً: الحروف الأولى بتختفي من ورا الصورة (الصور المعزولة شفافة فكانت الحروف تبان منها). */
+const loadedUrls = new Set<string>()
 const VISIBLE_TOP = 0.62
 
 function framingOf(img: HTMLImageElement): Framing | null {
@@ -49,22 +51,35 @@ function framingOf(img: HTMLImageElement): Framing | null {
 }
 
 const framing = ref<Framing | null>(null)
+const photoLoaded = ref(false)
+/** طبقة الصورة تظهر بعد القياس: وإلا كانت بتتحرك (قصّة عامة ثم قصّة مظبوطة) بعد ما تظهر. */
+const photoReady = ref(false)
 watch(
-  () => (props.kind === 'agent' ? photoSrc.value : ''),
+  photoSrc,
   (src) => {
     framing.value = null
+    photoLoaded.value = false
+    photoReady.value = false
     if (!src) return
-    if (framingCache.has(src)) {
+    if (framingCache.has(src) || loadedUrls.has(src)) {
       framing.value = framingCache.get(src) ?? null
-      return
+      photoLoaded.value = loadedUrls.has(src)
+      photoReady.value = true
+      if (photoLoaded.value) return
     }
     const img = new Image()
     img.crossOrigin = 'anonymous'
     img.onload = () => {
-      const f = framingOf(img)
-      framingCache.set(src, f)
-      if (photoSrc.value === src) framing.value = f
+      loadedUrls.add(src)
+      if (props.kind === 'agent') framingCache.set(src, framingOf(img))
+      if (photoSrc.value === src) {
+        photoLoaded.value = true
+        photoReady.value = true
+        framing.value = framingCache.get(src) ?? null
+      }
     }
+    // فشل القياس (CORS مثلاً): الصورة نفسها (CSS) ممكن تظهر بالقصّة المعتادة، والحروف تفضل تحتها
+    img.onerror = () => { if (photoSrc.value === src) photoReady.value = true }
     img.src = src
   },
   { immediate: true },
@@ -134,14 +149,17 @@ const label = computed(() =>
     <template v-else>
       <span
         aria-hidden="true"
-        class="font-bold text-avatar-text tracking-tight text-[0.9em] leading-none"
+        data-avatar-initials
+        class="font-bold text-avatar-text tracking-tight text-[0.9em] leading-none transition-opacity duration-200"
+        :class="photoLoaded ? 'opacity-0' : ''"
       >{{ initials }}</span>
 
       <span
         v-if="entity.photo"
         aria-hidden="true"
         data-avatar-photo
-        class="absolute inset-0 bg-cover bg-center"
+        class="absolute inset-0 bg-cover bg-center transition-opacity duration-200"
+        :class="photoReady ? '' : 'opacity-0'"
         :style="{ backgroundImage: `url('${photoSrc}')`, backgroundPosition: kind === 'agent' ? (framing?.position ?? '50% 12%') : 'center', backgroundSize: framing?.size }"
       />
     </template>

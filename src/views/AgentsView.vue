@@ -74,7 +74,7 @@ const GRID_NO_AMOUNTS =
   'grid-cols-[56px_1fr] gap-3 px-4 rounded-xl 2xl:grid-cols-[88px_1fr] 2xl:gap-5 2xl:px-6 bg-strong/[0.03]'
 const gridClass = computed(() => (hideSales.value ? GRID_NO_AMOUNTS : GRID))
 /** بلا أرقام: صفوف كروت في عمودين على الشاشات العريضة، والفريق تحت الاسم بدل عمود فاضي. */
-const listClass = computed(() => (hideSales.value ? 'grid content-start gap-2 p-3 2xl:gap-3 2xl:p-4 xl:grid-cols-2' : 'flex flex-col'))
+const listClass = computed(() => (hideSales.value ? 'grid content-start auto-rows-min gap-2 p-3 2xl:gap-3 2xl:p-4 xl:grid-cols-2' : 'flex flex-col'))
 </script>
 
 <template>
